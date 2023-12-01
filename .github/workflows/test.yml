@@ -1,0 +1,78 @@
+name: test
+
+on:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: enricher
+          POSTGRES_PASSWORD: supersecret1
+          POSTGRES_DB: sql_enrichment_test
+          POSTGRES_PORT: 5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: coursier/cache-action@v6
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Start HTTP server to test API enrichment in Common Enrich
+      run: python integration-tests/common/api-enrichment-test.py 8001 &
+    - name: Start HTTP server to test API enrichment in Common Fs2
+      run: python integration-tests/common-fs2/api-enrichment-test.py 8000 &
+    - name: Prepare data in Postgres to test SQL enrichment in Common Enrich
+      run: psql -h localhost -p 5432 -U enricher -d sql_enrichment_test < integration-tests/common/sql-enrichment-test.sql
+      env:
+        PGPASSWORD: supersecret1
+    - name: Prepare data in Postgres to test SQL enrichment in Common Fs2
+      run: psql -h localhost -p 5432 -U enricher -d sql_enrichment_test < integration-tests/common-fs2/sql-enrichment-test.sql
+      env:
+        PGPASSWORD: supersecret1
+    - name: Run tests
+      run: SBT_OPTS="-Xms1G -Xmx8G -Xss4M -XX:MaxMetaspaceSize=1024M" sbt coverage +test
+      env:
+        OER_KEY: ${{ secrets.OER_KEY }}
+    - name: Check Scala formatting
+      run: sbt scalafmtCheckAll
+    - name: Check assets can be published
+      run: sbt publishLocal
+    - name: Run integration tests for enrich-kinesis
+      run: sbt "project kinesisDistroless" IntegrationTest/test
+      env:
+        AWS_ACCESS_KEY_ID: foo
+        AWS_SECRET_ACCESS_KEY: bar
+    - name: Run integration tests for enrich-eventbridge
+      run: sbt "project eventbridgeDistroless" IntegrationTest/test
+      env:
+        AWS_ACCESS_KEY_ID: foo
+        AWS_SECRET_ACCESS_KEY: bar
+    - name: Run integration tests for enrich-kafka
+      run: |
+        sbt "project kafka" "docker:publishLocal"
+        docker-compose -f integration-tests/enrich-kafka/docker-compose.yml up -d
+        sbt "project kafka" IntegrationTest/test
+        docker-compose -f integration-tests/enrich-kafka/docker-compose.yml down
+    - name: Run integration tests for enrich-nsq
+      run: sbt "project nsqDistroless" IntegrationTest/test
+    - name: Generate coverage report
+      run: sbt coverageReport
+    - name: Aggregate coverage data
+      run: sbt coverageAggregate
+    - name: Submit coveralls data
+      run: sbt coveralls
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}

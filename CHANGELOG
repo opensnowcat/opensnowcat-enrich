@@ -1,0 +1,1405 @@
+3.8.1 (2023-07-19)
+------------------
+Github Actions: split testing and releasing (#806)
+Bump AWS SDK to 1.12.506 (#805)
+Bump snakeyaml to 1.33 (#804)
+Bump jackson to 2.15.2 (#803)
+Bump uap-java to 1.5.4 (#802)
+Bump log4j to 2.20.0 (#801)
+Remove bench module (#799)
+enrich-nsq: add S3 and GCS dependencies (#793)
+Add eventVolume and platform to observed_event (#795)
+Makes schemas configurable in adapters (#791)
+Update Iglu Scala Client to 1.5.0 (#794)
+common: ignore API/SQL enrichments when failing (#760)
+
+3.8.0 (2023-05-03)
+------------------
+Take superseding schema into account during validation (#751)
+common: Provide derived contexts to JS enrichment (#769)
+Scan Docker images in Snyk Github action (#772)
+common: do not validate enrichment names (#767)
+common: SQL enrichment: get connection only if request not cached (#765)
+common: SQL enrichment: put getConnection in Blocker (#763)
+common-fs2: fix env var substitution for JSON files (#753)
+Add enrich-nsq (#740)
+fix: add mskAuth to kafka depedencies (#752)
+common: improve caching in API/SQL enrichments (#747)
+
+3.7.3 (2023-04-26)
+------------------
+enrich-pubsub: check max message attricutes length (#782)
+common: upgrade iglu-scala-client to 1.3.1 (#781)
+
+3.7.2 (2023-04-26)
+------------------
+Try to base64 decode event if initial Thrift serialization fails (#777)
+
+3.7.1 (2023-04-13)
+------------------
+Bump net.minidev json-smart to 2.4.10 (#771)
+
+3.7.0 (2023-02-01)
+------------------
+common: bump http4s to 0.21.34 (#744)
+common: bump postgresql to 42.5.2 (#743)
+common: bump netty to 4.1.87.Final (#742)
+common: bump yauaa to 7.11.0 (#741)
+enrich-kinesis: activate JS enrichment, SQL enrichment and API request enrichment in integration tests (#724)
+common: parse Iglu resolver and enrichment configs as HOCON instead of JSON (#736)
+Add UA parser enrichment cache (#738)
+
+3.6.1 (2022-12-09)
+------------------
+common: bump iglu scala client to 1.3.0 (#734)
+common: Update Yauaa to 7.9.0 (#734)
+
+3.6.0 (2022-11-18)
+------------------
+common: Prune system libs from distroless image (#728)
+common: remove duplicates from Sendgrid adapter payload (#725)
+Common: Upgrade yauaa to 7.x (#639)
+
+3.5.1 (2022-11-02)
+------------------
+enrich-kinesis: exclude aws glue libs from the build (#722)
+common: bump slf4j to 2.0.3 (#721)
+enrich-pubsub: bump GCP sdk to 2.14.0 (#719)
+common: bump netty to 4.1.84.Final (#718)
+common: bump protobuf-java to 3.21.9 (#717)
+common: bump jackson-databind to 2.13.4.2 (#716)
+common: bump commons-text to 1.10.0 (#715)
+enrich-kinsis: bump amazon-kinesis-client to 2.4.3 (#714)
+enrich-kinesis: exclude amazon-kinesis-producer from build (#713)
+enrich-kinesis: add integration tests with localstack and testcontainers (#706)
+common: use correct event id for PII event's parent context (#709)
+common: bump specs2 to 4.17.0 (#707)
+common: remove common info from v_etl (#704)
+
+3.5.0 (2022-10-17)
+------------------
+Add enrich-kafka (#648)
+
+3.4.1 (2022-10-10)
+------------------
+enrich-rabbitmq: fix jar patch in Github worflow for releasing (#702)
+enrich-kinesis: add STS v2 to runtime dependencies (#643)
+Enrich-kinesis: improve sink retry policy for when throttled by kinesis (#697)
+common: use iglu-scala-client with improved caching (#699)
+Common: remove url decoding the user agent (#695)
+
+3.4.0 (2022-09-27)
+------------------
+Add RabbitMQ asset (#679)
+
+3.3.2 (2022-09-15)
+------------------
+common: show the name of the misconfigured enrichment (#683) 
+common-fs2: retry EOF errors in blaze http client (#692)
+
+3.3.1 (2022-09-06)
+------------------
+Bump snake-yaml to 1.31 (#688)
+enrich-kinesis: never send batch of records > 5 MB with putRecords (#685)
+
+3.3.0 (2022-08-30)
+------------------
+enrich-pubsub: Add flow control & maxAckExtensionPeriod to consumer (#681)
+
+3.2.5 (2022-08-15)
+------------------
+Update Mailgun adapter to work with the new API (#665)
+Common: api_request_enrichment_config schema version 1-0-1 support (#669)
+Common: Explicitly set Accept header (#667)
+
+3.2.4 (2022-08-11)
+------------------
+Bump postgresql to 42.2.26 (#672)
+enrich-pubsub: Fix to sending output events in parallel (#673)
+
+3.2.3 (2022-08-08)
+------------------
+Common: Get HttpClient to Set Authorization header and Content-Type (#660)
+Stream Enrich: Fix the enrichment order (#662)
+Enrich-kinesis: recover from IllegalArgumentException when checkpointing near end of shard (#657)
+
+3.2.2 (2022-07-22)
+------------------
+Pubsub: Decrease maxBatchBytes defaults to 8 MB (#653)
+Common: BigDecimal instead of Float for numeric EnrichedEvent fields (#654)
+
+3.2.1 (2022-07-04)
+------------------
+enrich-kinesis: Checkpoint only fully processed records (#652)
+enrich-kinesis: Recover from losing lease to a new worker (#649)
+
+3.2.0 (2022-06-28)
+------------------
+Publish distroless docker image (#605)
+common-fs2: fix the building of metadata (#634)
+Drop KPL in enrich-kinesis and sink chunks (#633)
+common-fs2: add DEBUG logging with the time needed for enriching and sinking (#637)
+common-fs2: remove logging of collector payload (#636)
+stream-enrich-kafka: reinstate config example (#646)
+Common: fix mysql connection (#626)
+common-fs2: add support for remote adapters (#567)
+common-fs2: Revert http4s client backend to blaze (#620)
+common: Remove logging of user data when accepting invalid enriched events (#637)
+Common: Return to original intended enrichment order (#619)
+
+3.1.5 (2022-06-10)
+------------------
+common: Add test to check that a required field that is allowed to be null passes validation (#621)
+enrich-kinesis: Bump amazon-kinesis-client to 2.4.1 (#625)
+common: Fix parsing "null" in numeric event fields (#623)
+
+3.1.4 (2022-06-01)
+------------------
+Bump jackson-databind to 2.13.3 (#615)
+common: Bump GCP sdk to 2.7.2 (#613)
+common-fs2: Bump fs2-blobstore to 0.8.6 (#614)
+common-fs2: Bump http4s to 0.21.33 (#612)
+common-fs2: Change http4s client backend to Ember (#611)
+common: update the validation of the enriched event with static field lengths (#608)
+
+3.1.3 (2022-04-27)
+------------------
+enrich-kinesis: use flatMap for the resources in the integration test (#599)
+common-fs2: move metadata shutdown hook (#593)
+enrich-kinesis: add retry mechanism for the checkpointing (#591)
+
+Version 3.1.2 (2022-03-30)
+--------------------------
+common: Configure sbt memory in github action (#590)
+enrich-pubsub: Fix syntax error in application.conf (#588)
+Fix stable version tagging (#584)
+
+Version 3.1.1 (2022-03-28)
+--------------------------
+Stream Enrich: Remove logging of collector payloads (#522)
+enrich-inesis: Cap recordTtl in KPL (#581)
+kinesis: Fix disabling cloudwatch metrics (#580)
+common-fs2: Fix precedence of configuration system properties (#579)
+enrich-kinesis: Harden fetching enrichment configs from DynamoDB (#578)
+
+Version 3.1.0 (2022-03-23)
+--------------------------
+common-fs2: Add experimental metadata aggregation sink (#569)
+Enable publishing snapshot images (#568)
+Add an event generator test for ETL pipeline (#535)
+
+Version 3.0.1 (2022-03-23)
+--------------------------
+common: Recover from corrupt asset downloads (#573)
+common: Sentry should report exceptions in initialising environment (#572)
+common: Retry downloading assets from S3 and GCS (#574)
+
+Version 3.0.0 (2022-03-24)
+--------------------------
+enrich-pubsub: split into common module and PubSub module (#473)
+enrich-pubsub: Bump fs2-google-pubsub to 0.18.1 (#513)
+enrich-kinesis: create enrich asset based on fs2 (#480)
+common-fs2: Metrics: send counts instead of gauges (#494)
+common-fs2: File sink should rotate files with maximum size (#440)
+common-fs2: put good bad and pii inside output {} in config (#493)
+Bump circe to 0.14.1 (#496)
+Set spray-json transitive dependency to 1.3.6 (#498)
+Bump jackson-databind to 2.11.4 (#499)
+Bump snowplow-badrows to 2.1.1 (#500)
+Remove tomcat-embed-core transitive dependency (#501)
+Set netty transitive dependency to 4.1.68.Final (#502)
+Add possibility to use STS to authenticate (#318)
+Bump Snowplow Scala tracker to 1.0.0 (#504)
+common-fs2: add telemetry (#489)
+Bump Iglu client to 1.1.1 (#507)
+enrich-pubsub: add reference.conf and provide minimal config example (#505)
+Add Github Action to scan Docker images with lacework (#506)
+common: use schemas/nl.basjes/yauaa_context/jsonschema/1-0-3 (#515)
+Enable ES6 by default in javascript enrichment (#508)
+Publish arm64 and amd64 docker images (#491)
+Beam Enrich: deprecate (#530)
+common: SQL enrichment: fix getConnection for Sync (#546)
+common: catch and handle errors in the CurrencyConversionEnrichment (#542)
+Validate enriched event against atomic schema before emitting (#517)
+Stream Enrich Kafka: Enable AWS MSK IAM Authentication (#547)
+Stream Enrich Kafka: bump Kafka Client to 2.8.1 (#518)
+common: add Adapted type (#560)
+enrich-kinesis: add integration test (#531)
+enrich-pubsub: bump GCP SDK to 2.4.2 (#562)
+Set protobuf-java transitive dependency to 3.19.4 (#561)
+enrich-pubsub: set gson transitive dependency to 2.9.0 (#565)
+enrich-pubsub: set google-oauth-client transitive dependency to 1.33.1 (#566)
+
+Version 2.0.7 (2022-02-25)
+--------------------------
+Stream: Bump gson to 2.9.0 (#563)
+Stream: Set google-cloud-storage transitive dependency to 1.118.1 (#503)
+
+Version 2.0.6 (2022-02-16)
+--------------------------
+Bump postgresql to 42.2.25 (#554)
+Bump jayway jsonpath to 2.7.0 (#555)
+Bump lemonlabs scala-uri to 1.5.1 (#556)
+Bump nsq-java-client to 1.3.0 (#557)
+Update copyright notices to 2022 (#558)
+Change docker base image to eclipse/temurin:11-jre-focal (#512)
+
+Version 2.0.5 (2021-12-20)
+--------------------------
+Bump aws sdks to 1.12.129 (#540)
+Bump libthrift to 0.15.0 (#539)
+Bump jackson to 2.10.5.1 (#538)
+Bump log4j-core to 2.17.0 (#537)
+
+Version 2.0.4 (2021-12-16)
+--------------------------
+Bump log4j-core to 2.16.0 (#524)
+Bump slf4j to 1.7.32 (#525)
+Bump scio to 0.11.1 (#526)
+Bump sbt to 1.5.6 (#527)
+Bump scala version to 2.12.15 (#532)
+Bump amazon-kinesis-client to 0.14.5 (#533)
+
+Version 2.0.3 (2021-10-27)
+--------------------------
+PubSub: check size of plain bad rows before sinking (#510)
+
+Version 2.0.2 (2021-08-09)
+--------------------------
+PubSub: drop attributes that are longer than 1024 characters (#485)
+Stream Enrich: rename directories (#475)
+
+Version 2.0.1 (2021-05-21)
+--------------------------
+PubSub: fix missing apikey header to resolve schemas (#468)
+
+Version 2.0.0 (2021-05-06)
+--------------------------
+Common: fix duplicate workflow runs in CI/CD (#465)
+Stream FS2: rename fs2-enrich to snowplow-enrich-pubsub (#463)
+Beam: bump Scio to 0.10.2 (#461)
+Beam: fix authentication of docker image (#390)
+Common: integrate cache into CI/CD (#397)
+Common: integrate sbt-assembly (#290)
+Common: change formatting check to scalafmtCheckAll (#378)
+Stream FS2: allow source/sink concurrency settings to be configurable (#458)
+Common: use yauaa_context version 1-0-2 (#456)
+Common: add version badge to README.md (#343)
+Stream: improve error output for incorrectly configured enrichments (#387)
+Stream FS2: rename dir to file in config file (#454)
+Common: fix README (#405)
+Stream FS2: tune source and sink configs to optimise throughput (#427)
+Stream: kinesis partition key fall back to random UUID (#377)
+Common: bump sbt to 1.5.1 (#366)
+Stream FS2: bump cats-retry to 2.1.0 (#446)
+Stream FS2: bump log4cats to 1.3.0 (#445)
+Stream FS2: bump http4s to 0.21.22 (#444)
+Stream FS2: bump FS2 to 2.5.5 (#441)
+Stream FS2: bump cats effect to 2.5.0 (#442)
+Stream FS2: run blocking enrichments on a separate execution context (#432)
+Stream FS2: fix acking message after all payloads are sunk (#443)
+Stream FS2: filesystem source should handle sub-directories (#439)
+Stream FS2: make config file compatible with RDB loader config (#438)
+Stream FS2: reset latency metric to zero (#435)
+Stream FS2: add message attributes to PubSub (#340)
+Stream FS2: statsd reporter for metrics (#421)
+Stream FS2: remove dropwizard metrics dependency (#437)
+Common: bump commons-codec to 1.15 (#430)
+Stream: fix incorrect event construction for heartbeat events (#410)
+Common: extend copyright to 2021 (#423)
+Stream FS2: remove race condition from flaky EnrichSpec (#422)
+Common: update README.md and CONTRIBUTING.md (#379)
+Common: remove EtlException (#309)
+Stream FS2: send Size Violations to bad sink (#419)
+Stream FS2: add sink for pii events (#416)
+Common: remove __SyntaxError__ from YAUAA context (#414)
+Common: bump YAUAA to 5.23 (#401)
+Common: publish to DockerHub and Sonatype instead of Bintray (#424)
+Common: use Python 3 for integration tests (#420)
+
+Version 1.4.2 (2020-11-20)
+--------------------------
+Stream: crash at startup if Sentry DSN is not correct (#399)
+Beam: crash at startup if Sentry DSN is not correct (#398)
+Beam: handle commas in Sentry DSN parameter (#391)
+
+Version 1.4.1 (2020-11-02)
+--------------------------
+Beam: Add missing tcnative dependency of Scio 0.9.5 (#389)
+Beam: bump Scio to 0.9.5 (#381)
+Common: fix number deserialization in API Request Enrichment (#383)
+
+Version 1.4.0 (2020-10-21)
+--------------------------
+Stream FS2: add (#346)
+Stream: bump log4j-core to 2.13.3 (#368)
+Stream: bump base-debian to 0.2.1 (#359)
+Stream: remove unused Maxmind database (#352)
+Beam: bump Scio to 0.9.3 (#308)
+Beam: use test Maxmind databases (#269)
+Common: add benchmarking module (#370)
+Common: bump scala-forex to 1.0.0 (#349)
+Common: bump scala-referer-parser to 1.1.0 (#348)
+Common: bump scala-weather to 1.0.0 (#347)
+Common: bump iglu-scala-client to 1.0.2 (#52)
+Common: bump scala-maxmind-iplookups to 0.7.1 (#323)
+Common: bump snowplow-badrows to 2.1.0 (#325)
+Common: bump YAUAA to 5.19 (#314)
+Common: bump postgresql to 42.2.16 (#369)
+Common: bump jackson-databind to 2.10.5 (#367)
+Common: bump to JDK 11 (#362)
+Common: switch to HostName.asInetAddress to validate IP addresses (#355)
+Common: fix NullPointerException on serializing invalid state (#371)
+Common: fix API Request Enrichment output deserialization (#374)
+Common: fix PiiPseudonymizerEnrichment for arrays and improve unit tests coverage (#334)
+Common: fix PII enrichment adding empty objects instead of missing properties (#351)
+Common: fix PathNotFoundException in PII enrichment (#339)
+Common: fix pattern matching against null in ScrambleMapFunction (#338)
+Common: fix flaky ThriftLoader test (#306)
+Common: handle empty query string parameters in adapters (#341)
+Common: make assets publishing independent of each other (#373)
+Common: disable formatting on compile (#358)
+Common: add sbt publishLocal operation to test action (#357)
+Common: add toThrift and toRaw methods to CollectorPayload (#345)
+Common: replace deprecated constructors in EnrichedEventSpec (#354)
+Common: improve unit tests coverage (#335)
+Common: use test Maxmind databases (#350)
+Common: get rid of placeholder schema in enrichment configurations (#302)
+Common: move EnrichmentConf into its own module (#303)
+Common: get rid of Eval instances (#300)
+Common: add tests for Input for SQL enrichment (#316)
+
+Version 1.3.2 (2020-09-06)
+--------------------------
+Common: convert null fields in EnrichedEvent to None in PartiallyEnrichedEvent (#331)
+Common: skip the SQL enrichment on null placeholders (#315)
+Common: check that IP address is valid IPv4 or IPv6 before passing to IAB enrichment (#329)
+Beam: fix unit tests failing after update of MaxMind database (#327)
+
+Version 1.3.1 (2020-07-28)
+--------------------------
+Common: fix JS enrichment failing without return statement (#295)
+Beam: bump k8s-dataflow to 0.2.0 (#293)
+Common: Skip sql enrichment on null values as placeholders (#291)
+
+Version 1.3.0 (2020-07-14)
+--------------------------
+Beam: reduce MaximumRecordSize to 6900000 bytes (#287)
+Beam: make metrics optional (#285)
+Beam: bump scio to 0.9.2 (#277)
+Stream: bump amazon-kinesis-client to 1.13.3 (#286)
+Common: fix ClassCastException with multi-thread access (#278)
+Common: replace use of erasure with runtimeClass (#252)
+Common: Enable IP Lookup Enrichment for IPv6 with port number (#284)
+Common: Enable IAB Enrichment for IPv6 (#282)
+Common: bump iab-spiders-and-robots-client to 0.2.0 (#262)
+Common: bump scalafmt to 2.6.1 (#265)
+Common: bump sbt-scalafmt to 2.4.0 (#264)
+Common: use Nashorn instead of Rhino for JS enrichment (#138)
+Common: bump SBT to 1.3.12 (#6)
+Common: bump Scala to 2.12.11 (#7)
+Common: apply automated code formatting for all projects (#263)
+
+Version 1.3.0-SNAPSHOT (Unreleased)
+-----------------------------------
+Common: integrate Snyk (#4)
+Common: integrate Coveralls (#5)
+Common: add CI/CD (#3)
+
+Stream Enrich 1.1.3 (2020-06-15)
+--------------------------------
+Bump Common Enrich to 1.1.3 (snowplow/stream-enrich#11)
+
+Stream Enrich 1.1.2 (2020-06-04)
+--------------------------------
+Bump Common Enrich to 1.1.2 (snowplow/stream-enrich#9)
+
+Beam Enrich 1.2.2 (2020-06-03)
+------------------------------
+Bump Common Enrich to 1.1.2 (snowplow/beam-enrich#44)
+
+Snowplow Common Enrich 1.1.2 (2020-06-03)
+-----------------------------------------
+Use ua query parameter if set (snowplow/common-enrich#13)
+
+Beam Enrich 1.2.1 (2020-06-01)
+------------------------------
+Bump Common Enrich to 1.1.1 (snowplow/beam-enrich#39)
+Add Snowplow Bintray to resolvers (snowplow/beam-enrich#41)
+Integrate Sentry for Common Enrich exceptions (snowplow/beam-enrich#40)
+
+Stream Enrich 1.1.1 (2020-06-01)
+--------------------------------
+Integrate Sentry for Common Enrich exceptions (snowplow/stream-enrich#8)
+Bump Common Enrich to 1.1.1 (snowplow/stream-enrich#7)
+Add DockerHub credentials to .travis.yml (snowplow/stream-enrich#4)
+Add Bintray credentials to .travis.yml (snowplow/stream-enrich#5)
+Add CI/CD (snowplow/stream-enrich#1)
+Update README for post-migration (snowplow/stream-enrich#2)
+
+Snowplow Common Enrich 1.1.1 (2020-06-01)
+-----------------------------------------
+Add Sonatype credentials to .travis.yml (snowplow/common-enrich#7)
+Add OER_KEY to .travis.yml (snowplow/common-enrich#8)
+Add Bintray credentials to .travis.yml (snowplow/common-enrich#2)
+Add CI/CD (snowplow/common-enrich#4)
+Make ConversionUtils.extractQuerystring return List[(String, Option[String])] (snowplow/common-enrich#5)
+Disable weather enrichment unit tests (snowplow/common-enrich#6)
+Update README for post-migration (snowplow/common-enrich#1)
+
+Beam Enrich 1.2.0 (2020-05-05)
+------------------------------
+Update README (snowplow/beam-enrich#35)
+Fix dashes in CHANGELOG (snowplow/beam-enrich#34)
+Fix 1.1.0 release date in CHANGELOG (snowplow/beam-enrich#33)
+Use BadRow as an error type of enrich (snowplow/beam-enrich#21)
+Bump Scala Common Enrich to 1.1.0 (snowplow/beam-enrich#29)
+Change base docker image to k8s-dataflow (snowplow/beam-enrich#15)
+
+Snowplow Release 119 Tycho Magnetic Anomaly Two (2020-04-30)
+------------------------------------------------------------
+Spark: deprecate (snowplow/snowplow#4263)
+Beam: extract into separate repo (snowplow/snowplow#4282)
+Stream: bump to 1.1.0 (snowplow/snowplow#4296)
+Stream: add the possibility to override the DynamoDB endpoint (snowplow/snowplow#3942)
+Stream: use info generated by BuildInfo for Processor in Source (snowplow/snowplow#4335)
+Stream: remove sbt version from README (snowplow/snowplow#4303)
+Stream: bump Scala Common Enrich to 1.1.0 (snowplow/snowplow#4295)
+Stream: allow to download data from private S3 or GCS (snowplow/snowplow#4269)
+Common: bump to 1.1.0 (snowplow/snowplow#4294)
+Common: use recent timestamp for unit tests in WeatherEnrichmentSpec (snowplow/snowplow#4339)
+Common: change maxColumns to 140 in .scalafmt.conf (snowplow/snowplow#4314)
+Common: add Snowplow Bintray to resolvers (snowplow/snowplow#4325)
+Common: return capitalised Unknown value in YAUAA enrichment (snowplow/snowplow#4114)
+Common: fix abandon assertions in PiiPseudonymizerEnrichmentSpec (snowplow/snowplow#4322)
+Common: handle query string parameters that don't have a value in IgluAdapter (snowplow/snowplow#4330)
+Common: bump snowplow-badrows to 1.0.0 (snowplow/snowplow#4292)
+Common: fix EtlPipeline short-circuiting on a first bad row (snowplow/snowplow#4320)
+Common: add validation for contexts added by enrichments (snowplow/snowplow#3795)
+
+Beam Enrich 1.1.0 (2020-02-21)
+------------------------------
+Add support for GCP labels in dataflow launcher docker image (snowplow/beam-enrich#6)
+Bump scio to 0.8.1 (snowplow/beam-enrich#11)
+Do not use remote json for referer parser specs (snowplow/beam-enrich#9)
+Fix versioning in bintray (snowplow/beam-enrich#13)
+
+Snowplow Release 118 Morgantina (2020-01-16)
+--------------------------------------------
+Spark: extend copyright notice to 2020 (snowplow/snowplow#4260)
+Spark: bump to 2.0.0 (snowplow/snowplow#4236)
+Spark: bump scala-common-enrich to 1.0.0 (snowplow/snowplow#4235)
+Spark: replace scopt by decline (snowplow/snowplow#4245)
+Beam: extend copyright notice to 2020 (snowplow/snowplow#4259)
+Beam: bump to 1.0.0 (snowplow/snowplow#4194)
+Beam: migrate enrichment specs from Spark Enrich (snowplow/snowplow#4200)
+Beam: migrate miscellaneous specs from Spark Enrich (snowplow/snowplow#4199)
+Beam: migrate adapters specs from Spark Enrich (snowplow/snowplow#4198)
+Beam: bump SBT to 1.3.3 (snowplow/snowplow#4174)
+Beam: use sbt-tpolecat (snowplow/snowplow#4172)
+Beam: use scalafmt (snowplow/snowplow#4171)
+Beam: bump sbt-buildinfo to 0.9.0 (snowplow/snowplow#4170)
+Beam: bump scalatest to 3.0.8 (snowplow/snowplow#4169)
+Beam: bump paradise to 2.1.1 (snowplow/snowplow#4168)
+Beam: bump beam to 2.11.0 (snowplow/snowplow#4167)
+Beam: bump scio version to 0.7.4 (snowplow/snowplow#4166)
+Beam: bump scala-common-enrich to 1.0.0 (snowplow/snowplow#4165)
+Beam: bump Scala to 2.12.10 (snowplow/snowplow#4164)
+Beam: bump sbt-native-packager to 1.3.22 (snowplow/snowplow#4163)
+Stream: extend copyright notice to 2020 (snowplow/snowplow#4258)
+Stream: bump to 1.0.0 (snowplow/snowplow#4162)
+Stream: bump snowplow-scala-tracker to 0.6.1 (snowplow/snowplow#4145)
+Stream: use sbt-tpolecat (snowplow/snowplow#4173)
+Stream: bump sbt-buildinfo to 0.9.0 (snowplow/snowplow#4161)
+Stream: bump sbt-assembly to 0.14.9 (snowplow/snowplow#4160)
+Stream: bump jinjava to 2.5.0 (snowplow/snowplow#4159)
+Stream: bump pureconfig to 0.11.0 (snowplow/snowplow#4158)
+Stream: bump scopt to 3.7.1 (snowplow/snowplow#4157)
+Stream: bump slf4j to 1.7.26 (snowplow/snowplow#4156)
+Stream: bump jackson to 2.9.9 (snowplow/snowplow#4155)
+Stream: bump config to 1.3.4 (snowplow/snowplow#4154)
+Stream: bump kafka-clients to 2.2.1 (snowplow/snowplow#4153)
+Stream: bump amazon-kinesis-client to 1.10.0 (snowplow/snowplow#4152)
+Stream: bump aws-java-sdk to 1.11.566 (snowplow/snowplow#4151)
+Stream: add custom .jvmopts file (snowplow/snowplow#4104)
+Stream: bump specs2 to 4.5.1 (snowplow/snowplow#4149)
+Stream: bump scala-common-enrich to 1.0.0 (snowplow/snowplow#4148)
+Stream: bump Scala to 2.12.10 (snowplow/snowplow#4147)
+Stream: bump scalacheck to 1.14.0 (snowplow/snowplow#4144)
+Stream: bump SBT to 1.3.3 (snowplow/snowplow#4098)
+Stream: replace sbt-scalafmt-coursier with sbt-scalafmt (snowplow/snowplow#4097)
+Common: extend copyright notice to 2020 (snowplow/snowplow#4257)
+Common: bump to 1.0.0 (snowplow/snowplow#4026)
+Common: wrap all contexts and unstruct events into SelfDescribingData (snowplow/snowplow#4241)
+Common: remove shred function (snowplow/snowplow#4233)
+Common: make test specifications formatting consistent (snowplow/snowplow#4234)
+Common: use snowplow-badrows (snowplow/snowplow#4106)
+Common: add custom .jvmopts file (snowplow/snowplow#4103)
+Common: bump SBT to 1.2.8 (snowplow/snowplow#4096)
+Common: update WeatherEnrichmentSpec (snowplow/snowplow#4073)
+Common: bump scala-uri to 1.4.5 (snowplow/snowplow#4072)
+Common: bump scalaj-http to 2.4.1 (snowplow/snowplow#4071)
+Common: bump mysql-connector-java to 8.0.16 (snowplow/snowplow#4070)
+Common: bump postgresql to 42.2.5 (snowplow/snowplow#4069)
+Common: bump uap-java to 1.4.3 (snowplow/snowplow#4068)
+Common: bump jackson-databind to 2.9.8 (snowplow/snowplow#4067)
+Common: bump joda-time to 2.10.1 (snowplow/snowplow#4066)
+Common: bump commons-codec to 1.12 (snowplow/snowplow#4064)
+Common: clean up dependencies (snowplow/snowplow#4052)
+Common: parameterize ApiRequestEnrichment over the effect type (snowplow/snowplow#4046)
+Common: parameterize SqlQueryEnrichment over the effect type (snowplow/snowplow#4045)
+Common: bump scala-weather to 0.5.0 (snowplow/snowplow#4044)
+Common: bump scala-maxmind-iplookups to 0.6.1 (snowplow/snowplow#4043)
+Common: use sbt-scalafmt (snowplow/snowplow#4040)
+Common: separate EnrichmentRegistry parsing from its construction (snowplow/snowplow#4033)
+Common: externalize referer-parser yml file (snowplow/snowplow#3830)
+Common: bump scala-forex to 0.7.0 (snowplow/snowplow#4031)
+Common: bump scala-referer-parser to 1.0.0 (snowplow/snowplow#4030)
+Common: bump iglu-scala-client to 0.6.1 (snowplow/snowplow#4029)
+Common: bump jsonpath to 0.6.14 (snowplow/snowplow#4028)
+Common: bump Scala to 2.12.10 (snowplow/snowplow#4027)
+Common: bump specs2 to 4.5.1 (snowplow/snowplow#4024)
+Common: replace scalaz by cats (snowplow/snowplow#4018)
+Common: replace json4s with circe (snowplow/snowplow#3602)
+Common: use sbt-tpolecat (snowplow/snowplow#4010)
+
+Snowplow Release 117 Biskupin (2019-12-03)
+------------------------------------------
+Common: bump referer-parser to 0.3.1 (snowplow/snowplow#4135)
+Common: add anonymization for IPv6 (snowplow/snowplow#4222)
+Common: add additional event fingerprint hashing methods (snowplow/snowplow#4226)
+Common: bump to 0.38.0 (snowplow/snowplow#4136)
+Beam: bump scala-common-enrich to 0.38.0 (snowplow/snowplow#4137)
+Beam: fix unit tests failing after update of MaxMind database (snowplow/snowplow#4230)
+Beam: fix docker deployment authorization (snowplow/snowplow#4231)
+Beam: bump to 0.4.0 (snowplow/snowplow#4138)
+Stream: bump scala-common-enrich to 0.38.0 (snowplow/snowplow#4139)
+Stream: bump to 0.22.0 (snowplow/snowplow#4140)
+Spark: bump scala-common-enrich to 0.38.0 (snowplow/snowplow#4141)
+Spark: use hadoop-lzo 0.4.20 from Snowplow Bintray maven (snowplow/snowplow#4238)
+Spark: bump to 1.19.0 (snowplow/snowplow#4142)
+
+Snowplow Release 116 Madara Rider (2019-09-12)
+------------------------------------------
+Beam: fix unit tests failing after update of MaxMind database (snowplow/snowplow#4129)
+
+Snowplow Release 114 Polonnaruwa (2019-05-17)
+---------------------------------------------
+Beam: bump to 0.3.0 (snowplow/snowplow#4061)
+Beam: bump scala-common-enrich to 0.37.0 (snowplow/snowplow#4060)
+Beam: fix unit tests failing after update of MaxMind database (snowplow/snowplow#4037)
+Common: bump to 0.37.0 (snowplow/snowplow#4057)
+Common: make IpAddressExtractor fall back to the Forwarded: for= header as a last resort (snowplow/snowplow#4014)
+Common: update Sendgrid integration (snowplow/snowplow#4002)
+Common: add HTTP remote adapter #3760
+Common: add YAUAA enrichment (snowplow/snowplow#4009)
+Common: create tutorial for adding an enrichment (snowplow/snowplow#4039)
+Common: update WeatherEnrichmentSpec (snowplow/snowplow#4073)
+Common: explore more relaxed URL parsing (snowplow/snowplow#3880)
+Common: add support to IPs (v4) with port to IP lookup enrichment (snowplow/snowplow#4048)
+Common: fix incompatibility between IAB enrichment and Iglu Webhook (snowplow/snowplow#3952)
+Common: skip IAB enrichment for IPs v6 addresses (snowplow/snowplow#4078)
+Spark: bump to 1.18.0 (snowplow/snowplow#4063)
+Spark: bump scala-common-enrich to 0.37.0 (snowplow/snowplow#4062)
+Stream: bump to 0.21.0 (snowplow/snowplow#4059)
+Stream: bump scala-common-enrich to 0.37.0 (snowplow/snowplow#4058)
+
+Snowplow Release 113 Filitosa (2019-02-27)
+------------------------------------------
+Common: bump to 0.36.0 (snowplow/snowplow#3984)
+Common: add adapter to pre-process Hubspot webhooks (snowplow/snowplow#3282)
+Common: change MarketoAdapter's last_interesting_moment_date type to date-time (snowplow/snowplow#3967)
+Common: bump CallRail's call_complete to 1-0-2 (snowplow/snowplow#2501)
+Common: support POST requests in API Request enrichment (snowplow/snowplow#3857)
+Common: warn users of the user-agent-utils enrichment (snowplow/snowplow#3964)
+Common: disable parallel test execution (snowplow/snowplow#3970)
+Common: extend copyright notice to 2019 (snowplow/snowplow#3998)
+Beam: bump to 0.2.0 (snowplow/snowplow#3990)
+Beam: bump scala-common-enrich to 0.36.0 (snowplow/snowplow#3989)
+Beam: extend copyright notice to 2019 (snowplow/snowplow#4001)
+Stream: bump to 0.20.0 (snowplow/snowplow#3986)
+Stream: bump scala-common-enrich to 0.36.0 (snowplow/snowplow#3985)
+Stream: bump kafka client to 2.1.1 (snowplow/snowplow#3992)
+Stream: provide a way to add arbitrary Kafka configuration settings (snowplow/snowplow#3969)
+Stream: showcase the usage of env variables in the configuration example (snowplow/snowplow#3972)
+Stream: extend copyright notice to 2019 (snowplow/snowplow#4000)
+Spark: bump to 1.17.0 (snowplow/snowplow#3988)
+Spark: bump scala-common-enrich to 0.36.0 (snowplow/snowplow#3987)
+Spark: add test for the Hubspot adapter (snowplow/snowplow#3977)
+Spark: add test for the Marketo adapter (snowplow/snowplow#3976)
+Spark: use sbt-buildinfo (snowplow/snowplow#3628)
+Spark: extend copyright notice to 2019 (snowplow/snowplow#3999)
+
+Snowplow Release 110 Valle dei Templi (2018-09-07)
+--------------------------------------------------
+Beam: implement a barebone port of Stream Enrich (snowplow/snowplow#3735)
+Beam: support enrichments relying on local files (snowplow/snowplow#3736)
+Beam: add support for the PII enrichment (snowplow/snowplow#3888)
+Beam: add metrics (snowplow/snowplow#3737)
+Beam: build Docker image (snowplow/snowplow#3815)
+Beam: add README (snowplow/snowplow#3773)
+Beam: add CI/CD (snowplow/snowplow#3757)
+Stream: bump to 0.19.1 (snowplow/snowplow#3889)
+Stream: remove GCP module (snowplow/snowplow#3865)
+Stream: fix parent event context in PII events (snowplow/snowplow#3886)
+
+Snowplow Release 109 Lambaesis (2018-08-21)
+-------------------------------------------
+Common: bump to 0.35.0 (snowplow/snowplow#3861)
+Common: externalize ua-parser rule file (snowplow/snowplow#3793)
+Common: bump ua-parser to 1.4.0 (snowplow/snowplow#3811)
+Common: make the list of files to cache available from the EnrichmentRegistry (snowplow/snowplow#3789)
+Common: change Iglu adapter to consider arrays as multiple events (snowplow/snowplow#3858)
+Common: update CloudfrontAccessLogAdapter to support newer 26 field format (snowplow/snowplow#3816)
+Common: leverage the x-forwarded-for field in CloudfrontLoader (snowplow/snowplow#2859)
+Common: handle comma-separated list of ips (snowplow/snowplow#3771)
+Common: bump SBT Bintray to 0.5.4 (snowplow/snowplow#3840)
+Common: bump SBT to 1.1.6 (snowplow/snowplow#3839)
+Stream: bump to 0.19.0 (snowplow/snowplow#3864)
+Stream: bump scala-common-enrich to 0.35.0 (snowplow/snowplow#3863)
+Stream: allow overriding of the kinesis endpoint url in the configuration (snowplow/snowplow#3775)
+Stream: decorrelate the need for a pii stream and the pii enrichment (snowplow/snowplow#3828)
+Stream: bump SBT to 1.1.6 (snowplow/snowplow#3841)
+Stream: fix configuration example (snowplow/snowplow#3820)
+Spark: bump to 1.16.0 (snowplow/snowplow#3874)
+Spark: bump scala-common-enrich to 0.35.0 (closes #3869)
+Spark: bump SBT Assembly to 0.14.7 (snowplow/snowplow#3844)
+Spark: bump SBT to 1.1.6 (snowplow/snowplow#3843)
+
+Snowplow Release 107 Trypillia (2018-07-17)
+-------------------------------------------
+Common: add adapter to pre-process Marketo webhooks (snowplow/snowplow#2616)
+Common: add adapter to pre-process Vero webhooks (snowplow/snowplow#2757)
+Common: propagate the currency code to all the contexts which need it in the GA adapter (snowplow/snowplow#3733)
+Common: add IAB Spiders & Robots Enrichment (snowplow/snowplow#937)
+Common: bump to 0.34.0 (snowplow/snowplow#3758)
+Spark: bump scala-common-enrich to 0.34.0 (snowplow/snowplow#3729)
+Spark: add support for the IAB Enrichment (snowplow/snowplow#3772)
+Spark: bump to 1.15.0 (snowplow/snowplow#3728)
+Stream: bump scala-common-enrich to 0.34.0 (snowplow/snowplow#3730)
+Stream: add support for the IAB enrichment (snowplow/snowplow#3797)
+Stream: force jackson-databind to 2.9.3 for all projects (snowplow/snowplow#3767)
+Stream: rename force-ip-lookups-download to force-cached-files-download (snowplow/snowplow#3809)
+Stream: bump to 0.18.0 (snowplow/snowplow#3727)
+
+Snowplow Release 106 Acropolis (2018-06-14)
+-------------------------------------------
+Common: add formats as ScalazJson4sUtils.extract as implicit parameter (snowplow/snowplow#3668)
+Common: add salt to PII Enrichment (snowplow/snowplow#3648)
+Common: bump to 0.33.0 (snowplow/snowplow#3763)
+Common: bump user-agent-utils to 1.21 (snowplow/snowplow#3656)
+Common: extend PII Enrichment to include identification events in EnrichedEvent (snowplow/snowplow#3580)
+Common: fix platform specific error checking in IpLookupsEnrichmentSpec (snowplow/snowplow#3762)
+Common: fix unnecessarily-created JSON object as a result of the PII Enrichment (snowplow/snowplow#3636)
+Spark: apply automated code formatting (snowplow/snowplow#3655)
+Spark: bump scala-common-enrich to 0.33.0 (snowplow/snowplow#3764)
+Spark: bump to 1.14.0 (snowplow/snowplow#3765)
+Spark: ignore PII identification events from Scala Common Enrich (snowplow/snowplow#3582)
+Spark: use automated code formatting (snowplow/snowplow#3654)
+Stream: add context for parent event when generating PII event (snowplow/snowplow#3724)
+Stream: add end-to-end test using mock streaming (snowplow/snowplow#3639)
+Stream: apply automated code formatting (snowplow/snowplow#3651)
+Stream: bump scala-common-enrich to 0.33.0 (snowplow/snowplow#3607)
+Stream: bump to 0.17.0 (snowplow/snowplow#3608)
+Stream: extend PII Enrichment to output a stream of PII identification events (snowplow/snowplow#3581)
+Stream: update config.hocon.sample to include a PII output stream (snowplow/snowplow#3579)
+Stream: use automated code formatting (snowplow/snowplow#3644)
+
+Snowplow Release 105 Pompeii (2018-05-07)
+-----------------------------------------
+Stream: bump to 0.16.1 (snowplow/snowplow#3748)
+Stream: ensure a one-to-one relationship between sink and record processor (snowplow/snowplow#3745)
+Stream: force jackson-databind to 2.9.3 (snowplow/snowplow#3744)
+Common: update WeatherEnrichmentSpec (snowplow/snowplow#3749)
+
+Snowplow Release 103 Paestum (2018-04-17)
+-----------------------------------------
+Common: bump to 0.32.0 (snowplow/snowplow#3673)
+Common: bump scala-maxmind-iplookups to 0.4.0 (snowplow/snowplow#3675)
+Common: update IP Lookups Enrichment to support non-legacy database (snowplow/snowplow#3672)
+Common: support extraction of IP addresses in the Forwarded header (snowplow/snowplow#3475)
+Common: support IPv6 addresses in the IpAddressExtractor (snowplow/snowplow#3474)
+Common: bump mandrill event versions to 1-0-1 (snowplow/snowplow#3372)
+Stream: bump to 0.16.0 (snowplow/snowplow#3698)
+Stream: bump scala-common-enrich to 0.32.0 (snowplow/snowplow#3676)
+Stream: force jackson-dataformat-cbor to 2.9.3 (snowplow/snowplow#3701)
+Spark: bump to 1.13.0 (snowplow/snowplow#3705)
+Spark: bump scala-common-enrich to 0.32.0 (snowplow/snowplow#3674)
+Spark: downgrade geoip2 to 2.5.0 (snowplow/snowplow#3702)
+
+Snowplow Release 101 Neapolis (2018-03-21)
+------------------------------------------
+Stream: bump to 0.15.0 (snowplow/snowplow#3681)
+Stream: add Google Cloud PubSub source (snowplow/snowplow#3150)
+Stream: add Google Cloud PubSub sink (snowplow/snowplow#3149)
+Stream: split into multiple artifacts according to targeted platform (snowplow/snowplow#3645)
+Stream: rename etl version from kinesis to stream-enrich (snowplow/snowplow#3642)
+Stream: make source / sink configuration a coproduct (snowplow/snowplow#3555)
+Stream: add ability to retrieve resolver and enrichments from Google Cloud Datastore (snowplow/snowplow#3152)
+Stream: update config.hocon.sample to support Google Cloud PubSub (snowplow/snowplow#3151)
+Stream: customize useragent for GCP API calls (snowplow/snowplow#3193)
+Stream: bump kafka-clients to 1.0.1 (snowplow/snowplow#3661)
+Stream: bump amazon-kinesis-client to 1.9.0 (snowplow/snowplow#3663)
+Stream: bump aws-java-sdk to 1.11.290 (snowplow/snowplow#3662)
+Stream: bump SBT to 1.1.1 (snowplow/snowplow#3657)
+Stream: bump sbt-assembly to 0.14.6 (snowplow/snowplow#3664)
+Stream: use sbt-buildinfo (snowplow/snowplow#3627)
+Stream: extend copyright notice to 2018 (snowplow/snowplow#3686)
+
+Snowplow Release 100 Epidaurus (2018-02-26)
+------------------------------------------
+Common: add PII Enrichment (snowplow/snowplow#3472)
+Common: apply automated code formatting (snowplow/snowplow#3532)
+Common: bump commons-codec to 1.11 (snowplow/snowplow#3638)
+Common: bump to 0.31.0 (snowplow/snowplow#3598)
+Common: remove unused version member in Enrichment trait (snowplow/snowplow#3541)
+Common: use automated code formatting (snowplow/snowplow#3496)
+Stream: bump scala-common-enrich to 0.31.0 (snowplow/snowplow#3597)
+Stream: bump to 0.14.0 (snowplow/snowplow#3596)
+Stream: use generated Settings for version in test (snowplow/snowplow#3604)
+
+Snowplow Release 99 Carnac (2018-01-25)
+---------------------------------------
+Common: bump to 0.30.0 (snowplow/snowplow#3562)
+Common: add adapter for Google Analytics (snowplow/snowplow#3560)
+Common: extend copyright notice to 2018 (snowplow/snowplow#3574)
+Spark: bump to 1.12.0 (snowplow/snowplow#3565)
+Spark: bump scala-common-enrich to 0.30.0 (snowplow/snowplow#3563)
+Spark: add tests for the Google Analytics adapter (snowplow/snowplow#3561)
+Spark: extend copyright notice to 2018 (snowplow/snowplow#3573)
+Spark: change Twitter repository url to https (snowplow/snowplow#3593)
+
+Snowplow Release 98 Argentomagus (2018-01-05)
+---------------------------------------------
+Stream: bump to 0.13.0 (snowplow/snowplow#3549)
+Stream: bump scala-common-enrich to 0.29.0 (snowplow/snowplow#3553)
+Stream: bump nsq-java-client to 1.2.0 (snowplow/snowplow#3520)
+Common: bump to 0.29.0 (snowplow/snowplow#3552)
+Common: add validation of tracker-sent timestamps (snowplow/snowplow#336)
+Common: add validation of collector_tstamp (snowplow/snowplow#3416)
+
+Snowplow Release 97 Knossos (2017-12-18)
+----------------------------------------
+Common: add Adapter to pre-process Olark events (snowplow/snowplow#1014)
+Common: add adapter to pre-process Mailgun webhooks (snowplow/snowplow#2734)
+Common: add adapter to pre-process Statusgator webhooks (snowplow/snowplow#2169)
+Common: add adapter to pre-process Unbounce webhooks (snowplow/snowplow#2615)
+Common: add function to camelCase all JSON fields in Adaptor (snowplow/snowplow#3538)
+Common: bump user-agent-utils to 1.20 (snowplow/snowplow#2930)
+Common: default port to 443 if scheme is https (snowplow/snowplow#3483)
+Common: make enrichments.ExtractEventTypeSpec timezone-safe (snowplow/snowplow#3481)
+Common: remove toSecond parameter in Adapter (snowplow/snowplow#3534)
+Common: tolerate content type for GET requests sent to Clojure Collector (snowplow/snowplow#2743)
+Common: bump to 0.28.0 (snowplow/snowplow#2725)
+Spark: add test for Mailgun Adapter (snowplow/snowplow#2763)
+Spark: add test for Olark Adapter (snowplow/snowplow#2792)
+Spark: add test for StatusGator Adapter (snowplow/snowplow#2722)
+Spark: add test for Unbounce Adapter (snowplow/snowplow#2745)
+Spark: bump to 1.11.0 (snowplow/snowplow#3533)
+Spark: fix tests that fail when running on an alternative iglu service (snowplow/snowplow#3503)
+Spark: fix tests that fail with error when running on a platform that doesn't have native-lzo (snowplow/snowplow#3508)
+Spark: improve error message in test to show index line (snowplow/snowplow#3494)
+Spark: bump scala-common-enrich to 0.28.0 (snowplow/snowplow#2724)
+
+Snowplow Release 96 Zeugma (2017-11-21)
+---------------------------------------
+Stream: bump to 0.12.0 (snowplow/snowplow#3432)
+Stream: update config.hocon.sample to support NSQ (snowplow/snowplow#3339)
+Stream: add NSQ sink (snowplow/snowplow#3337)
+Stream: add NSQ source (snowplow/snowplow#3336)
+
+Snowplow Release 95 Ellora (2017-11-13)
+---------------------------------------
+Spark: overwrite output datasets (snowplow/snowplow#3443)
+Spark: bump to 1.10.0 (snowplow/snowplow#3428)
+Spark: add test for Cloudfront Sep 2016 (snowplow/snowplow#3000)
+Spark: bump scala-common-enrich to 0.27.0 (snowplow/snowplow#3427)
+Spark: bump Spark to 2.2.0 (snowplow/snowplow#3466)
+Common: bump to 0.27.0 (snowplow/snowplow#3429)
+Common: add support for new field in CloudFront access logs (snowplow/snowplow#2933)
+
+Snowplow Release 94 Hill of Tara (2017-10-10)
+---------------------------------------------
+Stream: bump to 0.11.1 (snowplow/snowplow#3454)
+Stream: keep sending records when the Kinesis stream is resharding (snowplow/snowplow#3452)
+
+Snowplow Release 93 Virunum (2017-10-03)
+----------------------------------------
+Stream: bump to 0.11.0 (snowplow/snowplow#3425)
+Stream: support AT_TIMESTAMP as initial position (snowplow/snowplow#3360)
+Stream: add ability to force re-download IP lookup databases on reboot (snowplow/snowplow#3159)
+Stream: add support for the Chinese Kinesis and DynamoDB endpoints (snowplow/snowplow#3344)
+Stream: replace argot by scopt (snowplow/snowplow#3345)
+Stream: use Kafka callback based API to detect failures to send messages (snowplow/snowplow#2974)
+Stream: make Kafka sink more fault tolerant by allowing retries (snowplow/snowplow#2973)
+Stream: make partition key for enriched event stream user-configurable (snowplow/snowplow#1924)
+Stream: fix incorrect property used for kafkaProducer.batch.size (snowplow/snowplow#3380)
+Stream: flush Kafka producer (snowplow/snowplow#3342)
+Stream: configuration decoding with pureconfig (snowplow/snowplow#3394)
+Stream: stop catching fatal errors (snowplow/snowplow#1455)
+Stream: stop making the assembly jar executable (snowplow/snowplow#3411)
+Stream: change package name (snowplow/snowplow#3340)
+Stream: add commons-codec dependency (snowplow/snowplow#3349)
+Stream: add json4s dependency (snowplow/snowplow#3348)
+Stream: upgrade to Java 8 (snowplow/snowplow#3392)
+Stream: bump Scala version to 2.11 (snowplow/snowplow#3388)
+Stream: bump SBT to 0.13.16 (snowplow/snowplow#3382)
+Stream: bump sbt-assembly to 0.14.5 (snowplow/snowplow#3391)
+Stream: bump kafka-clients to 0.10.2.1 (snowplow/snowplow#3413)
+Stream: bump config to 1.3.1 (snowplow/snowplow#3412)
+Stream: bump iglu-scala-client to 0.5.0 (snowplow/snowplow#3387)
+Stream: bump scalacheck to 1.11.3 (snowplow/snowplow#3386)
+Stream: bump specs2 to 2.3.13 (snowplow/snowplow#3383)
+Stream: bump scalaz-core to 7.0.9 (snowplow/snowplow#3381)
+Stream: bump amazon-kinesis-client to 1.8.1 (snowplow/snowplow#3379)
+Stream: bump aws-java-sdk to 1.11 (snowplow/snowplow#3377)
+Stream: remove scalaz-specs2 dependency (snowplow/snowplow#3347)
+Stream: remove scalazon dependency (snowplow/snowplow#3341)
+Stream: remove unused dependencies (snowplow/snowplow#3346)
+Stream: run the unit tests systematically in Travis (snowplow/snowplow#3408)
+Common: bump to 0.26.0 (snowplow/snowplow#3333)
+Common: drop Scala 2.10 (snowplow/snowplow#3285)
+Common: replace akka-http with scalaj (snowplow/snowplow#3330)
+Common: bump scala-uri to 0.5.0 (snowplow/snowplow#2893)
+Common: bump scala-weather to 0.3.0 (snowplow/snowplow#3334)
+
+Snowplow Release 89 Plain of Jars (2017-06-12)
+----------------------------------------------
+Common: bump to 0.25.0 (snowplow/snowplow#3089)
+Common: bump scala-iglu-client to 0.5.0 (snowplow/snowplow#3092)
+Common: remove scala-util (snowplow/snowplow#3054)
+Common: get rid of deprecated erasure method calls (snowplow/snowplow#3008)
+Common: bump scalaz to 7.0.9 (snowplow/snowplow#3055)
+Common: bump scalding-args to 0.13.0 (snowplow/snowplow#3058)
+Common: bump specs2 to 2.3.13 (snowplow/snowplow#3059)
+Common: bump scalaz-specs2 to 0.2 (snowplow/snowplow#3060)
+Common: bump scala-forex to 0.5.0 (snowplow/snowplow#3057)
+Common: bump sbt to 0.13.13 (closes #3056)
+Common: bump Scala to 2.11.11 (snowplow/snowplow#3007)
+Common: add Scala 2.11 cross-building (snowplow/snowplow#3061)
+Common: make EnrichedEvent Serializable (snowplow/snowplow#3081)
+Common: fix failing WeatherEnrichmentSpec expectation (snowplow/snowplow#3205)
+Common: remove ScalazArgs (snowplow/snowplow#3209)
+Common: upgrade to Java 8 (snowplow/snowplow#3212)
+Common: add CI/CD (snowplow/snowplow#3216)
+Spark: bump to 1.9.0 (snowplow/snowplow#3072)
+Spark: rename from Scala Hadoop Enrich (snowplow/snowplow#3064)
+Spark: change the package from hadoop to spark (snowplow/snowplow#3076)
+Spark: bump sbt-assembly to 0.14.3 (snowplow/snowplow#3078)
+Spark: bump SBT to 0.13.13 (snowplow/snowplow#3065)
+Spark: port from Scalding to Spark (snowplow/snowplow#3067)
+Spark: bump scala-common-enrich to 0.25 (snowplow/snowplow#3096)
+Spark: bump Scalaz to 7.0.9 (snowplow/snowplow#3097)
+Spark: bump iglu-scala-client to 0.5.0 (snowplow/snowplow#3098)
+Spark: bump specs2-core to 2.3.13 (snowplow/snowplow#3099)
+Spark: bump Scala version to 2.11 (snowplow/snowplow#3070)
+Spark: upgrade to Java 8 (snowplow/snowplow#2381)
+Spark: fix SqlQueryEnrichmentCfLinesSpec (snowplow/snowplow#3224)
+Spark: fix CurrencyConversionTransactionSpec (snowplow/snowplow#3225)
+Spark: run the unit tests systematically in Travis (snowplow/snowplow#3228)
+
+Snowplow Release 88 Angkor Wat (2017-04-27)
+-------------------------------------------
+Common: fix failing WeatherEnrichmentSpec expectation (snowplow/snowplow#3154)
+Common: bump to 0.24.1 (snowplow/snowplow#3155)
+
+Snowplow Release 85 Metamorphosis (2016-11-15)
+----------------------------------------------
+Stream: bump to 0.10.0 (snowplow/snowplow#2942)
+Stream: add Kafka sink (snowplow/snowplow#2939)
+Stream: add Kafka source (snowplow/snowplow#2941)
+Stream: update config.hocon.sample to support Kafka (snowplow/snowplow#2940)
+Stream: fix incorrect parsing of S3 urls (snowplow/snowplow#2921)
+
+Snowplow Release 84 Steller's Sea Eagle (2016-10-07)
+----------------------------------------------------
+Stream: bump to 0.9.0 (snowplow/snowplow#2728)
+Stream: bump Scala Tracker to 0.3.0 (snowplow/snowplow#2898)
+Stream: bump Scala Common Enrich to 0.24.0 (snowplow/snowplow#2729)
+Stream: tolerate trailing slashes for paths in IP Lookups Enrichment configuration (snowplow/snowplow#2744)
+Stream: call Config.resolve() to resolve environment variables in hocon (snowplow/snowplow#2878)
+
+Snowplow Release 83 Bald Eagle (2016-09-06)
+-------------------------------------------
+Common: bump to 0.24.0 (snowplow/snowplow#2715)
+Common: add SQL Query Enrichment (snowplow/snowplow#2321)
+Common: add POST support to IgluAdapter (snowplow/snowplow#1184)
+Hadoop: bump to 1.8.0 (snowplow/snowplow#2716)
+Hadoop: bump Scala Common Enrich to 0.24.0 (snowplow/snowplow#2717)
+Hadoop: add test for SQL Query Enrichment (snowplow/snowplow#2718)
+Hadoop: make resolver config in JobSpecHelpers injectable (snowplow/snowplow#2825)
+
+Snowplow Release 81 Kangaroo Island Emu (2016-06-16)
+----------------------------------------------------
+Common: bump to 0.23.1 (snowplow/snowplow#2699)
+Common: bump commons codec to 1.10 (snowplow/snowplow#2691)
+Stream: bump to 0.8.1 (snowplow/snowplow#2701)
+Stream: bump Scala Common Enrich to 0.23.1 (snowplow/snowplow#2700)
+
+Snowplow Release 80 Southern Cassowary (2016-05-30)
+---------------------------------------------------
+Stream: bump to 0.8.0 (snowplow/snowplow#2596)
+Stream: bump Common Enrich to 0.23.0 (snowplow/snowplow#2612)
+Stream: bump Iglu Scala Client to 0.4.0 (snowplow/snowplow#2688)
+Stream: add configuration setting for MaxRecords (snowplow/snowplow#2610)
+Stream: use nonEmpty method to check whether lists are empty (snowplow/snowplow#2608)
+Stream: refactor functions to avoid return keyword (snowplow/snowplow#2607)
+Stream: upgrade the log level for reports of stream nonexistence from INFO to ERROR (snowplow/snowplow#2598)
+Stream: crash when unable to find stream instead of hanging (snowplow/snowplow#2584)
+Stream: add standard copyright notice to AbstractSourceSpec.scala (snowplow/snowplow#2580)
+Stream: make logging more succinct in case of failure (snowplow/snowplow#1723)
+Stream: move example configuration file to examples folder (snowplow/snowplow#2567)
+Stream: remove src/main/resolver.json.sample (snowplow/snowplow#1932)
+Stream: use json4s to combine the enrichment configuration JSONs (snowplow/snowplow#2259)
+
+Snowplow Release 79 Black Swan (2016-05-12)
+-------------------------------------------
+Common: bumped user-agent-utils version to latest (snowplow/snowplow#2516)
+Common: transaction item quantity type changed to JInteger (snowplow/snowplow#2157)
+Common: bumped to 0.23.0 (snowplow/snowplow#2486)
+Common: improved OWM error if user doesn't have historical weather (snowplow/snowplow#2325)
+Common: added API Request Enrichment (snowplow/snowplow#2051)
+Common: bumped Iglu Scala Client to 0.4.0 (snowplow/snowplow#2333)
+Common: added HTTP Header Extractor Enrichment (snowplow/snowplow#1373)
+Hadoop: bumped to 1.7.0 (snowplow/snowplow#2446)
+Hadoop: bumped Scala Common Enrich to 0.23.0 (snowplow/snowplow#2485)
+Hadoop: bumped Iglu Scala Client to 0.4.0 (snowplow/snowplow#2478)
+Hadoop: added test for API Request Enrichment (snowplow/snowplow#2603)
+
+Snowplow Release 78 Great Hornbill (2016-03-15)
+-----------------------------------------------
+Common: bumped to 0.22.0
+Common: added handling for bad rows which are too long to print in full (snowplow/snowplow#2419)
+
+Snowplow Release 77 Great Auk (2016-02-28)
+------------------------------------------
+Hadoop: bumped to 1.6.0
+Hadoop: bumped Scala Common Enrich to 0.21.0 (snowplow/snowplow#2442)
+Common: bumped to 0.21.0
+Common: fixed exception for invalid API key in currency conversion (snowplow/snowplow#2441)
+Common: fixed exception on same currency conversion (snowplow/snowplow#2437)
+Common: switched from javax.script to org.mozilla.javascript for JavaScriptEnrichment (snowplow/snowplow#2453)
+
+Snowplow Release 76 Changeable Hawk-Eagle (2016-01-26)
+------------------------------------------------------
+Hadoop: bumped to 1.5.1
+Hadoop: bumped Scala Common Enrich to 0.20.1 (snowplow/snowplow#2338)
+Common: bumped to 0.20.1
+Common: now using only base MIME type in content-type check for SendGrid Adapter (snowplow/snowplow#2328)
+
+Snowplow Release 75 Long-Legged Buzzard (2016-01-02)
+----------------------------------------------------
+Hadoop: bumped to 1.5.0
+Hadoop: bumped Scala Common Enrich to 0.20.0 (snowplow/snowplow#2200)
+Hadoop: added test for loading Urban Airship Connect ndjson files (snowplow/snowplow#2168)
+Hadoop: added test for SendGrid Adapter (snowplow/snowplow#2194)
+Common: bumped to 0.20.0
+Common: added JsonLoader for Urban Airship, Mixpanel et al (snowplow/snowplow#2210)
+Common: added Adapter to pre-process Urban Airship events (snowplow/snowplow#2167)
+Common: abstracted Mandrill `reformatParameters` function into Adapter (snowplow/snowplow#2171)
+Common: added Adapter to pre-process SendGrid events (snowplow/snowplow#1161)
+
+Snowplow Release 74 European Honey Buzzard (2015-12-22)
+-------------------------------------------------------
+Hadoop: bumped to 1.4.0
+Hadoop: bumped Scala Common Enrich to 0.19.0 (snowplow/snowplow#2255)
+Common: bumped to 0.19.0
+Common: added weather enrichment (snowplow/snowplow#456)
+Common: fixed issue with BC timestamp in ExtractEventTypeSpec (snowplow/snowplow#2257)
+Common: fixed currency conversion enrichment's test for invalid API key (snowplow/snowplow#2258)
+
+Snowplow Release 73 Cuban Macaw (2015-12-04)
+--------------------------------------------
+Common: bumped Iglu Scala Client to 0.3.1 (snowplow/snowplow#2079)
+Common: bumped version to 0.18.0
+Common: moved ScalazArgs into shared library (snowplow/snowplow#2010)
+Common: removed executable bit from Scala source files (snowplow/snowplow#2022)
+Common: removed JSON length checks (snowplow/snowplow#2041)
+Common: removed truncation code (snowplow/snowplow#2044)
+Common: stopped attempting to catch fatal errors (snowplow/snowplow#2045)
+Hadoop: bumped to 1.3.0
+Hadoop: bumped Scala Common Enrich to 0.18.0 (snowplow/snowplow#2015)
+Hadoop: added Iglu Scala Client as an explicit dependency (snowplow/snowplow#2115)
+Hadoop: added .forceToDisk to speed up run (snowplow/snowplow#859)
+Hadoop: started using Scala Common Enrich's version of ScalazArgs (snowplow/snowplow#2013)
+
+Snowplow Release 72 Great Spotted Kiwi (2015-10-15)
+---------------------------------------------------
+Common: bumped to 0.17.0
+Common: added cookie extractor enrichment, thanks @kazjote! (snowplow/snowplow#2072)
+Common: converted SnowplowAdapter from object to package (snowplow/snowplow#2040)
+Common: added Adapter to pre-process URI redirect events (snowplow/snowplow#1103)
+Hadoop: bumped to 1.2.0
+Hadoop: bumped Scala Common Enrich to 0.17.0 (snowplow/snowplow#2027)
+
+Snowplow Release 71 Stork-Billed Kingfisher (2015-10-02)
+--------------------------------------------------------
+Common: bumped to 0.16.0
+Common: added derived_tstamp enrichment (snowplow/snowplow#1550)
+Common: added validation that v_collector is set (snowplow/snowplow#1600)
+Common: added validation that collector_tstamp is set and valid (snowplow/snowplow#1611)
+Common: added event_vendor/name/format/version to enriched event, thanks @danisola! (snowplow/snowplow#1800)
+Common: ported JSON schema from Scala Hadoop Shred, thanks @danisola! (snowplow/snowplow#1637)
+Common: bumped referer-parser to 0.3.0 (snowplow/snowplow#1839)
+Common: changed etl_tstamp in EnrichmentManager from String to Joda DateTime (snowplow/snowplow#1841)
+Common: added support for four new fields in CloudFront access logs (snowplow/snowplow#1865)
+Common: bumped user-agent-utils to 1.16 (snowplow/snowplow#1905)
+Common: changed BadRow class to use ProcessingMessages (snowplow/snowplow#1936)
+Common: ensured that all timestamp fields are nonnegative (snowplow/snowplow#1938)
+Common: started catching all exceptions in EtlPipeline (snowplow/snowplow#1954)
+Common: added event_fingerprint enrichment (snowplow/snowplow#1965)
+Common: bumped Iglu Scala Client to 0.3.0 (snowplow/snowplow#1989)
+Common: renamed dvce_tstamp to dvce_created_tstamp (snowplow/snowplow#1995)
+Common: started extracting true_tstamp from querystring (snowplow/snowplow#1968)
+Hadoop: bumped to 1.1.0
+Hadoop: bumped Scala Common Enrich to 0.16.0 (snowplow/snowplow#1807)
+Hadoop: updated tests to expect bad row JSONs with timestamps and processing messages (snowplow/snowplow#1751)
+Hadoop: updated to use new EtlPipeline (snowplow/snowplow#1931)
+Hadoop: bad rows for Thrift payloads now contain the original Thrift record (snowplow/snowplow#1950)
+Hadoop: simplified validation projection code (snowplow/snowplow#1986)
+
+Snowplow Release 67 Bohemian Waxwing (2015-07-13)
+-------------------------------------------------
+Common: bumped to 0.15.0
+Common: fixed JavascriptScriptEnrichmentSpec test to pass openjdk7 (snowplow/snowplow#1793)
+Common: bumped scala-maxmind-iplookups to 0.3.0 (snowplow/snowplow#1771)
+Common: bumped Scala Forex to 0.3.0 (snowplow/snowplow#1770)
+Common: updated bad rows to include timestamp (snowplow/snowplow#1577)
+
+Snowplow Release 66 Oriental Skylark (2015-06-16)
+-------------------------------------------------
+Hadoop: bumped to 1.0.0
+Hadoop: renamed build to snowplow-hadoop-enrich (snowplow/snowplow#1718)
+Hadoop: updated dependencies to Hadoop 2.4 (snowplow/snowplow#1716)
+Hadoop: bumped Scala Common Enrich to 0.14.0 (snowplow/snowplow#1700)
+Hadoop: updated Core2015RefreshSpec to include JavascriptScriptEnrichment (snowplow/snowplow#1746)
+Common: bumped to 0.14.0
+Common: added JavaScript scripting enrichment (snowplow/snowplow#378)
+Common: made IpLookupsEnrichment error message more informative (snowplow/snowplow#1426)
+Common: commons-codec dependency is no longer test-only (snowplow/snowplow#1712)
+Common: bumped commons-lang3 to 3.4 (snowplow/snowplow#1713)
+Common: made mkt_ and refr_ fields TSV safe, thanks @jasonbosco! (snowplow/snowplow#1643)
+Common: updated JodaTime dependency to 2.2 (snowplow/snowplow#1748)
+Common: now handles null message in stripInstanceEtc (snowplow/snowplow#1622)
+
+Snowplow Release 64 Palila (2015-04-16)
+---------------------------------------
+Common: bumped to 0.13.1
+Common: prevented UaParserEnrichment from creating a new Parser on every event (snowplow/snowplow#1616)
+Hadoop: bumped to 0.14.1
+Hadoop: bumped Scala Common Enrich to 0.13.1 (snowplow/snowplow#1617)
+
+Snowplow Release 63 Red-Cheeked Cordon-Bleu (2015-04-02)
+--------------------------------------------------------
+Common: bumped to 0.13.0
+Common: bumped referer-parser to 0.2.3 (snowplow/snowplow#670)
+Common: converted transactions from given currency to base currency (snowplow/snowplow#370)
+Common: bumped CampaignAttributionEnrichment version to 0.2.0 (snowplow/snowplow#1338)
+Common: added mkt_clickid and mkt_network fields to POJO (snowplow/snowplow#1073)
+Common: added derived_contexts field to POJO (snowplow/snowplow#787)
+Common: added geo_timezone field to POJO (snowplow/snowplow#787)
+Common: added etl_tags field to POJO (snowplow/snowplow#1247)
+Common: added currency fields to POJO (snowplow/snowplow#1316)
+Common: changed enrichment configuration to use SchemaCriterion rather than SchemaKey (snowplow/snowplow#1353)
+Common: extracted original IP address from CollectorPayload headers (snowplow/snowplow#1372)
+Common: extracted dvce_sent_tstamp from stm field (snowplow/snowplow#1383)
+Common: added dvce_sent_tstamp to POJO (snowplow/snowplow#1384)
+Common: added refr_domain_userid and refr_dvce_sent_tstamp to POJO (snowplow/snowplow#1449)
+Common: added domain_sessionid field to POJO (snowplow/snowplow#1538)
+Common: added derived_tstamp field to POJO (snowplow/snowplow#1557)
+Common: populated refr_ fields based on page_url querystring (snowplow/snowplow#1461)
+Common: populated domain_sessionid field based on "sid" parameter (snowplow/snowplow#1541)
+Common: parsed the page URI in the EnrichmentManager (snowplow/snowplow#1463)
+Common: added ua-parser enrichment (snowplow/snowplow#62)
+Common: added ability to disable user-agent-utils enrichment (snowplow/snowplow#792)
+Common: used Netaporter to parse querystrings if httpclient fails, thanks @danisola! (snowplow/snowplow#1429)
+Hadoop: bumped to 0.14.0
+Hadoop: bumped Scala Common Enrich to 0.13.0 (snowplow/snowplow#1340)
+Hadoop: added integration tests for currency conversion enrichment (snowplow/snowplow#1430)
+Hadoop: added tests for other new EnrichedEvent fields (snowplow/snowplow#1337)
+
+Snowplow Release 61 Pygmy Parrot (2015-03-02)
+---------------------------------------------
+Common: bumped to 0.12.0
+Common: updated SnowplowAdapter to accept "charset=UTF-8" (snowplow/snowplow#1424)
+Common: Base64 decoding does not specify UTF-8 charset (snowplow/snowplow#1403)
+Common: removed incorrect extra layer of URL decoding from non-Bas64-encoded JSONs (snowplow/snowplow#1396)
+Common: added support for ti_nm for transaction item name as well as ti_na (snowplow/snowplow#1401)
+Common: added CloudfrontAccessLogAdapter (snowplow/snowplow#1282)
+Common: made timestamp field of CollectorPayload an Option (snowplow/snowplow#1417)
+Hadoop: bumped to 0.13.0
+Hadoop: bumped Scala Common Enrich to 0.12.0 (snowplow/snowplow#1395)
+Hadoop: added test for non-Base64-encoded JSON (snowplow/snowplow#1394)
+Hadoop: updated tests to include Unicode (snowplow/snowplow#1390)
+Hadoop: added integration test for CloudfrontAccessLogAdapter (snowplow/snowplow#1423)
+
+Snowplow Release 60 Bee Hummingbird (2015-02-03)
+------------------------------------------------
+Common: bumped to 0.11.0
+Common: added schema-sniffer-1 and collector-payload-1 dependencies (snowplow/snowplow#1296)
+Common: bumped user-agent-utils version to 1.14 (snowplow/snowplow#1224)
+Common: changed EnrichedEvent field name to ip_organization (snowplow/snowplow#1145)
+Common: changed "thrift" to "thrift-raw" in Loader object (snowplow/snowplow#1302)
+Common: added tests for getLoader function (snowplow/snowplow#558)
+Hadoop: bumped to 0.12.0
+Hadoop: bumped Scala Common Enrich to 0.11.0 (snowplow/snowplow#1294)
+Hadoop: added collector-payload-1 and snowplow-thrift-raw-event as test dependencies (snowplow/snowplow#1248)
+Hadoop: added support for processing Thrift raw events, thanks @pkallos! (snowplow/snowplow#538)
+Hadoop: added tests to Hadoop Enrich for processing Thrift raw events (snowplow/snowplow#559)
+
+Snowplow Version 0.9.14 (2014-12-31)
+------------------------------------
+Common: bumped to 0.10.0
+Common: bumped Scala Iglu Client to 0.2.0 (snowplow/snowplow#1222)
+Common: updated SnowplowAdapter to accept payload_data versions above 1-0-0 (snowplow/snowplow#1220)
+Common: updated SnowplowAdapter to make charset=utf-8 optional (snowplow/snowplow#1257)
+Common: added Adapter to pre-process Pingdom events (snowplow/snowplow#1164)
+Common: added Adapter to pre-process PagerDuty events (snowplow/snowplow#1158)
+Common: added Adapter to pre-process Mandrill events (snowplow/snowplow#1061)
+Hadoop: bumped to 0.11.0
+Hadoop: bumped Scala Common Enrich to 0.10.0 (snowplow/snowplow#1223)
+Hadoop: added test job for PingdomAdapter (snowplow/snowplow#1176)
+Hadoop: added test job for PagerdutyAdapter (snowplow/snowplow#1175)
+Hadoop: added test job for MandrillAdapter (snowplow/snowplow#1171)
+Hadoop: added test job for more relaxed payload_data schema matching (snowplow/snowplow#1235)
+
+Snowplow Version 0.9.13 (2014-12-01)
+------------------------------------
+Common: bumped to 0.9.1
+Common: added error handling for Netaporter URI parsing (snowplow/snowplow#1216)
+Hadoop: bumped to 0.10.1
+Hadoop: bumped Scala Common Enrich to 0.9.1
+
+Snowplow Version 0.9.12 (2014-11-26)
+------------------------------------
+Common: bumped to 0.9.0
+Common: added BadRow from Scala Hadoop Enrich (snowplow/snowplow#1118)
+Common: added ability to override collector-set nuid with tracker-set tnuid (snowplow/snowplow#1095)
+Common: made URI parsing more permissive using NetAPorter's URI library, thanks @rupeshmane! (snowplow/snowplow#1172)
+Hadoop: bumped to 0.10.0
+Hadoop: bumped Scala Common Enrich to 0.9.0
+Hadoop: moved BadRow into Scala Common Enrich (snowplow/snowplow#1119)
+Hadoop: updated README with new Snowplow capitalization (snowplow/snowplow#1127)
+
+Snowplow Version 0.9.11 (2014-11-10)
+------------------------------------
+Common: bumped to 0.8.0
+Common: bumped json4s to 3.2.11 (snowplow/snowplow#1141)
+Common: bumped Scala Iglu Client to 0.1.1 (snowplow/snowplow#1140)
+Common: removed check that POST request has body and content-type (snowplow/snowplow#1132)
+Common: moved payload API detection into CollectorApi.parse (snowplow/snowplow#1113)
+Common: fixed bug in CljTomcatLoader expecting request body to be "_" instead of "-" (snowplow/snowplow#1112)
+Common: added Adapter to pre-process CallRail events (snowplow/snowplow#1108)
+Common: added Adapter to pre-process MailChimp events (snowplow/snowplow#1086)
+Common: added Adapter to pre-process Iglu-compatible events (snowplow/snowplow#1060)
+Hadoop: bumped to 0.9.0
+Hadoop: added job test for unrecognized api name/version (snowplow/snowplow#1115)
+Hadoop: updated DiscardableCfLinesSpec given /not-ice.png is no longer discarded (snowplow/snowplow#1114)
+Hadoop: added test job for MailchimpAdapter (snowplow/snowplow#1159)
+Hadoop: added test job for CallrailAdapter (snowplow/snowplow#1160)
+
+Snowplow Version 0.9.9 (2014-10-27)
+-----------------------------------
+Common: bumped to 0.7.0
+Common: bumped scala-maxmind-iplookups to 0.2.0 (snowplow/snowplow#1002)
+Common: added support for non-GA campaign attribution: phase 1 (snowplow/snowplow#402)
+Common: rewrote AttributionEnrichments tests as RefererParserEnrichment tests (snowplow/snowplow#974)
+Common: allow but downcase a-f characters in incoming event_id (snowplow/snowplow#1006)
+Common: extract useragent from ua parameter (snowplow/snowplow#1011)
+Common: fixed issue where unset integer fields throw an NPE (snowplow/snowplow#570)
+Common: fixed issue where unset double fields throw an NPE (snowplow/snowplow#1062)
+Common: added tests for ConversionUtils.stringToJInteger (snowplow/snowplow#1064)
+Common: now enforcing Java 7 for compilation (snowplow/snowplow#1065)
+Hadoop: bumped to 0.8.0
+Hadoop: bumped Scala Common Enrich to 0.7.0 (snowplow/snowplow#995)
+Hadoop: added test for empty integer and double fields to ensure no NPE thrown (snowplow/snowplow#1063)
+Hadoop: now enforcing Java 7 for compilation (snowplow/snowplow#1066)
+Hadoop: updated test jobs to reflect updated useragent parsing (snowplow/snowplow#1070)
+
+Snowplow Version 0.9.8 (2014-09-18)
+-----------------------------------
+Common: bumped to 0.6.0
+Common: split out Clojure and CloudFront Collector event processing (snowplow/snowplow#943)
+Common: added CljTomcatLoaderSpec tests (snowplow/snowplow#963)
+Common: filtering non-GETs from CloudfrontLoader (snowplow/snowplow#944)
+Common: replaced all Argonaut code with json4s (snowplow/snowplow#945)
+Common: renamed CanonicalOutput to EnrichedEvent (snowplow/snowplow#964)
+Common: replaced CanonicalInput and TrackerPayload with CollectorPayload and RawEvent (snowplow/snowplow#946)
+Common: updated EnrichmentManager to process RawEvent not CanonicalInput (snowplow/snowplow#903)
+Common: added Snowplow Tp2 Adapter to convert event JSON to NEL of RawEvents (snowplow/snowplow#904)
+Common: geo-IP lookup now supports ip parameter on querystring (snowplow/snowplow#961)
+Common: IP address anonymization now works with ip parameter on querystring (snowplow/snowplow#960)
+Hadoop: bumped to 0.7.0
+Hadoop: bumped to Scala Common Enrich 0.6.0 (snowplow/snowplow#940)
+Hadoop: updated to support generating multiple enriched events from one raw payload (snowplow/snowplow#902)
+
+Snowplow Version 0.9.6 (2014-07-26)
+-----------------------------------
+Hadoop: bumped to 0.6.0
+Hadoop: bumped Scala to 2.10.4 (snowplow/snowplow#912)
+Hadoop: bumped Scalding to 0.11.1 (snowplow/snowplow#911)
+Hadoop: bumped Hadoop to 1.2.1 (snowplow/snowplow#913)
+Hadoop: bumped to Scala Common Enrich 0.5.0 (snowplow/snowplow#788)
+Hadoop: passed etl_tstamp into Scala Common Enrich (snowplow/snowplow#817)
+Hadoop: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (snowplow/snowplow#835)
+Hadoop: removed %3D handling for compatibility with old Scalding Args (snowplow/snowplow#850)
+Hadoop: added ability to download additional MaxMind databases (snowplow/snowplow#885)
+Hadoop: added runHadoop and Tool.main tests (snowplow/snowplow#914)
+Common: bumped to 0.5.0
+Common: bumped user-agent-utils version, thanks @pkallos! (snowplow/snowplow#662)
+Common: bumped referer-parser to 0.2.2 (snowplow/snowplow#864)
+Common: bumped httpclient to 4.3.3 (snowplow/snowplow#897)
+Common: bumped scala-maxmind-geoip to scala-maxmind-iplookups 0.1.0 (snowplow/snowplow#882)
+Common: stored etl_tstamp in new field in CanonicalOutput (snowplow/snowplow#818)
+Common: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (snowplow/snowplow#836)
+Common: made referer parsing configurable with list of internal domains (snowplow/snowplow#857)
+Common: migrated configurable enrichments to new EnrichmentRegistry (snowplow/snowplow#858)
+Common: added validation of enrichments JSON (snowplow/snowplow#807)
+Common: replaced "anon_ip_quartets" with "anon_ip_octets" everywhere (snowplow/snowplow#547)
+Common: added ability to extract event_id from querystring (snowplow/snowplow#723)
+Common: extracted CanonicalInput's userId as network_userid, thanks @pkallos! (snowplow/snowplow#855)
+Common: added MaxMind region_name field (snowplow/snowplow#873)
+Common: added IP -> ISP lookup (snowplow/snowplow#861)
+Common: added IP -> organization lookup (snowplow/snowplow#887)
+Common: added IP -> domain lookup (snowplow/snowplow#886)
+Common: added IP -> net speed lookup (snowplow/snowplow#889)
+Common: added validation for transaction ID (snowplow/snowplow#428)
+Common: renamed Tests to Specs for consistency (snowplow/snowplow#618)
+
+Snowplow Version 0.9.2 (2014-04-30)
+-----------------------------------
+Hadoop: bumped to 0.5.0
+Hadoop: bumped to Scala Common Enrich 0.4.0 (snowplow/snowplow#699)
+Hadoop: bumped SBT to 0.13.2 (snowplow/snowplow#702)
+Hadoop: bumped to using using sbt-assembly 0.11.2 (snowplow/snowplow#704)
+Common: bumped to 0.4.0
+Common: upgraded to support new and future CloudFront file formats (snowplow/snowplow#698)
+Common: bumped SBT to 0.13.2 (snowplow/snowplow#703)
+
+Snowplow Version 0.9.1 (2014-04-11)
+-----------------------------------
+Hadoop: bumped to 0.4.0
+Hadoop: bumped to Scala Common Enrich 0.3.0 (snowplow/snowplow#497)
+Hadoop: renamed AnonQuartets to AnonOctets (snowplow/snowplow#498)
+Hadoop: renamed all Snowplow Hadoop Tests to Specs (snowplow/snowplow#515)
+Hadoop: added page_url and page_referrer back into ETL's output (snowplow/snowplow#483)
+Common: bumped to 0.3.0
+Common: bumped Argonaut to 6.0.3 (snowplow/snowplow#620)
+Common: added app and mob as valid platform codes, thanks @kinabalu! (snowplow/snowplow#524)
+Common: added support for remaining platform codes (snowplow/snowplow#516)
+Common: updated POJO in Scalding ETL to include new unstructured fields (snowplow/snowplow#362)
+Common: updated POJO in Scalding ETL to include name_tracker field (snowplow/snowplow#595)
+Common: extract evn from Tracker Protocol (snowplow/snowplow#604)
+Common: extract tna from Tracker Protocol (snowplow/snowplow#616)
+Common: extract and validate unstructured events (snowplow/snowplow#142)
+Common: extract and validate custom contexts (snowplow/snowplow#426)
+Common: reformat incoming event and context JSONs (snowplow/snowplow#589)
+Common: make sure to error a JSON if > length (snowplow/snowplow#567)
+
+Snowplow Version 0.9.0 (2014-02-04)
+-----------------------------------
+Common: bumped to 0.2.0
+Common: added Thrift SnowplowRawEvent as a dependency to common-enrich (snowplow/snowplow#475)
+Common: added ability to read Thrift SnowplowRawEvent (Thrift) (snowplow/snowplow#462)
+Common: renamed CloudFront to Cloudfront in code (snowplow/snowplow#495)
+Common: renamed AnonQuartets to AnonOctets (snowplow/snowplow#491)
+Common: added raw -> CanonicalInput tests (snowplow/snowplow#484)
+Common: updated GET payload extraction to handle empty payloads (snowplow/snowplow#502)
+
+Snowplow Version 0.8.12 (2014-01-07)
+------------------------------------
+Hadoop ETL: bumped to 0.3.6
+Hadoop ETL: bumped to SBT 0.13.0 (snowplow/snowplow#404)
+Hadoop ETL: bumped to using sbt-assembly 0.10.1 (snowplow/snowplow#421)
+Hadoop ETL: bumped to Scala 2.10.3 (snowplow/snowplow#423)
+Hadoop ETL: bumped to Scalding 0.8.11 (snowplow/snowplow#422)
+Hadoop ETL: upgraded useragent utils to 1.11 & moved to Maven dependency (snowplow/snowplow#416)
+Hadoop ETL: added test running back into sbt-assembly step (snowplow/snowplow#420)
+Hadoop ETL: updated copyright messages to be Snowplow not SnowPlow, and to 2014 not 2013 (snowplow/snowplow#419)
+Hadoop ETL: added ValidatedString as a type to package.scala (snowplow/snowplow#328)
+Hadoop ETL: added missing validation to stringToJByte (snowplow/snowplow#408)
+Hadoop ETL: missing page URI no longer interpreted as bad row (snowplow/snowplow#399)
+Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (snowplow/snowplow#410)
+Hadoop ETL: numeric fields in tr_ and ti_ now parsed to doubles, not madeTsvSafe strings (snowplow/snowplow#400)
+Hadoop ETL: moved ETL core into separate project scala-enrich-common (snowplow/snowplow#417)
+Common: updated ETL versioning to include host and common versions (snowplow/snowplow#448)
+
+Snowplow Version 0.8.11 (2013-10-22)
+------------------------------------
+Hadoop ETL: bumped to 0.3.5
+Hadoop ETL: added Argonaut 6.0 as a dependency (snowplow/snowplow#342)
+Hadoop ETL: added fromTimestamp to EventEnrichments (snowplow/snowplow#340)
+Hadoop ETL: added makeTsvSafe to ConversionUtils (snowplow/snowplow#338)
+Hadoop ETL: added JsonUtils (snowplow/snowplow#323)
+Hadoop ETL: added support for 3 and 4 return values from MapTransformer (snowplow/snowplow#324)
+Hadoop ETL: updated GetJsonPayload to use Argonaut and renamed to JsonPayload (snowplow/snowplow#339)
+Hadoop ETL: added ability to mask IP addresses in ETL (snowplow/snowplow#309)
+Hadoop ETL: refr_ and page_ fields now stored raw (snowplow/snowplow#374)
+Hadoop ETL: defensively fixed raw spaces in page and referer URLs (snowplow/snowplow#346)
+Hadoop ETL: fixed regression, single-encoded %s logic didn't account for % itself (snowplow/snowplow#347)
+Hadoop ETL: added unit tests for fixTabsNewlines (snowplow/snowplow#332)
+Hadoop ETL: tests now report the failing CanonicalOutput field (snowplow/snowplow#325)
+Hadoop ETL: now handling all fields double-encoded as per CloudFront post-14-September (snowplow/snowplow#348)
+Hadoop ETL: added support for 21 Oct CloudFront access log format (snowplow/snowplow#384)
+Hadoop ETL: added truncation to refr_term (snowplow/snowplow#379)
+Hadoop ETL: added truncation to se_label (snowplow/snowplow#394)
+Hadoop ETL: made all prior ME.identity fields TSV-safe (snowplow/snowplow#395)
+
+Snowplow Version 0.8.9 (2013-09-05)
+-----------------------------------
+Hadoop ETL: bumped to 0.3.4
+Hadoop ETL: updated to handle singly-encoded %s in CloudFront querystring field (snowplow/snowplow#333)
+
+Snowplow Version 0.8.8 (2013-08-04)
+-----------------------------------
+Hadoop ETL: bumped to 0.3.3
+Hadoop ETL: URL-decodes "%3D" to "=" to allow Hive-style directory names as arguments (snowplow/snowplow#305)
+Hadoop ETL: bumped referer-parser to 0.1.1 to fix java.lang.NullPointerException (snowplow/snowplow#314)
+
+Snowplow Version 0.8.6 (2013-06-03)
+-----------------------------------
+Hadoop ETL: bumped to 0.3.2
+Hadoop ETL: bumped Scalding to 0.8.5
+Hadoop ETL: bumped Scala version to 2.10.0
+Hadoop ETL: bumped scala-maxmind-geoip to 0.0.5 to work with Scala 2.10.0
+Hadoop ETL: bumped SBT from 0.12.1 to 0.12.3
+Hadoop ETL: bumped Specs2 to 1.14
+Hadoop ETL: replaced Bytes in CanonicalOutput with JBytes (snowplow/snowplow#254)
+Hadoop ETL: disabled "corruption" detection in ETL overriding custom URLs with longer collector referer URLs (snowplow/snowplow#268)
+
+Snowplow Version 0.8.5 (2013-05-24)
+-----------------------------------
+Hadoop ETL: bumped to 0.3.1
+Hadoop ETL: now supports downloading GeoLiteCity.dat from public S3 URL if needed, thanks @petervanwesep (part of #258)
+Hadoop ETL: added Twitter Maven Repo as a resolution repo, thanks @rgabo (snowplow/snowplow#239)
+Hadoop ETL: stripping control characters in addition to tabs and newlines (snowplow/snowplow#259)
+Hadoop ETL: fixed issue with large values for se_value (snowplow/snowplow#263)
+Hadoop ETL: renamed ev_ fields in CanonicalOutput to se_
+Hadoop ETL: extractResolution renamed and fails gracefully if view dimensions exceed Integer max size (snowplow/snowplow#264)
+
+Snowplow Version 0.8.4 (2013-05-16)
+-----------------------------------
+Hadoop ETL: bumped to 0.3.0
+Hadoop ETL: added geo-ip lookup to Scalding ETL
+Hadoop ETL: bumped referer-parser from 0.1.0-M6 to to 0.1.0
+Hadoop ETL: removed truncation of page_referrer (snowplow/snowplow#236)
+Hadoop ETL: added truncation of referer path/qs/fragment (snowplow/snowplow#235)
+Hadoop ETL: removing tabs found in referer search terms (snowplow/snowplow#234)
+Hadoop ETL: fixed client timestamp so it's not incorrectly localised - thanks @rgabo (snowplow/snowplow#238)
+Hadoop ETL: added parsing of collector version `cv` (snowplow/snowplow#243)
+Hadoop ETL: bumped Scalaz from 7.0.0-M9 to 7.0.0
+Hadoop ETL: removed .gets from extractPageUri (snowplow/snowplow#249)
+
+Snowplow Version 0.8.1 (2013-04-12)
+-----------------------------------
+Hadoop ETL: bumped to 0.2.0
+Hadoop ETL: break referer_url into constituent parts (part of #175)
+Hadoop ETL: remove raw referrer_url (as no space in Redshift table defn) (part of #175)
+Hadoop ETL: added referer parsing (snowplow/snowplow#176)
+
+Snowplow Version 0.8.0 (2013-04-03)
+-----------------------------------
+Hadoop ETL: added. 
+Snowplow Version 0.1.0 (snowplow/snowplow#177)
+Hadoop ETL: truncate 6 "high risk" fields for Redshift (raw useragent, page title etc) (snowplow/snowplow#192)
+Hadoop ETL: ev_value now extracted as a float (snowplow/snowplow#201)

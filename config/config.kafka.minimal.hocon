@@ -1,0 +1,18 @@
+{
+  "input": {
+    "topicName": "collector-payloads"
+    "bootstrapServers": "localhost:9092"
+  }
+
+  "output": {
+    "good": {
+      "topicName": "enriched"
+      "bootstrapServers": "localhost:9092"
+    }
+
+    "bad": {
+      "topicName": "bad"
+      "bootstrapServers": "localhost:9092"
+    }
+  }
+}

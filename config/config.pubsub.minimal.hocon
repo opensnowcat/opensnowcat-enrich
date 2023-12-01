@@ -1,0 +1,15 @@
+{
+  "input": {
+    "subscription": "projects/test-project/subscriptions/collector-payloads-sub"
+  }
+
+  "output": {
+    "good": {
+      "topic": "projects/test-project/topics/enriched"
+    }
+
+    "bad": {
+      "topic": "projects/test-project/topics/bad"
+    }
+  }
+}

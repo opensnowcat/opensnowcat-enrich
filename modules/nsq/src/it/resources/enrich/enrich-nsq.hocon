@@ -1,0 +1,40 @@
+{
+  "input": {
+    "topic": ${INPUT_TOPIC}
+    "channel": "EnrichNsqChannel"
+    "lookupHost": ${LOOKUP_HOST}
+    "lookupPort": ${LOOKUP_PORT}
+  }
+
+  "output": {
+    "good": {
+      "topic": ${GOOD_OUTPUT_TOPIC}
+      "nsqdHost": ${NSQD_HOST}
+      "nsqdPort": ${NSQD_PORT}
+    }
+
+    "bad": {
+      "topic": ${BAD_OUTPUT_TOPIC}
+      "nsqdHost": ${NSQD_HOST}
+      "nsqdPort": ${NSQD_PORT}
+    }
+  }
+
+  "monitoring": {
+    # Optional, configure how metrics are reported
+    "metrics": {
+
+      # Optional. Log to stdout using Slf4j
+      "stdout": {
+        "period": "10 seconds"
+
+        # Optional, override the default metric prefix
+        # "prefix": "snowplow.enrich."
+      }
+    }
+  }
+
+  "telemetry": {
+    "disable": true
+  }
+}

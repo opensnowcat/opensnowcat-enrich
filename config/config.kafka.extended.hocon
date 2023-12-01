@@ -1,0 +1,239 @@
+{
+  # Where to read collector payloads from
+  "input": {
+    "type": "Kafka"
+
+    # Name of the Kafka topic to read from
+    "topicName": "collector-payloads"
+
+    # A list of host:port pairs to use for establishing the initial connection to the Kafka cluster
+    # This list should be in the form host1:port1,host2:port2,...
+    "bootstrapServers": "localhost:9092"
+
+    # Optional, Kafka Consumer configuration
+    # See https://kafka.apache.org/documentation/#consumerconfigs for all properties
+    "consumerConf": {
+      "auto.offset.reset" : "earliest"
+      "session.timeout.ms": "45000"
+    }
+  }
+
+  "output": {
+    # Enriched events output
+    "good": {
+      "type": "Kafka"
+
+      # Name of the Kafka topic to write to
+      "topicName": "enriched"
+
+      # A list of host:port pairs to use for establishing the initial connection to the Kafka cluster
+      # This list should be in the form host1:port1,host2:port2,...
+      "bootstrapServers": "localhost:9092"
+
+      # Optional, Kafka producer configuration
+      # See https://kafka.apache.org/documentation/#producerconfigs for all properties
+      "producerConf": {
+        "acks": "all"
+      }
+
+      # Optional. Enriched event field to use as Kafka partition key
+      "partitionKey": "app_id"
+
+      # Optional. Enriched event fields to add as Kafka record headers
+      "headers": [ "app_id" ]
+    }
+
+    # Optional. Pii events output. Should be omitted if pii events are not emitted
+    "pii": {
+      "type": "Kafka"
+
+      # Name of the Kafka topic to write to
+      "topicName": "pii"
+
+      # A list of host:port pairs to use for establishing the initial connection to the Kafka cluster
+      # This list should be in the form host1:port1,host2:port2,...
+      "bootstrapServers": "localhost:9092"
+
+      # Optional, Kafka producer configuration
+      # See https://kafka.apache.org/documentation/#producerconfigs for all properties
+      "producerConf": {
+        "acks": "all"
+      }
+
+      # Optional. Enriched event field to use as Kafka partition key
+      "partitionKey": "app_id"
+
+      # Optional. Enriched event fields to add as Kafka record headers
+      "headers": [ "app_id" ]
+    }
+
+    # Bad rows output
+    "bad": {
+      "type": "Kafka"
+
+      # Name of the Kafka topic to write to
+      "topicName": "bad"
+
+      # A list of host:port pairs to use for establishing the initial connection to the Kafka cluster
+      # This list should be in the form host1:port1,host2:port2,...
+      "bootstrapServers": "localhost:9092"
+
+      # Optional, Kafka producer configuration
+      # See https://kafka.apache.org/documentation/#producerconfigs for all properties
+      "producerConf": {
+        "acks": "all"
+      }
+    }
+  }
+
+  # Optional. Concurrency of the app
+  "concurrency" : {
+    # Number of events that can get enriched at the same time within a chunk
+    "enrich": 256
+    # Number of chunks that can get sunk at the same time
+    # WARNING: if greater than 1, records can get checkpointed before they are sunk
+    "sink": 1
+  }
+
+  # Optional, period after which enrich assets should be checked for updates
+  # no assets will be updated if the key is absent
+  "assetsUpdatePeriod": "7 days"
+
+  # Optional, configuration of remote adapters
+  "remoteAdapters": {
+    # how long enrich waits to establish a connection to remote adapters
+    "connectionTimeout": "10 seconds",
+    # how long enrich waits to get a response from remote adapters
+    "readTimeout": "45 seconds",
+    # how many connections enrich opens at maximum for remote adapters
+    # increasing this could help with throughput in case of adapters with high latency
+    "maxConnections": 10,
+    # a list of remote adapter configs
+    "configs": [
+      {
+        "vendor": "com.example",
+        "version": "v1",
+        "url": "https://remote-adapter.com"
+      }
+    ]
+  }
+
+  "monitoring": {
+
+    # Optional, for tracking runtime exceptions
+    "sentry": {
+      "dsn": "http://sentry.acme.com"
+    }
+
+    # Optional, configure how metrics are reported
+    "metrics": {
+
+      # Optional. Send metrics to a StatsD server on localhost
+      "statsd": {
+        "hostname": "localhost"
+        "port": 8125
+
+        # Required, how frequently to report metrics
+        "period": "10 seconds"
+
+        # Any key-value pairs to be tagged on every StatsD metric
+        "tags": {
+          "app": enrich
+        }
+
+        # Optional, override the default metric prefix
+        # "prefix": "snowplow.enrich."
+      }
+
+      # Optional. Log to stdout using Slf4j
+      "stdout": {
+        "period": "10 seconds"
+
+        # Optional, override the default metric prefix
+        # "prefix": "snowplow.enrich."
+      }
+
+      # Optional. Send KCL and KPL metrics to Cloudwatch
+      "cloudwatch": true
+    }
+  }
+
+  # Optional, configure telemetry
+  # All the fields are optional
+  "telemetry": {
+
+    # Set to true to disable telemetry
+    "disable": false
+
+    # Interval for the heartbeat event
+    "interval": 15 minutes
+
+    # HTTP method used to send the heartbeat event
+    "method": POST
+
+    # URI of the collector receiving the heartbeat event
+    "collectorUri": collector-g.snowplowanalytics.com
+
+    # Port of the collector receiving the heartbeat event
+    "collectorPort": 443
+
+    # Whether to use https or not
+    "secure": true
+
+    # Identifier intended to tie events together across modules,
+    # infrastructure and apps when used consistently
+    "userProvidedId": my_pipeline
+
+    # ID automatically generated upon running a modules deployment script
+    # Intended to identify each independent module, and the infrastructure it controls
+    "autoGeneratedId": hfy67e5ydhtrd
+
+    # Unique identifier for the VM instance
+    # Unique for each instance of the app running within a module
+    "instanceId": 665bhft5u6udjf
+
+    # Name of the terraform module that deployed the app
+    "moduleName": enrich-kafka-ce
+
+    # Version of the terraform module that deployed the app
+    "moduleVersion": 1.0.0
+  }
+
+  # Optional. To activate/deactive enrich features that are still in beta
+  # or that are here for transition.
+  # This section might change in future versions
+  "featureFlags" : {
+
+    # Enrich 3.0.0 introduces the validation of the enriched events against atomic schema
+    # before emitting.
+    # If set to false, a bad row will be emitted instead of the enriched event
+    # if validation fails.
+    # If set to true, invalid enriched events will be emitted, as before.
+    # WARNING: this feature flag will be removed in a future version
+    # and it will become impossible to emit invalid enriched events.
+    # More details: https://github.com/snowplow/enrich/issues/517#issuecomment-1033910690
+    "acceptInvalid": false
+
+    # In early versions of enrich-kinesis and enrich-pubsub (pre-3.1.4), the Javascript enrichment
+    # incorrectly ran before the currency, weather, and IP Lookups enrichments. Set this flag to true
+    # to keep the erroneous behaviour of those previous versions. This flag will be removed in a
+    # future version.
+    # More details: https://github.com/snowplow/enrich/issues/619
+    "legacyEnrichmentOrder": false
+
+    # Try to base64 decode event if initial Thrift serialization fail
+    "tryBase64Decoding": false
+  }
+
+  # Optional. Configuration for experimental/preview features
+  "experimental": {
+    # Whether to export metadata using a webhook URL.
+    # Follows iglu-webhook protocol.
+    "metadata": {
+      "endpoint": "https://my_pipeline.my_domain.com/iglu"
+      "interval": 5 minutes
+      "organizationId": "c5f3a09f-75f8-4309-bec5-fea560f78455"
+      "pipelineId": "75a13583-5c99-40e3-81fc-541084dfc784"
+    }
+  }
+}

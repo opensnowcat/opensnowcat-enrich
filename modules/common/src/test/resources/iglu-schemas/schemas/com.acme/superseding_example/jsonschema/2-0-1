@@ -1,0 +1,24 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Superseding schema example",
+  "self": {
+    "vendor": "com.acme",
+    "name": "superseding_schema",
+    "format": "jsonschema",
+    "version": "2-0-1"
+  },
+  "type": "object",
+  "properties": {
+    "field_e": {
+      "type": "string"
+    },
+    "field_f": {
+      "type": "string"
+    },
+    "field_g": {
+      "type": "string"
+    }
+  },
+  "required": ["field_e", "field_f"],
+  "additionalProperties": false
+}

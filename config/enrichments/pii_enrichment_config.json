@@ -1,0 +1,36 @@
+{
+  "schema": "iglu:com.snowplowanalytics.snowplow.enrichments/pii_enrichment_config/jsonschema/2-0-0",
+  "data": {
+    "vendor": "com.snowplowanalytics.snowplow.enrichments",
+    "name": "pii_enrichment_config",
+    "emitEvent": true,
+    "enabled": true,
+    "parameters": {
+      "pii": [
+        {
+          "pojo": {
+            "field": "user_id"
+          }
+        },
+        {
+          "pojo": {
+            "field": "user_ipaddress"
+          }
+        },
+        {
+          "json": {
+            "field": "unstruct_event",
+            "schemaCriterion": "iglu:com.google.analytics.measurement-protocol/user/jsonschema/1-*-*",
+            "jsonPath": "$.['clientId', 'userId']"
+          }
+        }
+      ],
+      "strategy": {
+        "pseudonymize": {
+          "hashFunction": "SHA-1",
+          "salt": "pepper123"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "input": {
+    "streamName": "collector-payloads"
+  }
+
+  "output": {
+    "good": {
+      "streamName": "enriched"
+    }
+
+    "bad": {
+      "streamName": "bad"
+    }
+  }
+}

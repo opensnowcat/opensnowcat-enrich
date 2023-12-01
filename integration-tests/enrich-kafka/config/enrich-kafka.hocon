@@ -1,0 +1,58 @@
+{
+  "input": {
+    "type": "Kafka"
+    "topicName": "it-enrich-kinesis-collector-payloads"
+    "bootstrapServers": "broker:29092"
+    "consumerConf": {
+      "enable.auto.commit": "false"
+      "auto.offset.reset" : "earliest"
+    }
+  }
+
+  "output": {
+    "good": {
+      "type": "Kafka"
+      "topicName": "it-enrich-kinesis-enriched"
+      "bootstrapServers": "broker:29092"
+      "partitionKey": "app_id"
+      "headers": ["app_id"]
+    }
+
+    "bad": {
+      "type": "Kafka"
+      "topicName": "it-enrich-kinesis-bad"
+      "bootstrapServers": "broker:29092"
+    }
+  }
+
+
+  "monitoring": {
+
+    "sentry": {
+      "dsn": ""
+    }
+
+    # Optional, configure how metrics are reported
+    "metrics": {
+
+      # Optional. Log to stdout using Slf4j
+      "stdout": {
+        "period": "10 seconds"
+
+        # Optional, override the default metric prefix
+        # "prefix": "snowplow.enrich."
+      }
+
+      # Optional. Send KCL and KPL metrics to Cloudwatch
+      "cloudwatch": false
+    }
+  }
+
+  "telemetry": {
+    "disable": true
+  }
+
+  "featureFlags": {
+    "acceptInvalid": true
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "input": {
+    "cluster": {
+      "nodes": [
+        {
+          "host": "localhost"
+          "port": 5672
+        }
+      ]
+      "username": "guest"
+      "password": "guest"
+      "virtualHost": "/"
+    }
+    "queue": "raw"
+  }
+
+  "output": {
+    "good": {
+      "cluster": {
+        "nodes": [
+          {
+            "host": "localhost"
+            "port": 5672
+          }
+        ]
+        "username": "guest"
+        "password": "guest"
+        "virtualHost": "/"
+      }
+      "exchange": "enriched"
+    }
+
+    "bad": {
+      "cluster": {
+        "nodes": [
+          {
+            "host": "localhost"
+            "port": 5672
+          }
+        ]
+        "username": "guest"
+        "password": "guest"
+        "virtualHost": "/"
+      }
+      "exchange": "bad-1"
+    }
+  }
+}

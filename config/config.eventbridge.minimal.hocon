@@ -1,0 +1,32 @@
+{
+  "input": {
+    "type": "Kinesis"
+    "appName": "snowplow-enrich-eventbridge"
+    "streamName": "input-stream-name"
+    "region": "us-west-2"
+    "initialPosition": {
+      "type": "LATEST"
+    }
+  }
+
+  "output": {
+    "good": {
+      "type": "Eventbridge"
+      "eventBusName": "output-good-eventbus-name"
+      "eventBusSource": "output-good-eventbus-source"
+      "region": "us-west-2"
+      "recordLimit": 10
+      "byteLimit": 250000
+    }
+
+    "bad": {
+      "type": "Eventbridge"
+      "eventBusName": "output-bad-eventbus-name"
+      "eventBusSource": "output-bad-eventbus-source"
+      "region": "us-west-2"
+      "recordLimit": 10
+      "byteLimit": 250000
+    }
+  }
+}
+

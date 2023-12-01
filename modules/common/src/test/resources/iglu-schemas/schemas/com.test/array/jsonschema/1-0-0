@@ -1,0 +1,39 @@
+{
+    "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+    "description": "Schema to test scrambling of array in PII enrichment",
+    "self": {
+        "vendor": "com.test",
+        "name": "array",
+        "format": "jsonschema",
+        "version": "1-0-0"
+    },
+    "type": "object",
+	  "properties": {
+      "field": {
+        "type": "array",
+        "items": {
+          "type": ["string", "null" ]
+        }
+      },
+      "field2": {
+        "type": ["string", "null"]
+      },
+      "field3": {
+        "type": ["object", "null"],
+        "properties": {
+          "a": {
+            "type": "string"
+          },
+          "b": {
+            "type": "string"
+          }
+        }
+      },
+      "field4": {
+        "type": "string",
+        "maxLength": 64
+      }
+    },
+    "required": ["field"],
+    "additionalProperties": false
+}
