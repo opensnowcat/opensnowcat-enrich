@@ -78,6 +78,7 @@ class ConfigFileSpec extends Specification with CatsIO {
         io.FeatureFlags(
           false,
           false,
+          false,
           false
         ),
         Some(
@@ -178,6 +179,7 @@ class ConfigFileSpec extends Specification with CatsIO {
           Some("1.0.0")
         ),
         io.FeatureFlags(
+          false,
           false,
           false,
           false
@@ -292,6 +294,7 @@ class ConfigFileSpec extends Specification with CatsIO {
         io.FeatureFlags(
           false,
           false,
+          false,
           false
         ),
         Some(
@@ -392,6 +395,7 @@ class ConfigFileSpec extends Specification with CatsIO {
           Some("1.0.0")
         ),
         io.FeatureFlags(
+          false,
           false,
           false,
           false
@@ -502,7 +506,8 @@ class ConfigFileSpec extends Specification with CatsIO {
         io.FeatureFlags(
           false,
           false,
-          tryBase64Decoding = true
+          tryBase64Decoding = true,
+          false
         ),
         Some(
           io.Experimental(

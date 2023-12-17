@@ -194,7 +194,7 @@ object Enrich {
         .separate
 
     val (moreBad, good) = enriched.map { e =>
-      serializeEnriched(e, env.processor, env.streamsSettings.maxRecordSize)
+      serializeEnriched(e, env.processor, env.streamsSettings.maxRecordSize, env.featureFlags.formatOutputAsJson)
         .map(bytes => (e, AttributedData(bytes, env.goodPartitionKey(e), env.goodAttributes(e))))
     }.separate
 
@@ -258,7 +258,7 @@ object Enrich {
         val (bad, serialized) =
           enriched
             .flatMap(ConversionUtils.getPiiEvent(processor, _))
-            .map(e => serializeEnriched(e, processor, maxRecordSize).map(AttributedData(_, partitionKey(e), attributes(e))))
+            .map(e => serializeEnriched(e, processor, maxRecordSize, formatOutputAsJson = false).map(AttributedData(_, partitionKey(e), attributes(e))))
             .separate
         val logging =
           if (bad.nonEmpty)
@@ -273,21 +273,37 @@ object Enrich {
   def serializeEnriched(
     enriched: EnrichedEvent,
     processor: Processor,
-    maxRecordSize: Int
+    maxRecordSize: Int,
+    formatOutputAsJson: Boolean
   ): Either[BadRow, Array[Byte]] = {
-    val asStr = ConversionUtils.tabSeparatedEnrichedEvent(enriched)
-    val asBytes = asStr.getBytes(UTF_8)
-    val size = asBytes.length
-    if (size > maxRecordSize) {
-      val msg = s"event passed enrichment but then exceeded the maximum allowed size $maxRecordSize bytes"
-      val br = BadRow
-        .SizeViolation(
-          processor,
-          Failure.SizeViolation(Instant.now(), maxRecordSize, size, msg),
-          BadRowPayload.RawPayload(asStr.take(maxRecordSize * 8 / 10))
+    val asStrE = if (formatOutputAsJson)
+      EnrichedEvent.toAtomic(enriched).map(_.noSpaces)
+    else Right(ConversionUtils.tabSeparatedEnrichedEvent(enriched))
+
+    asStrE match {
+      case Left(error) => Left(
+        BadRow.GenericError(
+          processor = processor,
+          failure = Failure.GenericFailure(Instant.now(), NonEmptyList(error.getMessage, List.empty)),
+          payload = BadRowPayload.RawPayload(
+            ConversionUtils.tabSeparatedEnrichedEvent(enriched).take(maxRecordSize * 8 / 10)
+          )
         )
-      Left(br)
-    } else Right(asBytes)
+      )
+      case Right(asStr) =>
+        val asBytes = asStr.getBytes(UTF_8)
+        val size = asBytes.length
+        if (size > maxRecordSize) {
+          val msg = s"event passed enrichment but then exceeded the maximum allowed size $maxRecordSize bytes"
+          val br = BadRow
+            .SizeViolation(
+              processor,
+              Failure.SizeViolation(Instant.now(), maxRecordSize, size, msg),
+              BadRowPayload.RawPayload(asStr.take(maxRecordSize * 8 / 10))
+            )
+          Left(br)
+        } else Right(asBytes)
+    }
   }
 
   /**

@@ -348,6 +348,9 @@
 
     # Try to base64 decode event if initial Thrift serialization fail
     "tryBase64Decoding": false
+
+    # Encode the output as json, by default, output is encoded as TSV.
+    "formatOutputAsJson": false
   }
 
   # Optional. Configuration for experimental/preview features

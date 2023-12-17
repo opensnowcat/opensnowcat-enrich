@@ -77,6 +77,7 @@ class ParsedConfigsSpec extends Specification with CatsIO {
         io.FeatureFlags(
           false,
           false,
+          false,
           false
         ),
         Some(

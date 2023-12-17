@@ -157,5 +157,5 @@ object BlackBoxTesting extends Specification with CatsIO {
         } yield registry
     }
 
-  private val featureFlags = FeatureFlags(acceptInvalid = false, legacyEnrichmentOrder = false, tryBase64Decoding = false)
+  private val featureFlags = FeatureFlags(acceptInvalid = false, legacyEnrichmentOrder = false, tryBase64Decoding = false, formatOutputAsJson = false)
 }
