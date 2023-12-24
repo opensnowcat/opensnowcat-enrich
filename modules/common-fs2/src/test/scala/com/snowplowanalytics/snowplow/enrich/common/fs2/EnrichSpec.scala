@@ -511,5 +511,5 @@ object EnrichSpec {
       derived_tstamp = Some(Instant.ofEpochMilli(0L))
     )
 
-  val featureFlags = FeatureFlags(acceptInvalid = false, legacyEnrichmentOrder = false, tryBase64Decoding = false, formatOutputAsJson = false)
+  val featureFlags = FeatureFlags(acceptInvalid = false, legacyEnrichmentOrder = false, tryBase64Decoding = false)
 }
