@@ -78,7 +78,6 @@ class ConfigFileSpec extends Specification with CatsIO {
         io.FeatureFlags(
           false,
           false,
-          false,
           false
         ),
         Some(
@@ -122,7 +121,8 @@ class ConfigFileSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             500,
             5242880,
-            None
+            None,
+            jsonOutput = false
           ),
           Some(
             io.Output.Kinesis(
@@ -133,7 +133,8 @@ class ConfigFileSpec extends Specification with CatsIO {
               io.BackoffPolicy(100.millis, 1.second, None),
               500,
               5242880,
-              None
+              None,
+              jsonOutput = false
             )
           ),
           io.Output.Kinesis(
@@ -144,7 +145,8 @@ class ConfigFileSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             500,
             5242880,
-            None
+            None,
+            jsonOutput = false
           )
         ),
         io.Concurrency(256, 1),
@@ -179,7 +181,6 @@ class ConfigFileSpec extends Specification with CatsIO {
           Some("1.0.0")
         ),
         io.FeatureFlags(
-          false,
           false,
           false,
           false
@@ -294,7 +295,6 @@ class ConfigFileSpec extends Specification with CatsIO {
         io.FeatureFlags(
           false,
           false,
-          false,
           false
         ),
         Some(
@@ -395,7 +395,6 @@ class ConfigFileSpec extends Specification with CatsIO {
           Some("1.0.0")
         ),
         io.FeatureFlags(
-          false,
           false,
           false,
           false
@@ -506,8 +505,7 @@ class ConfigFileSpec extends Specification with CatsIO {
         io.FeatureFlags(
           false,
           false,
-          tryBase64Decoding = true,
-          false
+          tryBase64Decoding = true
         ),
         Some(
           io.Experimental(

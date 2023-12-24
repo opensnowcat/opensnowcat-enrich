@@ -12,31 +12,29 @@
  */
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
+import cats.data.Validated
+
 import java.nio.ByteBuffer
 import java.util.UUID
-
 import scala.collection.JavaConverters._
-
 import cats.implicits._
 import cats.{Monoid, Parallel}
-
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.effect.concurrent.Ref
-
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-
 import retry.syntax.all._
 import retry.RetryPolicy
-
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-
 import com.amazonaws.services.kinesis.model._
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
-
+import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Retries
+
+import java.nio.charset.StandardCharsets
+import scala.util.control.NonFatal
 
 object Sink {
 
@@ -61,7 +59,7 @@ object Sink {
           case Some(region) =>
             for {
               producer <- Resource.eval[F, AmazonKinesis](mkProducer(o, region))
-            } yield records => writeToKinesis(blocker, o, producer, toKinesisRecords(records))
+            } yield records => writeToKinesis(blocker, o, producer, toKinesisRecords(records, o))
           case None =>
             Resource.eval(Sync[F].raiseError(new RuntimeException(s"Region not found in the config and in the runtime")))
         }
@@ -208,9 +206,24 @@ object Sink {
             result.nextBatchAttempt.pure[F]
         }
 
-  private def toKinesisRecords(records: List[AttributedData[Array[Byte]]]): List[PutRecordsRequestEntry] =
+  private def toKinesisRecords(records: List[AttributedData[Array[Byte]]], config: Output.Kinesis): List[PutRecordsRequestEntry] =
     records.map { r =>
-      val data = ByteBuffer.wrap(r.data)
+      val sourceData = r.data
+      val binaryData = try {
+        if (config.jsonOutput) {
+          val tsv = new String(sourceData)
+          Event.parse(tsv) match {
+            case Validated.Valid(event) => event.toJson(false).noSpaces.getBytes(StandardCharsets.UTF_8)
+            case Validated.Invalid(_) => sourceData
+          }
+        } else {
+          sourceData
+        }
+      } catch {
+        case NonFatal(_) => sourceData
+      }
+
+      val data = ByteBuffer.wrap(binaryData)
       val prre = new PutRecordsRequestEntry()
       prre.setPartitionKey(r.partitionKey)
       prre.setData(data)

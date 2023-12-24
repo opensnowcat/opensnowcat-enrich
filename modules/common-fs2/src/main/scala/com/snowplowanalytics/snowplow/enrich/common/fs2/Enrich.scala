@@ -18,7 +18,7 @@ import java.util.Base64
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration._
 import org.joda.time.DateTime
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.{Monad, Parallel}
 import cats.implicits._
 import cats.effect.{Clock, Concurrent, ContextShift, ExitCase, Fiber, Sync, Timer}
@@ -185,7 +185,7 @@ object Enrich {
         .separate
 
     val (moreBad, good) = enriched.map { e =>
-      serializeEnriched(e, env.processor, env.streamsSettings.maxRecordSize, env.featureFlags.formatOutputAsJson)
+      serializeEnriched(e, env.processor, env.streamsSettings.maxRecordSize)
         .map(bytes => (e, AttributedData(bytes, env.goodPartitionKey(e), env.goodAttributes(e))))
     }.separate
 
@@ -249,7 +249,7 @@ object Enrich {
         val (bad, serialized) =
           enriched
             .flatMap(ConversionUtils.getPiiEvent(processor, _))
-            .map(e => serializeEnriched(e, processor, maxRecordSize, formatOutputAsJson = false).map(AttributedData(_, partitionKey(e), attributes(e))))
+            .map(e => serializeEnriched(e, processor, maxRecordSize).map(AttributedData(_, partitionKey(e), attributes(e))))
             .separate
         val logging =
           if (bad.nonEmpty)
@@ -264,41 +264,21 @@ object Enrich {
   def serializeEnriched(
     enriched: EnrichedEvent,
     processor: Processor,
-    maxRecordSize: Int,
-    formatOutputAsJson: Boolean
+    maxRecordSize: Int
   ): Either[BadRow, Array[Byte]] = {
-    val tsv = ConversionUtils.tabSeparatedEnrichedEvent(enriched)
-    lazy val jsonE = com.snowplowanalytics.snowplow.analytics.scalasdk.Event.parse(tsv) match {
-      case Validated.Valid(event) => Right(event.toJson(false).noSpaces)
-      case Validated.Invalid(error) => Left(
-        BadRow.GenericError(
-          processor = processor,
-          // TODO: We likely need a better error message
-          failure = Failure.GenericFailure(Instant.now(), NonEmptyList(error.toString, List.empty)),
-          payload = BadRowPayload.RawPayload(
-            ConversionUtils.tabSeparatedEnrichedEvent(enriched).take(maxRecordSize * 8 / 10)
-          )
+    val asStr = ConversionUtils.tabSeparatedEnrichedEvent(enriched)
+    val asBytes = asStr.getBytes(UTF_8)
+    val size = asBytes.length
+    if (size > maxRecordSize) {
+      val msg = s"event passed enrichment but then exceeded the maximum allowed size $maxRecordSize bytes"
+      val br = BadRow
+        .SizeViolation(
+          processor,
+          Failure.SizeViolation(Instant.now(), maxRecordSize, size, msg),
+          BadRowPayload.RawPayload(asStr.take(maxRecordSize * 8 / 10))
         )
-      )
-    }
-    val asStrE = if (formatOutputAsJson) jsonE else Right(tsv)
-
-    asStrE match {
-      case Left(error) => Left(error)
-      case Right(asStr) =>
-        val asBytes = asStr.getBytes(UTF_8)
-        val size = asBytes.length
-        if (size > maxRecordSize) {
-          val msg = s"event passed enrichment but then exceeded the maximum allowed size $maxRecordSize bytes"
-          val br = BadRow
-            .SizeViolation(
-              processor,
-              Failure.SizeViolation(Instant.now(), maxRecordSize, size, msg),
-              BadRowPayload.RawPayload(asStr.take(maxRecordSize * 8 / 10))
-            )
-          Left(br)
-        } else Right(asBytes)
-    }
+      Left(br)
+    } else Right(asBytes)
   }
 
   /**
