@@ -306,7 +306,8 @@ object io {
       throttledBackoffPolicy: BackoffPolicy,
       recordLimit: Int,
       byteLimit: Int,
-      customEndpoint: Option[URI]
+      customEndpoint: Option[URI],
+      jsonOutput: Boolean
     ) extends Output
     case class Eventbridge(
       eventBusName: String,
@@ -510,7 +511,7 @@ object io {
   case class FeatureFlags(
     acceptInvalid: Boolean,
     legacyEnrichmentOrder: Boolean,
-    tryBase64Decoding: Boolean
+    tryBase64Decoding: Boolean,
   )
 
   object FeatureFlags {

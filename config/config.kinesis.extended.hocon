@@ -116,6 +116,9 @@
       # Optional. Use a custom Kinesis endpoint.
       # Can be used for instance to work locally with localstack
       # "customEndpoint": "https://localhost:4566"
+
+      # Encode the output as json, by default, output is encoded as TSV.
+      "jsonOutput": false
     }
 
     # Pii events output
@@ -166,6 +169,9 @@
       # Optional. Use a custom Kinesis endpoint.
       # Can be used for instance to work locally with localstack
       # "customEndpoint": "https://localhost:4566"
+
+      # Encode the output as json, by default, output is encoded as TSV.
+      "jsonOutput": false
     }
 
     # Bad rows output
@@ -208,6 +214,9 @@
       # Optional. Use a custom Kinesis endpoint.
       # Can be used for instance to work locally with localstack
       # "customEndpoint": "https://localhost:4566"
+
+      # Encode the output as json, by default, output is encoded as TSV.
+      "jsonOutput": false
     }
   }
 

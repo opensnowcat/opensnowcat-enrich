@@ -121,7 +121,8 @@ class ConfigFileSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             500,
             5242880,
-            None
+            None,
+            jsonOutput = false
           ),
           Some(
             io.Output.Kinesis(
@@ -132,7 +133,8 @@ class ConfigFileSpec extends Specification with CatsIO {
               io.BackoffPolicy(100.millis, 1.second, None),
               500,
               5242880,
-              None
+              None,
+              jsonOutput = false
             )
           ),
           io.Output.Kinesis(
@@ -143,7 +145,8 @@ class ConfigFileSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             500,
             5242880,
-            None
+            None,
+            jsonOutput = false
           )
         ),
         io.Concurrency(256, 1),

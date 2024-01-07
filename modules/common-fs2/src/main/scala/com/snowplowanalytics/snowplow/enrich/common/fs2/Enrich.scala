@@ -16,28 +16,19 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Instant
 import java.util.Base64
 import java.util.concurrent.TimeUnit
-
 import scala.concurrent.duration._
-
 import org.joda.time.DateTime
-
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.{Monad, Parallel}
 import cats.implicits._
-
 import cats.effect.{Clock, Concurrent, ContextShift, ExitCase, Fiber, Sync, Timer}
 import cats.effect.implicits._
-
 import fs2.concurrent.{NoneTerminatedQueue, Queue}
 import fs2.{Pipe, Stream}
-
 import _root_.io.sentry.SentryClient
-
 import _root_.io.circe.syntax._
-
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-
 import com.snowplowanalytics.iglu.client.IgluCirceClient
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.snowplow.badrows.{BadRow, Failure, Processor, Payload => BadRowPayload}
