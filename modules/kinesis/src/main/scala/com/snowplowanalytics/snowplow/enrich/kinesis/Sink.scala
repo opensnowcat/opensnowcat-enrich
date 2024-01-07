@@ -213,7 +213,7 @@ object Sink {
         if (config.jsonOutput) {
           val tsv = new String(sourceData)
           Event.parse(tsv) match {
-            case Validated.Valid(event) => event.toJson(false).noSpaces.getBytes(StandardCharsets.UTF_8)
+            case Validated.Valid(event) => event.toJson(lossy=true).noSpaces.getBytes(StandardCharsets.UTF_8)
             case Validated.Invalid(_) => sourceData
           }
         } else {
