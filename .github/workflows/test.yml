@@ -55,6 +55,11 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: foo
         AWS_SECRET_ACCESS_KEY: bar
+    - name: Run integration tests for enrich-eventbridge
+      run: sbt "project eventbridgeDistroless" IntegrationTest/test
+      env:
+        AWS_ACCESS_KEY_ID: foo
+        AWS_SECRET_ACCESS_KEY: bar
     - name: Run integration tests for enrich-kafka
       run: |
         sbt "project kafka" "docker:publishLocal"

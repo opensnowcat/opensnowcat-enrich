@@ -1,0 +1,50 @@
+{
+  "input": {
+    "type": "Kinesis"
+    "appName": ${APP_NAME}
+    "streamName": ${KINESIS_STREAM_INPUT}
+    "region": ${REGION}
+    "customEndpoint": ${LOCALSTACK_ENDPOINT}
+    "dynamodbCustomEndpoint": ${LOCALSTACK_ENDPOINT}
+    "cloudwatchCustomEndpoint": ${LOCALSTACK_ENDPOINT}
+  }
+
+  "output": {
+    "good": {
+      "type": "Eventbridge"
+      "eventBusName": ${EVENTBRIDGE_STREAM_OUTPUT_GOOD_EVENTBUS_NAME}
+      "eventBusSource": ${EVENTBRIDGE_STREAM_OUTPUT_GOOD_EVENTBUS_SOURCE}
+      "collector": true
+      "payload": true
+      "recordLimit": 5
+      "byteLimit": 10000
+      "region": ${REGION}
+      "customEndpoint": ${LOCALSTACK_ENDPOINT}
+    }
+
+    "bad": {
+      "type": "Eventbridge"
+      "eventBusName": ${EVENTBRIDGE_STREAM_OUTPUT_BAD_EVENTBUS_NAME}
+      "eventBusSource": ${EVENTBRIDGE_STREAM_OUTPUT_BAD_EVENTBUS_SOURCE}
+      "collector": false
+      "payload": false
+      "recordLimit": 5
+      "byteLimit": 10000
+      "region": ${REGION}
+      "customEndpoint": ${LOCALSTACK_ENDPOINT}
+    }
+  }
+
+  "monitoring": {
+    "metrics": {
+      "stdout": {
+        "period": "10 seconds"
+      }
+      "cloudwatch": true
+    }
+  }
+
+  "telemetry": {
+    "disable": true
+  }
+}

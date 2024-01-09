@@ -279,6 +279,19 @@ object io {
       jsonOutput: Boolean
     ) extends Output
 
+    case class Eventbridge(
+      eventBusName: String,
+      eventBusSource: String,
+      region: Option[String],
+      backoffPolicy: BackoffPolicy,
+      throttledBackoffPolicy: BackoffPolicy,
+      recordLimit: Int,
+      byteLimit: Int,
+      customEndpoint: Option[URI],
+      collector: Option[Boolean],
+      payload: Option[Boolean]
+    ) extends Output
+
     implicit val outputDecoder: Decoder[Output] =
       deriveConfiguredDecoder[Output]
         .emap {
@@ -310,6 +323,8 @@ object io {
             "PubSub max batch bytes cannot be less than 0".asLeft
           case k: Kinesis if k.recordLimit > putRecordsMaxRecords =>
             s"recordLimit can't be > $putRecordsMaxRecords".asLeft
+          case k: Eventbridge if k.eventBusName.isEmpty && k.region.nonEmpty =>
+            "eventBusName needs to be set".asLeft
           case other =>
             other.asRight
         }
