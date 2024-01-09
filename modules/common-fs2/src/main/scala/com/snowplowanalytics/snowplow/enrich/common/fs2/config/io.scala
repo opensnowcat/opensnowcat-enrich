@@ -275,7 +275,8 @@ object io {
       throttledBackoffPolicy: BackoffPolicy,
       recordLimit: Int,
       byteLimit: Int,
-      customEndpoint: Option[URI]
+      customEndpoint: Option[URI],
+      jsonOutput: Boolean
     ) extends Output
 
     implicit val outputDecoder: Decoder[Output] =

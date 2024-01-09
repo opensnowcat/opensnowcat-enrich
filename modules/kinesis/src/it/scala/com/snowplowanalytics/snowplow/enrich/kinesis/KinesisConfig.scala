@@ -58,7 +58,8 @@ object KinesisConfig {
     BackoffPolicy(100.millis, 1.second, None),
     500,
     5242880,
-    Some(URI.create(getEndpoint(localstackPort)))
+    Some(URI.create(getEndpoint(localstackPort))),
+    jsonOutput = false
   )
 
   val monitoring = Monitoring(
