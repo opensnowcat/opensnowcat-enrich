@@ -18,12 +18,13 @@
 import Dependencies.Libraries._
 import BuildSettings._
 
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .settings(name := "enrich")
   .settings(projectSettings)
   .settings(compilerSettings)
   .settings(resolverSettings)
-  .aggregate(common, commonFs2, pubsub, kinesis, kafka, nsq)
+  .aggregate(common, commonFs2, pubsub, kinesis, eventbridge, kafka, nsq)
 
 lazy val common = project
   .in(file("modules/common"))
@@ -98,11 +99,13 @@ lazy val kinesisDistroless = project
   .enablePlugins(BuildInfoPlugin, JavaAppPackaging, SnowplowDistrolessDockerPlugin)
   .settings(sourceDirectory := (kinesis / sourceDirectory).value)
   .settings(kinesisDistrolessBuildSettings)
-  .settings(libraryDependencies ++= kinesisDependencies ++ Seq(
-    // integration tests dependencies
-    specs2CEIt,
-    testContainersIt
-  ))
+  .settings(
+    libraryDependencies ++= kinesisDependencies ++ Seq(
+      // integration tests dependencies
+      specs2CEIt,
+      testContainersIt
+    )
+  )
   .settings(excludeDependencies ++= exclusions)
   .settings(addCompilerPlugin(betterMonadicFor))
   .dependsOn(commonFs2 % "compile->compile;it->it")
@@ -116,10 +119,12 @@ lazy val kafka = project
   .in(file("modules/kafka"))
   .enablePlugins(BuildInfoPlugin, JavaAppPackaging, SnowplowDockerPlugin)
   .settings(kafkaBuildSettings)
-  .settings(libraryDependencies ++= kafkaDependencies ++ Seq(
-    // integration tests dependencies
-    specs2CEIt
-  ))
+  .settings(
+    libraryDependencies ++= kafkaDependencies ++ Seq(
+      // integration tests dependencies
+      specs2CEIt
+    )
+  )
   .settings(excludeDependencies ++= exclusions)
   .settings(Defaults.itSettings)
   .configs(IntegrationTest)
@@ -159,17 +164,50 @@ lazy val nsqDistroless = project
   .enablePlugins(BuildInfoPlugin, JavaAppPackaging, SnowplowDistrolessDockerPlugin)
   .settings(sourceDirectory := (nsq / sourceDirectory).value)
   .settings(nsqDistrolessBuildSettings)
-  .settings(libraryDependencies ++= nsqDependencies ++ Seq(
-    // integration tests dependencies
-    specs2CEIt,
-    testContainersIt
-  ))
+  .settings(
+    libraryDependencies ++= nsqDependencies ++ Seq(
+      // integration tests dependencies
+      specs2CEIt,
+      testContainersIt
+    )
+  )
   .settings(excludeDependencies ++= exclusions)
   .settings(addCompilerPlugin(betterMonadicFor))
   .dependsOn(commonFs2 % "compile->compile;it->it")
   .dependsOn(awsUtils % "compile->compile")
   .dependsOn(gcpUtils % "compile->compile")
   .dependsOn(azureUtils % "compile->compile")
+  .settings(Defaults.itSettings)
+  .configs(IntegrationTest)
+  .settings((IntegrationTest / test) := (IntegrationTest / test).dependsOn(Docker / publishLocal).value)
+  .settings((IntegrationTest / testOnly) := (IntegrationTest / testOnly).dependsOn(Docker / publishLocal).evaluated)
+
+lazy val eventbridge = project
+  .in(file("modules/eventbridge"))
+  .enablePlugins(BuildInfoPlugin, JavaAppPackaging, SnowplowDockerPlugin)
+  .settings(eventbridgeBuildSettings)
+  .settings(libraryDependencies ++= eventbridgeDependencies)
+  .settings(excludeDependencies ++= exclusions)
+  .settings(addCompilerPlugin(betterMonadicFor))
+  .dependsOn(commonFs2 % "test->test;compile->compile")
+  .dependsOn(awsUtils % "compile->compile")
+
+lazy val eventbridgeDistroless = project
+  .in(file("modules/distroless/eventbridge"))
+  .enablePlugins(BuildInfoPlugin, JavaAppPackaging, SnowplowDistrolessDockerPlugin)
+  .settings(sourceDirectory := (eventbridge / sourceDirectory).value)
+  .settings(eventbridgeDistrolessBuildSettings)
+  .settings(
+    libraryDependencies ++= eventbridgeDependencies ++ Seq(
+      // integration tests dependencies
+      specs2CEIt,
+      testContainersIt
+    )
+  )
+  .settings(excludeDependencies ++= exclusions)
+  .settings(addCompilerPlugin(betterMonadicFor))
+  .dependsOn(commonFs2 % "compile->compile;it->it")
+  .dependsOn(awsUtils % "compile->compile")
   .settings(Defaults.itSettings)
   .configs(IntegrationTest)
   .settings((IntegrationTest / test) := (IntegrationTest / test).dependsOn(Docker / publishLocal).value)
