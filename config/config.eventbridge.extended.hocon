@@ -4,7 +4,7 @@
     "type": "Kinesis"
 
     # Name of the application which the KCL daemon should assume
-    "appName": "snowplow-enrich-eventbridge"
+    "appName": "opensnowcat-enrich-eventbridge"
 
     # Name of the Kinesis stream to read from
     "streamName": "input-stream-name"

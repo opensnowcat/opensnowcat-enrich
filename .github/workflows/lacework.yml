@@ -37,53 +37,53 @@ jobs:
           LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
           LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
           LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/snowplow-enrich-pubsub ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
+        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-pubsub ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
 
       - name: Scan enrich-pubsub distroless
         env:
           LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
           LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
           LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/snowplow-enrich-pubsub ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
+        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-pubsub ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
 
       - name: Scan enrich-kinesis
         env:
           LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
           LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
           LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/snowplow-enrich-kinesis ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
+        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-kinesis ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
 
       - name: Scan enrich-kinesis distroless
         env:
           LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
           LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
           LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/snowplow-enrich-kinesis ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
+        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-kinesis ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
 
       - name: Scan enrich-kafka
         env:
           LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
           LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
           LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/snowplow-enrich-kafka ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
+        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-kafka ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
 
       - name: Scan enrich-kafka distroless
         env:
           LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
           LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
           LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/snowplow-enrich-kafka ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
+        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-kafka ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
 
       - name: Scan enrich-nsq
         env:
           LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
           LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
           LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/snowplow-enrich-nsq ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
+        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-nsq ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
 
       - name: Scan enrich-nsq distroless
         env:
           LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
           LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
           LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/snowplow-enrich-nsq ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
+        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-nsq ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull

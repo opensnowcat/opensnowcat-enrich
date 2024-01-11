@@ -78,7 +78,7 @@ object Containers extends CatsIO {
     val streams = KinesisConfig.getStreams(uuid)
 
     val container = GenericContainer(
-      dockerImage = s"snowplow/snowplow-enrich-kinesis:${BuildInfo.version}-distroless",
+      dockerImage = s"snowplow/opensnowcat-enrich-kinesis:${BuildInfo.version}-distroless",
       env = Map(
         "AWS_REGION" -> KinesisConfig.region,
         "AWS_ACCESS_KEY_ID" -> "foo",

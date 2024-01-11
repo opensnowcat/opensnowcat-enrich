@@ -1,7 +1,7 @@
 {
   "input": {
     "type": "Kinesis"
-    "appName": "snowplow-enrich-eventbridge"
+    "appName": "opensnowcat-enrich-eventbridge"
     "streamName": "input-stream-name"
     "region": "us-west-2"
     "initialPosition": {

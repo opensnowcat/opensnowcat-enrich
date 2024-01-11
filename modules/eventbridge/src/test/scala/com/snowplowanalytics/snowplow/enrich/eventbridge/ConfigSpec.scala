@@ -37,7 +37,7 @@ class ConfigSpec extends Specification with CatsIO {
       val configPath = Paths.get(getClass.getResource("/config.eventbridge.extended.hocon").toURI)
       val expected = ConfigFile(
         io.Input.Kinesis(
-          "snowplow-enrich-eventbridge",
+          "opensnowcat-enrich-eventbridge",
           "input-stream-name",
           Some("us-west-2"),
           io.Input.Kinesis.InitPosition.Latest,
@@ -146,7 +146,7 @@ class ConfigSpec extends Specification with CatsIO {
       val configPath = Paths.get(getClass.getResource("/config.eventbridge.minimal.hocon").toURI)
       val expected = ConfigFile(
         io.Input.Kinesis(
-          "snowplow-enrich-eventbridge",
+          "opensnowcat-enrich-eventbridge",
           "input-stream-name",
           Some("us-west-2"),
           io.Input.Kinesis.InitPosition.Latest,
