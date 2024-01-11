@@ -7,6 +7,9 @@ on:
     branches:
       - 'snapshot/**'
 
+permissions:
+  contents: write # to publish artifacts
+
 jobs:
   github_release:
     if: startsWith(github.ref, 'refs/tags/')

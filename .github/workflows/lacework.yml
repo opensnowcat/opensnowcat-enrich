@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - '*'
-    # TODO: Remove me
-    branches:
-      - 'snapshot/**'
 
 jobs:
   scan:
