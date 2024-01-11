@@ -38,7 +38,7 @@ class ConfigSpec extends Specification with CatsIO {
       val configPath = Paths.get(getClass.getResource("/config.kinesis.extended.hocon").toURI)
       val expected = ConfigFile(
         io.Input.Kinesis(
-          "snowplow-enrich-kinesis",
+          "opensnowcat-enrich-kinesis",
           "collector-payloads",
           Some("eu-central-1"),
           io.Input.Kinesis.InitPosition.TrimHorizon,
@@ -144,7 +144,7 @@ class ConfigSpec extends Specification with CatsIO {
       val configPath = Paths.get(getClass.getResource("/config.kinesis.minimal.hocon").toURI)
       val expected = ConfigFile(
         io.Input.Kinesis(
-          "snowplow-enrich-kinesis",
+          "opensnowcat-enrich-kinesis",
           "collector-payloads",
           None,
           io.Input.Kinesis.InitPosition.TrimHorizon,

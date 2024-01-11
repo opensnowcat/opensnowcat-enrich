@@ -35,10 +35,10 @@ jobs:
         name: ${{ steps.ver.outputs.tag }}
         tag_name: ${{ steps.ver.outputs.tag }}
         files: |
-          modules/pubsub/target/scala-2.12/snowplow-enrich-pubsub-${{ steps.ver.outputs.tag }}.jar
-          modules/kinesis/target/scala-2.12/snowplow-enrich-kinesis-${{ steps.ver.outputs.tag }}.jar
-          modules/kafka/target/scala-2.12/snowplow-enrich-kafka-${{ steps.ver.outputs.tag }}.jar
-          modules/nsq/target/scala-2.12/snowplow-enrich-nsq-${{ steps.ver.outputs.tag }}.jar
+          modules/pubsub/target/scala-2.12/opensnowcat-enrich-pubsub-${{ steps.ver.outputs.tag }}.jar
+          modules/kinesis/target/scala-2.12/opensnowcat-enrich-kinesis-${{ steps.ver.outputs.tag }}.jar
+          modules/kafka/target/scala-2.12/opensnowcat-enrich-kafka-${{ steps.ver.outputs.tag }}.jar
+          modules/nsq/target/scala-2.12/opensnowcat-enrich-nsq-${{ steps.ver.outputs.tag }}.jar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -45,64 +45,64 @@ object BuildSettings {
   )
 
   lazy val commonFs2ProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-common-fs2",
-    moduleName := "snowplow-enrich-common-fs2",
+    name := "opensnowcat-enrich-common-fs2",
+    moduleName := "opensnowcat-enrich-common-fs2",
     description := "Common functionality for streaming enrich applications built on top of functional streams"
   )
 
   lazy val awsUtilsProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-aws-utils",
-    moduleName := "snowplow-enrich-aws-utils",
+    name := "opensnowcat-enrich-aws-utils",
+    moduleName := "opensnowcat-enrich-aws-utils",
     description := "AWS specific utils"
   )
 
   lazy val gcpUtilsProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-gcp-utils",
-    moduleName := "snowplow-enrich-gcp-utils",
+    name := "opensnowcat-enrich-gcp-utils",
+    moduleName := "opensnowcat-enrich-gcp-utils",
     description := "GCP specific utils"
   )
 
   lazy val azureUtilsProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-azure-utils",
-    moduleName := "snowplow-enrich-azure-utils",
+    name := "opensnowcat-enrich-azure-utils",
+    moduleName := "opensnowcat-enrich-azure-utils",
     description := "Azure specific utils"
   )
 
   lazy val pubsubProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-pubsub",
-    moduleName := "snowplow-enrich-pubsub",
+    name := "opensnowcat-enrich-pubsub",
+    moduleName := "opensnowcat-enrich-pubsub",
     description := "High-performance streaming enrich app working with Pub/Sub, built on top of functional streams",
     buildInfoKeys := Seq[BuildInfoKey](organization, name, version, description),
     buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.pubsub.generated"
   )
 
   lazy val kinesisProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-kinesis",
-    moduleName := "snowplow-enrich-kinesis",
+    name := "opensnowcat-enrich-kinesis",
+    moduleName := "opensnowcat-enrich-kinesis",
     description := "High-performance streaming enrich app working with Kinesis, built on top of functional streams",
     buildInfoKeys := Seq[BuildInfoKey](organization, name, version, description),
     buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.kinesis.generated"
   )
 
   lazy val kafkaProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-kafka",
-    moduleName := "snowplow-enrich-kafka",
+    name := "opensnowcat-enrich-kafka",
+    moduleName := "opensnowcat-enrich-kafka",
     description := "High-performance streaming enrich app working with Kafka, built on top of functional streams",
     buildInfoKeys := Seq[BuildInfoKey](organization, name, version, description),
     buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.kafka.generated"
   )
 
   lazy val nsqProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-nsq",
-    moduleName := "snowplow-enrich-nsq",
+    name := "opensnowcat-enrich-nsq",
+    moduleName := "opensnowcat-enrich-nsq",
     description := "High-performance streaming enrich app working with Nsq, built on top of functional streams",
     buildInfoKeys := Seq[BuildInfoKey](organization, name, version, description),
     buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.nsq.generated"
   )
 
   lazy val eventbridgeProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-enrich-eventbridge",
-    moduleName := "snowplow-enrich-eventbridge",
+    name := "opensnowcat-enrich-eventbridge",
+    moduleName := "opensnowcat-enrich-eventbridge",
     description := "High-performance streaming enrich app working with EventBridge, built on top of functional streams",
     buildInfoKeys := Seq[BuildInfoKey](organization, name, version, description),
     buildInfoPackage := "com.snowplowanalytics.snowplow.enrich.eventbridge.generated"
@@ -263,7 +263,7 @@ object BuildSettings {
     pubsubProjectSettings ++ buildSettings ++
       // Build and publish
       assemblySettings ++ dockerSettingsFocal ++
-      Seq(Docker / packageName := "snowplow-enrich-pubsub") ++
+      Seq(Docker / packageName := "opensnowcat-enrich-pubsub") ++
       // Tests
       scoverageSettings ++ noParallelTestExecution ++ addExampleConfToTestCp
   }
@@ -275,7 +275,7 @@ object BuildSettings {
     kinesisProjectSettings ++ buildSettings ++
       // Build and publish
       assemblySettings ++ dockerSettingsFocal ++
-      Seq(Docker / packageName := "snowplow-enrich-kinesis") ++
+      Seq(Docker / packageName := "opensnowcat-enrich-kinesis") ++
       // Tests
       scoverageSettings ++ noParallelTestExecution ++ Seq(Test / fork := true) ++ addExampleConfToTestCp
   }
@@ -287,7 +287,7 @@ object BuildSettings {
     kafkaProjectSettings ++ buildSettings ++
       // Build and publish
       assemblySettings ++ dockerSettingsFocal ++
-      Seq(Docker / packageName := "snowplow-enrich-kafka") ++
+      Seq(Docker / packageName := "opensnowcat-enrich-kafka") ++
       // Tests
       scoverageSettings ++ noParallelTestExecution ++ addExampleConfToTestCp
   }
@@ -299,7 +299,7 @@ object BuildSettings {
     nsqProjectSettings ++ buildSettings ++
       // Build and publish
       assemblySettings ++ dockerSettingsFocal ++
-      Seq(Docker / packageName := "snowplow-enrich-nsq") ++
+      Seq(Docker / packageName := "opensnowcat-enrich-nsq") ++
       // Tests
       scoverageSettings ++ noParallelTestExecution ++ addExampleConfToTestCp
   }
@@ -311,7 +311,7 @@ object BuildSettings {
     eventbridgeProjectSettings ++ buildSettings ++
       // Build and publish
       assemblySettings ++ dockerSettingsFocal ++
-      Seq(Docker / packageName := "snowplow-enrich-eventbridge") ++
+      Seq(Docker / packageName := "opensnowcat-enrich-eventbridge") ++
       // Tests
       scoverageSettings ++ noParallelTestExecution ++ Seq(Test / fork := true) ++ addExampleConfToTestCp
   }

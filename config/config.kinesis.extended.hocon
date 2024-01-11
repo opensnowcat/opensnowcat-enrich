@@ -4,7 +4,7 @@
     "type": "Kinesis"
 
     # Optional. Name of the application which the KCL daemon should assume
-    "appName": "snowplow-enrich-kinesis"
+    "appName": "opensnowcat-enrich-kinesis"
 
     # Name of the Kinesis stream to read from
     "streamName": "collector-payloads"

@@ -222,7 +222,7 @@ object Containers {
     Resource.make(
       Sync[F].delay {
         val container = GenericContainer(
-          dockerImage = s"snowplow/snowplow-enrich-nsq:${BuildInfo.version}-distroless",
+          dockerImage = s"snowplow/opensnowcat-enrich-nsq:${BuildInfo.version}-distroless",
           env = Map(
             "JDK_JAVA_OPTIONS" -> "-Dorg.slf4j.simpleLogger.defaultLogLevel=info",
             "INPUT_TOPIC" -> topology.sourceTopic,

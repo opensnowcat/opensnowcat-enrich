@@ -25,7 +25,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
   enrich:
-    image: snowplow/snowplow-enrich-kafka:latest
+    image: snowplow/opensnowcat-enrich-kafka:latest
     container_name: enrich-kafka
     depends_on:
       - broker
