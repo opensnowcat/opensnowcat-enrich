@@ -39,8 +39,8 @@ object BuildSettings {
   )
 
   lazy val commonProjectSettings = projectSettings ++ Seq(
-    name := "snowplow-common-enrich",
-    moduleName := "snowplow-common-enrich",
+    name := "opensnowcat-common-enrich",
+    moduleName := "opensnowcat-common-enrich",
     description := "Common functionality for enriching raw Snowplow events"
   )
 
