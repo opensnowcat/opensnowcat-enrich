@@ -1,4 +1,5 @@
-1.0.0 (2024-01-XX)
+1.0.0 (2024-01-11)
 ------------------
 enrich-kinesis: Add support for flattened JSON as good output (#2)
 enrich-eventbridge: New module to deliver enrich events to AWS Eventbridge 1.0 (#3)
+fork from https://github.com/snowplow/enrich/tree/cc06fa29beefdcdbb4facd2559a53d7ae027d88b
