@@ -25,6 +25,7 @@ jobs:
       run: |
         sbt "project pubsub; set assembly / test := {}; assembly" \
             "project kinesis; set assembly / test := {}; assembly" \
+            "project eventbridge; set assembly / test := {}; assembly" \
             "project kafka; set assembly / test := {}; assembly" \
             "project nsq; set assembly / test := {}; assembly"
     - name: Create GitHub release and attach artifacts
@@ -37,6 +38,7 @@ jobs:
         files: |
           modules/pubsub/target/scala-2.12/opensnowcat-enrich-pubsub-${{ steps.ver.outputs.tag }}.jar
           modules/kinesis/target/scala-2.12/opensnowcat-enrich-kinesis-${{ steps.ver.outputs.tag }}.jar
+          modules/eventbridge/target/scala-2.12/opensnowcat-enrich-eventbridge-${{ steps.ver.outputs.tag }}.jar
           modules/kafka/target/scala-2.12/opensnowcat-enrich-kafka-${{ steps.ver.outputs.tag }}.jar
           modules/nsq/target/scala-2.12/opensnowcat-enrich-nsq-${{ steps.ver.outputs.tag }}.jar
       env:
@@ -50,10 +52,13 @@ jobs:
         app:
           - pubsub
           - kinesis
+          - eventbridge
           - kafka
           - nsq
         include:
           - app: kinesis
+            run_snyk: ${{ !contains(github.ref, 'rc') }}
+          - app: eventbridge
             run_snyk: ${{ !contains(github.ref, 'rc') }}
           - app: pubsub
             run_snyk: ${{ !contains(github.ref, 'rc') }}

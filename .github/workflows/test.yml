@@ -2,8 +2,9 @@ name: test
 
 on:
   push:
+    # TODO: roll this back to '**'
     branches:
-      - '**'
+      - 'develop'
     tags-ignore:
       - '**'
 
