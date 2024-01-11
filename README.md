@@ -1,4 +1,4 @@
-# OpenSnowcat Scala Stream Collector
+# OpenSnowcat Enrich
 [![License][license-image]][license]
 
 ## Welcome
