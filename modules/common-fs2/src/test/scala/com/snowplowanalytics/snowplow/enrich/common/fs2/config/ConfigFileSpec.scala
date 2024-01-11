@@ -87,7 +87,7 @@ class ConfigFileSpec extends Specification with CatsIO {
             "disable": false,
             "interval": "15 minutes",
             "method": "POST",
-            "collectorUri": "collector-g.snowplowanalytics.com",
+            "collectorUri": "sp.snowcatcloud.com",
             "collectorPort": "443",
             "secure": true
           },

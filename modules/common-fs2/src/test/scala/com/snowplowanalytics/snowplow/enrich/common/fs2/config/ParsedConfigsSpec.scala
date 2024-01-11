@@ -94,7 +94,7 @@ class ParsedConfigsSpec extends Specification with CatsIO {
           false,
           15.minutes,
           "POST",
-          "collector-g.snowplowanalytics.com",
+          "sp.snowcatcloud.com",
           443,
           true,
           Some("my_pipeline"),
@@ -112,7 +112,7 @@ class ParsedConfigsSpec extends Specification with CatsIO {
           io.Experimental(
             Some(
               io.Metadata(
-                Uri.uri("https://collector-g.snowplowanalytics.com"),
+                Uri.uri("https://sp.snowcatcloud.com"),
                 5.minutes,
                 UUID.fromString("c5f3a09f-75f8-4309-bec5-fea560f78455"),
                 UUID.fromString("75a13583-5c99-40e3-81fc-541084dfc784")

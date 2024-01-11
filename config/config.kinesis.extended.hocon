@@ -306,7 +306,7 @@
     "method": POST
 
     # URI of the collector receiving the heartbeat event
-    "collectorUri": collector-g.snowplowanalytics.com
+    "collectorUri": sp.snowcatcloud.com
 
     # Port of the collector receiving the heartbeat event
     "collectorPort": 443
