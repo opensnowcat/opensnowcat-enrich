@@ -56,7 +56,7 @@ object Dependencies {
     val maxmindIplookups = "0.7.1"
     val circe = "0.14.1"
     val circeOptics = "0.14.1"
-    val circeConfig = "0.7.0"
+    val circeConfig = "0.10.1"
     val circeJackson = "0.14.0"
     val scalaForex = "1.0.0"
     val scalaWeather = "1.0.0"
