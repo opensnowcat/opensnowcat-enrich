@@ -93,7 +93,7 @@ object Dependencies {
     val specsDiff = "0.6.0"
     val eventGen = "0.2.0"
 
-    val snowplowTracker = "1.0.0"
+    val snowplowTracker = "1.0.1"
 
     val specs2 = "4.17.0"
     val specs2Cats = "4.11.0"
