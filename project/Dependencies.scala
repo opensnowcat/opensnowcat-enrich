@@ -54,7 +54,7 @@ object Dependencies {
 
     val refererParser = "1.1.0"
     val maxmindIplookups = "0.7.1"
-    val circe = "0.14.1"
+    val circe = "0.14.3"
     val circeOptics = "0.14.1"
     val circeConfig = "0.7.0"
     val circeJackson = "0.14.0"
