@@ -53,7 +53,7 @@ object Dependencies {
     val protobuf = "3.21.9"
 
     val refererParser = "1.1.0"
-    val maxmindIplookups = "0.7.1"
+    val maxmindIplookups = "0.7.2"
     val circe = "0.14.1"
     val circeOptics = "0.14.1"
     val circeConfig = "0.7.0"
