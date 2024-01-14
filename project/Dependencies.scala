@@ -34,7 +34,7 @@ object Dependencies {
     val commonsText = "1.10.0"
     val jodaTime = "2.10.1"
     val useragent = "1.21"
-    val uaParser = "1.5.4"
+    val uaParser = "1.6.1"
     val snakeYaml = "1.33"
     val postgresDriver = "42.5.2"
     val mysqlConnector = "8.0.29"
