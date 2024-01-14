@@ -44,7 +44,7 @@ object Dependencies {
     val iabClient = "0.2.0"
     val yauaa = "7.11.0"
     val log4jToSlf4j = "2.18.0"
-    val guava = "28.1-jre"
+    val guava = "28.2-jre"
     val slf4j = "2.0.3"
     val log4j = "2.20.0"
     val thrift = "0.15.0"
