@@ -52,7 +52,7 @@ object Dependencies {
     val netty = "4.1.100.Final"
     val protobuf = "3.21.9"
 
-    val refererParser = "1.1.0"
+    val refererParser = "2.0.0"
     val maxmindIplookups = "0.7.1"
     val circe = "0.14.1"
     val circeOptics = "0.14.1"
