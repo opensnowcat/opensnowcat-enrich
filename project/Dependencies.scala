@@ -84,7 +84,7 @@ object Dependencies {
     val catsEffect = "2.5.0"
     val fs2PubSub = "0.18.1"
     val fs2Aws = "3.1.1"
-    val fs2Kafka = "1.10.0"
+    val fs2Kafka = "1.11.0"
     val fs2BlobStorage = "0.8.6"
     val azureIdentity = "1.11.0"
     val http4s = "0.21.34"
