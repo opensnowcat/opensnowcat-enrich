@@ -97,7 +97,7 @@ object Dependencies {
 
     val specs2 = "4.17.0"
     val specs2Cats = "4.11.0"
-    val specs2CE = "0.4.1"
+    val specs2CE = "0.4.2"
     val scalacheck = "1.14.0"
     val testcontainers = "0.40.10"
     val parserCombinators = "2.1.1"
