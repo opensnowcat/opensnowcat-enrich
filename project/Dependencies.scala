@@ -38,7 +38,7 @@ object Dependencies {
     val snakeYaml = "1.33"
     val postgresDriver = "42.5.2"
     val mysqlConnector = "8.0.29"
-    val hikariCP = "5.0.1"
+    val hikariCP = "5.1.0"
     val jaywayJsonpath = "2.7.0"
     val jsonsmart = "2.4.10"
     val iabClient = "0.2.0"
