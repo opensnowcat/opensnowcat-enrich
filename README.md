@@ -1,4 +1,6 @@
 # OpenSnowcat Enrich
+![GitHub Release](https://img.shields.io/github/v/release/opensnowcat/opensnowcat-enrich)
+[![main](https://github.com/opensnowcat/opensnowcat-enrich/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/opensnowcat/opensnowcat-enrich/actions/workflows/test.yml)
 [![License][license-image]][license]
 
 ## Welcome
