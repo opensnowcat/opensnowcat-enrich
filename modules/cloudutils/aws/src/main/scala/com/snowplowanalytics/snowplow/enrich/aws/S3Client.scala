@@ -65,4 +65,3 @@ object S3Client {
         Region.EU_CENTRAL_1
     }
 }
-

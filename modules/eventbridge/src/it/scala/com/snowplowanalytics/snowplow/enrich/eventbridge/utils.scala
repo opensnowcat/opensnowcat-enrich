@@ -39,44 +39,50 @@ object utils {
   }
 
   def mkEnrichPipe(
-                    localstackPort: Int,
-                    uuid: String
-                  ): Resource[IO, Pipe[IO, Array[Byte], OutputRow]] = {
+    localstackPort: Int,
+    uuid: String
+  ): Resource[IO, Pipe[IO, Array[Byte], OutputRow]] =
     for {
       blocker <- Blocker[IO]
       streams = IntegrationTestConfig.getStreams(uuid)
-      kinesisRawSink <- com.snowplowanalytics.snowplow.enrich.kinesis.Sink.init[IO](blocker, IntegrationTestConfig.kinesisOutputStreamConfig(localstackPort, streams.kinesisInput))
+      kinesisRawSink <- com.snowplowanalytics.snowplow.enrich.kinesis.Sink
+                          .init[IO](blocker, IntegrationTestConfig.kinesisOutputStreamConfig(localstackPort, streams.kinesisInput))
     } yield {
-      val kinesisGoodOutput = asGood(outputStream(blocker, IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputGood)))
-      val kinesisBadOutput = asBad(outputStream(blocker, IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputBad)))
+      val kinesisGoodOutput = asGood(
+        outputStream(blocker, IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputGood))
+      )
+      val kinesisBadOutput = asBad(
+        outputStream(blocker, IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputBad))
+      )
 
       collectorPayloads =>
-        kinesisGoodOutput.merge(kinesisBadOutput)
+        kinesisGoodOutput
+          .merge(kinesisBadOutput)
           .interruptAfter(3.minutes)
           .concurrently(collectorPayloads.evalMap(bytes => kinesisRawSink(List(bytes))))
     }
-  }
 
   private def outputStream(blocker: Blocker, config: Input.Kinesis): Stream[IO, Array[Byte]] =
-    com.snowplowanalytics.snowplow.enrich.kinesis.Source.init[IO](blocker, config, IntegrationTestConfig.monitoring)
+    com.snowplowanalytics.snowplow.enrich.kinesis.Source
+      .init[IO](blocker, config, IntegrationTestConfig.monitoring)
       .map(com.snowplowanalytics.snowplow.enrich.kinesis.KinesisRun.getPayload)
 
-  private def asGood(source: Stream[IO, Array[Byte]]): Stream[IO, OutputRow.Good] = {
+  private def asGood(source: Stream[IO, Array[Byte]]): Stream[IO, OutputRow.Good] =
     source.map { bytes =>
       val s = new String(bytes)
       // this is an eventbridge event, we need to extract the `detail` entry from it
       val parsed = io.circe.parser.parse(s) match {
         case Right(json) =>
-          json.hcursor.downField("detail")
+          json.hcursor
+            .downField("detail")
             .as[Event] match {
             case Right(r) => r
-            case Left(e) =>throw new RuntimeException(s"Can't parse enriched events from eventbridge: $e, json: $json")
+            case Left(e) => throw new RuntimeException(s"Can't parse enriched events from eventbridge: $e, json: $json")
           }
         case Left(e) => throw new RuntimeException(s"Can't parse enriched event [$s]. Error: $e")
       }
       OutputRow.Good(parsed)
     }
-  }
 
   private def asBad(source: Stream[IO, Array[Byte]]): Stream[IO, OutputRow.Bad] =
     source.map { bytes =>
@@ -84,7 +90,8 @@ object utils {
       // this is an eventbridge event, we need to extract the `detail` entry from it
       val parsed = io.circe.parser.parse(s) match {
         case Right(json) =>
-          json.hcursor.downField("detail")
+          json.hcursor
+            .downField("detail")
             .as[io.circe.Json]
             .getOrElse(throw new RuntimeException(s"Can't parse bad row from eventbridge: $s"))
 
@@ -98,11 +105,12 @@ object utils {
     }
 
   def parseOutput(output: List[OutputRow], testName: String): (List[Event], List[BadRow]) = {
-    val good = output.collect { case OutputRow.Good(e) => e}
+    val good = output.collect { case OutputRow.Good(e) => e }
     println(s"[$testName] Bad rows:")
-    val bad = output.collect { case OutputRow.Bad(b) =>
-      println(s"[$testName] ${b.compact}")
-      b
+    val bad = output.collect {
+      case OutputRow.Bad(b) =>
+        println(s"[$testName] ${b.compact}")
+        b
     }
     (good, bad)
   }
