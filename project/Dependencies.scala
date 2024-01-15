@@ -95,7 +95,7 @@ object Dependencies {
 
     val snowplowTracker = "1.0.0"
 
-    val specs2 = "4.17.0"
+    val specs2 = "4.20.4"
     val specs2Cats = "4.11.0"
     val specs2CE = "0.5.4"
     val scalacheck = "1.14.0"
