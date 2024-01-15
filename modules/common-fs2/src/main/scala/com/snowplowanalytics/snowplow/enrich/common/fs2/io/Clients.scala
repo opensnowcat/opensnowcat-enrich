@@ -18,7 +18,7 @@ import fs2.Stream
 import org.http4s.{Headers, Request, Uri}
 import org.http4s.client.defaults
 import org.http4s.client.{Client => Http4sClient}
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.blaze.client.BlazeClientBuilder
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -27,7 +27,7 @@ import Clients._
 import org.http4s.blaze.pipeline.Command
 import org.http4s.client.middleware.{Retry, RetryPolicy}
 import org.http4s.syntax.string._
-import org.http4s.util.CaseInsensitiveString
+import org.typelevel.ci.{ CIString, _ }
 
 case class Clients[F[_]: ConcurrentEffect](clients: List[Client[F]]) {
 
@@ -90,8 +90,8 @@ object Clients {
     if (attemptNumber > 1) None
     else Some(100.millis)
 
-  private def redactHeadersWhen(header: CaseInsensitiveString) =
-    (Headers.SensitiveHeaders + "apikey".ci).contains(header)
+  private def redactHeadersWhen(header: CIString) =
+    (Headers.SensitiveHeaders + ci"apikey").contains(header)
 
   trait RetryableFailure extends Throwable
 

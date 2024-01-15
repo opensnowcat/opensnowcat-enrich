@@ -19,7 +19,7 @@ import scala.concurrent.ExecutionContext
 import cats.implicits._
 import cats.effect.IO
 
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.blaze.client.BlazeClientBuilder
 
 import cats.effect.testing.specs2.CatsIO
 
