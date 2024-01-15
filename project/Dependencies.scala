@@ -37,7 +37,7 @@ object Dependencies {
     val uaParser = "1.6.1"
     val snakeYaml = "1.33"
     val postgresDriver = "42.5.2"
-    val mysqlConnector = "8.0.33"
+    val mysqlConnector = "8.2.0"
     val hikariCP = "5.1.0"
     val jaywayJsonpath = "2.7.0"
     val jsonsmart = "2.4.11"
@@ -107,16 +107,16 @@ object Dependencies {
   }
 
   object Libraries {
-    val commonsCodec = "commons-codec"                 % "commons-codec"        % V.commonsCodec
-    val commonsText = "org.apache.commons"             % "commons-text"         % V.commonsText
-    val jodaTime = "joda-time"                         % "joda-time"            % V.jodaTime
-    val useragent = "eu.bitwalker"                     % "UserAgentUtils"       % V.useragent
-    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind"     % V.jackson
-    val snakeYaml = "org.yaml"                         % "snakeyaml"            % V.snakeYaml
-    val uaParser = "com.github.ua-parser"              % "uap-java"             % V.uaParser
-    val postgresDriver = "org.postgresql"              % "postgresql"           % V.postgresDriver
-    val mysqlConnector = "mysql"                       % "mysql-connector-java" % V.mysqlConnector
-    val hikariCP = ("com.zaxxer"                       % "HikariCP"             % V.hikariCP)
+    val commonsCodec = "commons-codec"                 % "commons-codec"     % V.commonsCodec
+    val commonsText = "org.apache.commons"             % "commons-text"      % V.commonsText
+    val jodaTime = "joda-time"                         % "joda-time"         % V.jodaTime
+    val useragent = "eu.bitwalker"                     % "UserAgentUtils"    % V.useragent
+    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind"  % V.jackson
+    val snakeYaml = "org.yaml"                         % "snakeyaml"         % V.snakeYaml
+    val uaParser = "com.github.ua-parser"              % "uap-java"          % V.uaParser
+    val postgresDriver = "org.postgresql"              % "postgresql"        % V.postgresDriver
+    val mysqlConnector = "com.mysql"                   % "mysql-connector-j" % V.mysqlConnector
+    val hikariCP = ("com.zaxxer"                       % "HikariCP"          % V.hikariCP)
       .exclude("org.slf4j", "slf4j-api")
     val jaywayJsonpath = "com.jayway.jsonpath"    % "json-path"      % V.jaywayJsonpath
     val jsonsmart = "net.minidev"                 % "json-smart"     % V.jsonsmart
