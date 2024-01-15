@@ -71,7 +71,7 @@ object Dependencies {
 
     val awsSdk = "1.12.637"
     val gcpSdk = "2.31.0"
-    val awsSdk2 = "2.18.7"
+    val awsSdk2 = "2.18.41"
     val kinesisClient2 = "2.4.3"
     val kafka = "7.5.3-ce"
     val mskAuth = "1.1.4"
