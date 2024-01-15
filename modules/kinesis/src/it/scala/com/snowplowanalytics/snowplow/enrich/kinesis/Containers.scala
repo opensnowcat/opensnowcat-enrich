@@ -115,67 +115,67 @@ object Containers extends CatsIO {
       waitStrategy = Wait.forLogMessage(s".*$waitLogMessage.*", 1)
     )
     container.container.withNetwork(network)
-    Resource.make (
+    Resource.make(
       IO(startLocalstack(needsLocalstack, KinesisConfig.region, streams)) >>
         IO(startContainerWithLogs(container.container, testName))
-    )(
-      e => IO(e.stop())
-    )
+    )(e => IO(e.stop()))
   }
 
-  def mysqlServer: Resource[IO, JGenericContainer[_]] = Resource.make {
-    val container = GenericContainer(
-      dockerImage = "mysql:8.0.31",
-      fileSystemBind = Seq(
-        GenericContainer.FileSystemBind(
-          "modules/kinesis/src/it/resources/mysql",
-          "/docker-entrypoint-initdb.d",
-          BindMode.READ_ONLY
-        )
-      ),
-      env = Map(
-        "MYSQL_RANDOM_ROOT_PASSWORD" -> "yes",
-        "MYSQL_DATABASE" -> "snowplow",
-        "MYSQL_USER" -> "enricher",
-        "MYSQL_PASSWORD" -> "supersecret1"
-      ),
-      waitStrategy = Wait.forLogMessage(".*ready for connections.*", 1)
-    )
-    container.underlyingUnsafeContainer.withNetwork(network)
-    container.underlyingUnsafeContainer.withNetworkAliases("mysql")
-    IO(container.start()) >> IO.pure(container.container)
-  } {
-    c => IO(c.stop())
-  }
+  def mysqlServer: Resource[IO, JGenericContainer[_]] =
+    Resource.make {
+      val container = GenericContainer(
+        dockerImage = "mysql:8.0.31",
+        fileSystemBind = Seq(
+          GenericContainer.FileSystemBind(
+            "modules/kinesis/src/it/resources/mysql",
+            "/docker-entrypoint-initdb.d",
+            BindMode.READ_ONLY
+          )
+        ),
+        env = Map(
+          "MYSQL_RANDOM_ROOT_PASSWORD" -> "yes",
+          "MYSQL_DATABASE" -> "snowplow",
+          "MYSQL_USER" -> "enricher",
+          "MYSQL_PASSWORD" -> "supersecret1"
+        ),
+        waitStrategy = Wait.forLogMessage(".*ready for connections.*", 1)
+      )
+      container.underlyingUnsafeContainer.withNetwork(network)
+      container.underlyingUnsafeContainer.withNetworkAliases("mysql")
+      IO(container.start()) >> IO.pure(container.container)
+    } { c =>
+      IO(c.stop())
+    }
 
-  def httpServer: Resource[IO, JGenericContainer[_]] = Resource.make {
-    val container = GenericContainer(
-      dockerImage = "nginx:1.23.2",
-      fileSystemBind = Seq(
-        GenericContainer.FileSystemBind(
-          "modules/kinesis/src/it/resources/nginx/default.conf",
-          "/etc/nginx/conf.d/default.conf",
-          BindMode.READ_ONLY
+  def httpServer: Resource[IO, JGenericContainer[_]] =
+    Resource.make {
+      val container = GenericContainer(
+        dockerImage = "nginx:1.23.2",
+        fileSystemBind = Seq(
+          GenericContainer.FileSystemBind(
+            "modules/kinesis/src/it/resources/nginx/default.conf",
+            "/etc/nginx/conf.d/default.conf",
+            BindMode.READ_ONLY
+          ),
+          GenericContainer.FileSystemBind(
+            "modules/kinesis/src/it/resources/nginx/.htpasswd",
+            "/etc/.htpasswd",
+            BindMode.READ_ONLY
+          ),
+          GenericContainer.FileSystemBind(
+            "modules/kinesis/src/it/resources/nginx/www",
+            "/usr/share/nginx/html",
+            BindMode.READ_ONLY
+          )
         ),
-        GenericContainer.FileSystemBind(
-          "modules/kinesis/src/it/resources/nginx/.htpasswd",
-          "/etc/.htpasswd",
-          BindMode.READ_ONLY
-        ),
-        GenericContainer.FileSystemBind(
-          "modules/kinesis/src/it/resources/nginx/www",
-          "/usr/share/nginx/html",
-          BindMode.READ_ONLY
-        )
-      ),
-      waitStrategy = Wait.forLogMessage(".*start worker processes.*", 1)
-    )
-    container.underlyingUnsafeContainer.withNetwork(network)
-    container.underlyingUnsafeContainer.withNetworkAliases("api")
-    IO(container.start()) >> IO.pure(container.container)
-  } {
-    c => IO(c.stop())
-  }
+        waitStrategy = Wait.forLogMessage(".*start worker processes.*", 1)
+      )
+      container.underlyingUnsafeContainer.withNetwork(network)
+      container.underlyingUnsafeContainer.withNetworkAliases("api")
+      IO(container.start()) >> IO.pure(container.container)
+    } { c =>
+      IO(c.stop())
+    }
 
   private def startContainerWithLogs(
     container: JGenericContainer[_],
@@ -211,17 +211,18 @@ object Containers extends CatsIO {
     needsLocalstack: Boolean,
     region: String,
     streams: KinesisConfig.Streams
-  ): Unit = synchronized {
-    if(needsLocalstack) {
-      localstack.start()
-      createStreams(
-        localstack,
-        localstackPort,
-        region,
-        streams
-      )
-    } else ()
-  }
+  ): Unit =
+    synchronized {
+      if (needsLocalstack) {
+        localstack.start()
+        createStreams(
+          localstack,
+          localstackPort,
+          region,
+          streams
+        )
+      } else ()
+    }
 
   private def createStreams(
     localstack: JGenericContainer[_],

@@ -24,43 +24,46 @@ object KinesisConfig {
   val region = "eu-central-1"
   val endpoint = "localhost"
 
-  def enrichedStreamConfig(localstackPort: Int, streamName: String) = Input.Kinesis(
-    UUID.randomUUID().toString,
-    streamName,
-    Some(region),
-    Input.Kinesis.InitPosition.TrimHorizon,
-    Input.Kinesis.Retrieval.Polling(1000),
-    1000,
-    BackoffPolicy(10.millis, 10.seconds, Some(10)),
-    Some(URI.create(getEndpoint(localstackPort))),
-    Some(URI.create(getEndpoint(localstackPort))),
-    Some(URI.create(getEndpoint(localstackPort)))
-  )
+  def enrichedStreamConfig(localstackPort: Int, streamName: String) =
+    Input.Kinesis(
+      UUID.randomUUID().toString,
+      streamName,
+      Some(region),
+      Input.Kinesis.InitPosition.TrimHorizon,
+      Input.Kinesis.Retrieval.Polling(1000),
+      1000,
+      BackoffPolicy(10.millis, 10.seconds, Some(10)),
+      Some(URI.create(getEndpoint(localstackPort))),
+      Some(URI.create(getEndpoint(localstackPort))),
+      Some(URI.create(getEndpoint(localstackPort)))
+    )
 
-  def badStreamConfig(localstackPort: Int, streamName: String) = Input.Kinesis(
-    UUID.randomUUID().toString,
-    streamName,
-    Some(region),
-    Input.Kinesis.InitPosition.TrimHorizon,
-    Input.Kinesis.Retrieval.Polling(1000),
-    1000,
-    BackoffPolicy(10.millis, 10.seconds, Some(10)),
-    Some(URI.create(getEndpoint(localstackPort))),
-    Some(URI.create(getEndpoint(localstackPort))),
-    Some(URI.create(getEndpoint(localstackPort)))
-  )
+  def badStreamConfig(localstackPort: Int, streamName: String) =
+    Input.Kinesis(
+      UUID.randomUUID().toString,
+      streamName,
+      Some(region),
+      Input.Kinesis.InitPosition.TrimHorizon,
+      Input.Kinesis.Retrieval.Polling(1000),
+      1000,
+      BackoffPolicy(10.millis, 10.seconds, Some(10)),
+      Some(URI.create(getEndpoint(localstackPort))),
+      Some(URI.create(getEndpoint(localstackPort))),
+      Some(URI.create(getEndpoint(localstackPort)))
+    )
 
-  def rawStreamConfig(localstackPort: Int, streamName: String) = Output.Kinesis(
-    streamName,
-    Some(region),
-    None,
-    BackoffPolicy(10.millis, 10.seconds, Some(10)),
-    BackoffPolicy(100.millis, 1.second, None),
-    500,
-    5242880,
-    Some(URI.create(getEndpoint(localstackPort))),
-    jsonOutput = false
-  )
+  def rawStreamConfig(localstackPort: Int, streamName: String) =
+    Output.Kinesis(
+      streamName,
+      Some(region),
+      None,
+      BackoffPolicy(10.millis, 10.seconds, Some(10)),
+      BackoffPolicy(100.millis, 1.second, None),
+      500,
+      5242880,
+      Some(URI.create(getEndpoint(localstackPort))),
+      jsonOutput = false
+    )
 
   val monitoring = Monitoring(
     None,
@@ -70,7 +73,11 @@ object KinesisConfig {
   private def getEndpoint(localstackPort: Int): String =
     s"http://$endpoint:$localstackPort"
 
-  case class Streams(raw: String, enriched: String, bad: String)
+  case class Streams(
+    raw: String,
+    enriched: String,
+    bad: String
+  )
 
   def getStreams(uuid: String): Streams =
     Streams(s"raw-$uuid", s"enriched-$uuid", s"bad-1-$uuid")
