@@ -80,7 +80,7 @@ object Dependencies {
     val config = "1.3.4"
 
     val decline = "1.0.0"
-    val fs2 = "2.5.11"
+    val fs2 = "3.9.3"
     val catsEffect = "2.5.0"
     val fs2PubSub = "0.18.1"
     val fs2Aws = "3.1.1"
