@@ -85,7 +85,7 @@ object Dependencies {
     val fs2PubSub = "0.18.1"
     val fs2Aws = "3.1.1"
     val fs2Kafka = "1.10.0"
-    val fs2BlobStorage = "0.8.11"
+    val fs2BlobStorage = "0.9.12"
     val azureIdentity = "1.11.0"
     val http4s = "0.21.34"
     val log4cats = "1.3.0"
