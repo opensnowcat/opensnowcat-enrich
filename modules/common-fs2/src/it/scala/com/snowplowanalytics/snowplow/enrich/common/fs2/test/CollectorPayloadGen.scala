@@ -29,7 +29,7 @@ import org.apache.thrift.TSerializer
 
 import java.util.Base64
 
-import com.snowplowanalytics.iglu.core.{ SelfDescribingData, SchemaKey, SchemaVer }
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.CirceIgluCodecs._
 
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
@@ -42,7 +42,9 @@ object CollectorPayloadGen {
     generateRaw(nbGoodEvents, nbBadRows).map(_.toThrift).map(new TSerializer().serialize)
 
   def generateRaw[F[_]: Sync](nbGoodEvents: Long, nbBadRows: Long): Stream[F, CollectorPayload] =
-    Stream.repeatEval(runGen(collectorPayloadGen(true))).take(nbGoodEvents) ++ Stream.repeatEval(runGen(collectorPayloadGen(false))).take(nbBadRows)
+    Stream.repeatEval(runGen(collectorPayloadGen(true))).take(nbGoodEvents) ++ Stream
+      .repeatEval(runGen(collectorPayloadGen(false)))
+      .take(nbBadRows)
 
   private def collectorPayloadGen(valid: Boolean): Gen[CollectorPayload] =
     for {
@@ -76,46 +78,74 @@ object CollectorPayloadGen {
       aid <- Gen.const("enrich-kinesis-integration-tests").withKey("aid")
       e <- Gen.const("ue").withKey("e")
       tv <- Gen.oneOf("scala-tracker_1.0.0", "js_2.0.0", "go_1.2.3").withKey("tv")
-      uePx <-
-        if(valid)
-          ueGen.map(_.toString).map(str => base64Encoder.encodeToString(str.getBytes)).withKey("ue_px")
-        else
-          Gen.const("foo").withKey("ue_px")
+      uePx <- if (valid)
+                ueGen.map(_.toString).map(str => base64Encoder.encodeToString(str.getBytes)).withKey("ue_px")
+              else
+                Gen.const("foo").withKey("ue_px")
     } yield SelfDescribingData(
-      SchemaKey("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", SchemaVer.Full(1,0,4)),
-       List(asObject(List(p, aid, e, uePx, tv))).asJson
+      SchemaKey("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", SchemaVer.Full(1, 0, 4)),
+      List(asObject(List(p, aid, e, uePx, tv))).asJson
     ).asJson.toString
 
   private def ueGen =
     for {
       sdj <- Gen.oneOf(changeFormGen, clientSessionGen)
     } yield SelfDescribingData(
-      SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", SchemaVer.Full(1,0,0)),
+      SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", SchemaVer.Full(1, 0, 0)),
       sdj.asJson
     ).asJson
 
-
   private def changeFormGen =
     for {
-      formId    <- strGen(32, Gen.alphaNumChar).withKey("formId")
+      formId <- strGen(32, Gen.alphaNumChar).withKey("formId")
       elementId <- strGen(32, Gen.alphaNumChar).withKey("elementId")
-      nodeName  <- Gen.oneOf(List("INPUT", "TEXTAREA", "SELECT")).withKey("nodeName")
-      `type`    <- Gen.option(Gen.oneOf(List("button", "checkbox", "color", "date", "datetime", "datetime-local", "email", "file", "hidden", "image", "month", "number", "password", "radio", "range", "reset", "search", "submit", "tel", "text", "time", "url", "week"))).withKeyOpt("type")
-      value     <- Gen.option(strGen(16, Gen.alphaNumChar)).withKeyNull("value")
+      nodeName <- Gen.oneOf(List("INPUT", "TEXTAREA", "SELECT")).withKey("nodeName")
+      `type` <- Gen
+                  .option(
+                    Gen.oneOf(
+                      List(
+                        "button",
+                        "checkbox",
+                        "color",
+                        "date",
+                        "datetime",
+                        "datetime-local",
+                        "email",
+                        "file",
+                        "hidden",
+                        "image",
+                        "month",
+                        "number",
+                        "password",
+                        "radio",
+                        "range",
+                        "reset",
+                        "search",
+                        "submit",
+                        "tel",
+                        "text",
+                        "time",
+                        "url",
+                        "week"
+                      )
+                    )
+                  )
+                  .withKeyOpt("type")
+      value <- Gen.option(strGen(16, Gen.alphaNumChar)).withKeyNull("value")
     } yield SelfDescribingData(
-      SchemaKey("com.snowplowanalytics.snowplow", "change_form", "jsonschema", SchemaVer.Full(1,0,0)),
+      SchemaKey("com.snowplowanalytics.snowplow", "change_form", "jsonschema", SchemaVer.Full(1, 0, 0)),
       asObject(List(formId, elementId, nodeName, `type`, value))
     )
 
   private def clientSessionGen =
     for {
-      userId            <- Gen.uuid.withKey("userId")
-      sessionId         <- Gen.uuid.withKey("sessionId")
-      sessionIndex      <- Gen.choose(0, 2147483647).withKey("sessionIndex")
+      userId <- Gen.uuid.withKey("userId")
+      sessionId <- Gen.uuid.withKey("sessionId")
+      sessionIndex <- Gen.choose(0, 2147483647).withKey("sessionIndex")
       previousSessionId <- Gen.option(Gen.uuid).withKeyNull("previousSessionId")
-      storageMechanism  <- Gen.oneOf(List("SQLITE", "COOKIE_1", "COOKIE_3", "LOCAL_STORAGE", "FLASH_LSO")).withKey("storageMechanism")
+      storageMechanism <- Gen.oneOf(List("SQLITE", "COOKIE_1", "COOKIE_3", "LOCAL_STORAGE", "FLASH_LSO")).withKey("storageMechanism")
     } yield SelfDescribingData(
-      SchemaKey("com.snowplowanalytics.snowplow", "client_session", "jsonschema", SchemaVer.Full(1,0,1)),
+      SchemaKey("com.snowplowanalytics.snowplow", "client_session", "jsonschema", SchemaVer.Full(1, 0, 1)),
       asObject(List(userId, sessionId, sessionIndex, previousSessionId, storageMechanism))
     )
 
@@ -161,7 +191,7 @@ object CollectorPayloadGen {
 
   implicit class GenOps[A](gen: Gen[A]) {
     def withKey[B](name: String)(implicit enc: Encoder[A]): Gen[Option[(String, Json)]] =
-      gen.map { a => Some((name -> a.asJson)) }
+      gen.map(a => Some((name -> a.asJson)))
   }
 
   implicit class GenOptOps[A](gen: Gen[Option[A]]) {

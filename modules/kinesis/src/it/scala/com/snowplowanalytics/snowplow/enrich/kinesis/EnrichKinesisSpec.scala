@@ -36,32 +36,34 @@ class EnrichKinesisSpec extends Specification with AfterAll with CatsIO {
 
   "enrich-kinesis" should {
     "be able to parse the minimal config" in {
-      Containers.enrich(
-        configPath = "config/config.kinesis.minimal.hocon",
-        testName = "minimal",
-        needsLocalstack = false,
-        enrichments = Nil
-      ).use { e =>
-        IO(e.getLogs must contain("Running Enrich"))
-      }
+      Containers
+        .enrich(
+          configPath = "config/config.kinesis.minimal.hocon",
+          testName = "minimal",
+          needsLocalstack = false,
+          enrichments = Nil
+        )
+        .use { e =>
+          IO(e.getLogs must contain("Running Enrich"))
+        }
     }
 
     "emit the correct number of enriched events and bad rows" in {
       import utils._
 
       val testName = "count"
-      val nbGood = 1000l
-      val nbBad = 100l
+      val nbGood = 1000L
+      val nbBad = 100L
       val uuid = UUID.randomUUID().toString
 
       val resources = for {
         _ <- Containers.enrich(
-          configPath = "modules/kinesis/src/it/resources/enrich/enrich-localstack.hocon",
-          testName = "count",
-          needsLocalstack = true,
-          enrichments = Nil,
-          uuid = uuid
-        )
+               configPath = "modules/kinesis/src/it/resources/enrich/enrich-localstack.hocon",
+               testName = "count",
+               needsLocalstack = true,
+               enrichments = Nil,
+               uuid = uuid
+             )
         enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
       } yield enrichPipe
 
@@ -82,7 +84,7 @@ class EnrichKinesisSpec extends Specification with AfterAll with CatsIO {
       import utils._
 
       val testName = "enrichments"
-      val nbGood = 1000l
+      val nbGood = 1000L
       val uuid = UUID.randomUUID().toString
 
       val enrichments = List(
@@ -98,12 +100,12 @@ class EnrichKinesisSpec extends Specification with AfterAll with CatsIO {
         _ <- Containers.mysqlServer
         _ <- Containers.httpServer
         _ <- Containers.enrich(
-          configPath = "modules/kinesis/src/it/resources/enrich/enrich-localstack.hocon",
-          testName = "enrichments",
-          needsLocalstack = true,
-          enrichments = enrichments,
-          uuid = uuid
-        )
+               configPath = "modules/kinesis/src/it/resources/enrich/enrich-localstack.hocon",
+               testName = "enrichments",
+               needsLocalstack = true,
+               enrichments = enrichments,
+               uuid = uuid
+             )
         enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
       } yield enrichPipe
 
@@ -118,28 +120,30 @@ class EnrichKinesisSpec extends Specification with AfterAll with CatsIO {
           good.map { enriched =>
             enriched.derived_contexts.data.map(_.schema) must containTheSameElementsAs(enrichmentsContexts)
           }
-          bad.size.toLong must beEqualTo(0l)
+          bad.size.toLong must beEqualTo(0L)
         }
       }
     }
 
     "shutdown when it receives a SIGTERM" in {
-      Containers.enrich(
-        configPath = "modules/kinesis/src/it/resources/enrich/enrich-localstack.hocon",
-        testName = "stop",
-        needsLocalstack = true,
-        enrichments = Nil,
-        waitLogMessage = "enrich.metrics"
-      ).use { enrich =>
-        for {
-          _ <- IO(println("stop - Sending signal"))
-          _ <- IO(enrich.getDockerClient().killContainerCmd(enrich.getContainerId()).withSignal("TERM").exec())
-          _ <- Containers.waitUntilStopped(enrich)
-        } yield {
-          enrich.isRunning() must beFalse
-          enrich.getLogs() must contain("Enrich stopped")
+      Containers
+        .enrich(
+          configPath = "modules/kinesis/src/it/resources/enrich/enrich-localstack.hocon",
+          testName = "stop",
+          needsLocalstack = true,
+          enrichments = Nil,
+          waitLogMessage = "enrich.metrics"
+        )
+        .use { enrich =>
+          for {
+            _ <- IO(println("stop - Sending signal"))
+            _ <- IO(enrich.getDockerClient().killContainerCmd(enrich.getContainerId()).withSignal("TERM").exec())
+            _ <- Containers.waitUntilStopped(enrich)
+          } yield {
+            enrich.isRunning() must beFalse
+            enrich.getLogs() must contain("Enrich stopped")
+          }
         }
-      }
     }
   }
 }

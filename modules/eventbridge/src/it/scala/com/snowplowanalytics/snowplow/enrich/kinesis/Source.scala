@@ -45,10 +45,10 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input.Kinesis.
 object Source {
 
   def init[F[_]: ConcurrentEffect: ContextShift: Timer](
-                                                         blocker: Blocker,
-                                                         input: Input,
-                                                         monitoring: Monitoring
-                                                       ): Stream[F, CommittableRecord] =
+    blocker: Blocker,
+    input: Input,
+    monitoring: Monitoring
+  ): Stream[F, CommittableRecord] =
     input match {
       case k: Input.Kinesis =>
         k.region.orElse(getRuntimeRegion) match {
@@ -62,36 +62,36 @@ object Source {
     }
 
   def kinesis[F[_]: ConcurrentEffect: ContextShift: Sync: Timer](
-                                                                  blocker: Blocker,
-                                                                  kinesisConfig: Input.Kinesis,
-                                                                  region: String,
-                                                                  monitoring: Monitoring
-                                                                ): Stream[F, CommittableRecord] = {
+    blocker: Blocker,
+    kinesisConfig: Input.Kinesis,
+    region: String,
+    monitoring: Monitoring
+  ): Stream[F, CommittableRecord] = {
     val resources =
       for {
         region <- Resource.pure[F, Region](Region.of(region))
         bufferSize <- Resource.eval[F, Int Refined Positive](
-          refineV[Positive](kinesisConfig.bufferSize) match {
-            case Right(mc) => Sync[F].pure(mc)
-            case Left(e) =>
-              Sync[F].raiseError(
-                new IllegalArgumentException(s"${kinesisConfig.bufferSize} can't be refined as positive: $e")
-              )
-          }
-        )
+                        refineV[Positive](kinesisConfig.bufferSize) match {
+                          case Right(mc) => Sync[F].pure(mc)
+                          case Left(e) =>
+                            Sync[F].raiseError(
+                              new IllegalArgumentException(s"${kinesisConfig.bufferSize} can't be refined as positive: $e")
+                            )
+                        }
+                      )
         consumerSettings <- Resource.pure[F, KinesisConsumerSettings](
-          KinesisConsumerSettings(
-            kinesisConfig.streamName,
-            kinesisConfig.appName,
-            bufferSize = bufferSize
-          )
-        )
+                              KinesisConsumerSettings(
+                                kinesisConfig.streamName,
+                                kinesisConfig.appName,
+                                bufferSize = bufferSize
+                              )
+                            )
         kinesisClient <- mkKinesisClient[F](region, kinesisConfig.customEndpoint)
         dynamoClient <- mkDynamoDbClient[F](region, kinesisConfig.dynamodbCustomEndpoint)
         cloudWatchClient <- mkCloudWatchClient[F](region, kinesisConfig.cloudwatchCustomEndpoint)
         kinesis <- Resource.pure[F, Kinesis[F]](
-          Kinesis.create(blocker, scheduler(kinesisClient, dynamoClient, cloudWatchClient, kinesisConfig, monitoring, _))
-        )
+                     Kinesis.create(blocker, scheduler(kinesisClient, dynamoClient, cloudWatchClient, kinesisConfig, monitoring, _))
+                   )
       } yield (consumerSettings, kinesis)
 
     Stream
@@ -100,24 +100,24 @@ object Source {
   }
 
   private def scheduler[F[_]: Sync](
-                                     kinesisClient: KinesisAsyncClient,
-                                     dynamoDbClient: DynamoDbAsyncClient,
-                                     cloudWatchClient: CloudWatchAsyncClient,
-                                     kinesisConfig: Input.Kinesis,
-                                     monitoring: Monitoring,
-                                     recordProcessorFactory: ShardRecordProcessorFactory
-                                   ): F[Scheduler] =
+    kinesisClient: KinesisAsyncClient,
+    dynamoDbClient: DynamoDbAsyncClient,
+    cloudWatchClient: CloudWatchAsyncClient,
+    kinesisConfig: Input.Kinesis,
+    monitoring: Monitoring,
+    recordProcessorFactory: ShardRecordProcessorFactory
+  ): F[Scheduler] =
     Sync[F].delay(UUID.randomUUID()).map { uuid =>
       val hostname = InetAddress.getLocalHost().getCanonicalHostName()
 
       val configsBuilder =
         new ConfigsBuilder(kinesisConfig.streamName,
-          kinesisConfig.appName,
-          kinesisClient,
-          dynamoDbClient,
-          cloudWatchClient,
-          s"$hostname:$uuid",
-          recordProcessorFactory
+                           kinesisConfig.appName,
+                           kinesisClient,
+                           dynamoDbClient,
+                           cloudWatchClient,
+                           s"$hostname:$uuid",
+                           recordProcessorFactory
         )
 
       val initPositionExtended = kinesisConfig.initialPosition match {

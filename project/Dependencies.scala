@@ -32,20 +32,20 @@ object Dependencies {
     // Java
     val commonsCodec = "1.16.0"
     val commonsText = "1.11.0"
-    val jodaTime = "2.10.14"
+    val jodaTime = "2.12.6"
     val useragent = "1.21"
     val uaParser = "1.6.1"
-    val snakeYaml = "1.33"
+    val snakeYaml = "2.2"
     val postgresDriver = "42.5.2"
-    val mysqlConnector = "8.0.33"
+    val mysqlConnector = "8.2.0"
     val hikariCP = "5.1.0"
     val jaywayJsonpath = "2.7.0"
-    val jsonsmart = "2.4.11"
+    val jsonsmart = "2.5.0"
     val iabClient = "0.2.0"
     val yauaa = "7.11.0"
     val log4jToSlf4j = "2.22.1"
     val guava = "33.0.0-jre"
-    val slf4j = "2.0.3"
+    val slf4j = "2.0.11"
     val log4j = "2.22.1"
     val thrift = "0.19.0"
     val sprayJson = "1.3.6"
@@ -71,52 +71,52 @@ object Dependencies {
 
     val awsSdk = "1.12.637"
     val gcpSdk = "2.31.0"
-    val awsSdk2 = "2.18.7"
+    val awsSdk2 = "2.18.41"
     val kinesisClient2 = "2.4.3"
     val kafka = "7.5.3-ce"
-    val mskAuth = "1.1.4"
+    val mskAuth = "1.1.9"
     val nsqClient = "1.3.0"
     val jackson = "2.16.1"
     val config = "1.3.4"
 
-    val decline = "1.4.0"
+    val decline = "2.4.1"
     val fs2 = "2.5.11"
-    val catsEffect = "2.5.0"
+    val catsEffect = "2.5.5"
     val fs2PubSub = "0.18.1"
     val fs2Aws = "3.1.1"
     val fs2Kafka = "1.10.0"
     val fs2BlobStorage = "0.8.11"
     val azureIdentity = "1.11.0"
     val http4s = "0.21.34"
-    val log4cats = "1.3.0"
+    val log4cats = "1.3.1"
     val catsRetry = "2.1.1"
     val specsDiff = "0.9.0"
     val eventGen = "0.2.2"
 
     val snowplowTracker = "1.0.0"
 
-    val specs2 = "4.17.0"
+    val specs2 = "4.20.4"
     val specs2Cats = "4.11.0"
     val specs2CE = "0.5.4"
-    val scalacheck = "1.14.0"
+    val scalacheck = "1.14.3"
     val testcontainers = "0.40.10"
-    val parserCombinators = "2.1.1"
+    val parserCombinators = "2.3.0"
     val sentry = "1.7.30"
 
     val betterMonadicFor = "0.3.1"
   }
 
   object Libraries {
-    val commonsCodec = "commons-codec"                 % "commons-codec"        % V.commonsCodec
-    val commonsText = "org.apache.commons"             % "commons-text"         % V.commonsText
-    val jodaTime = "joda-time"                         % "joda-time"            % V.jodaTime
-    val useragent = "eu.bitwalker"                     % "UserAgentUtils"       % V.useragent
-    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind"     % V.jackson
-    val snakeYaml = "org.yaml"                         % "snakeyaml"            % V.snakeYaml
-    val uaParser = "com.github.ua-parser"              % "uap-java"             % V.uaParser
-    val postgresDriver = "org.postgresql"              % "postgresql"           % V.postgresDriver
-    val mysqlConnector = "mysql"                       % "mysql-connector-java" % V.mysqlConnector
-    val hikariCP = ("com.zaxxer"                       % "HikariCP"             % V.hikariCP)
+    val commonsCodec = "commons-codec"                 % "commons-codec"     % V.commonsCodec
+    val commonsText = "org.apache.commons"             % "commons-text"      % V.commonsText
+    val jodaTime = "joda-time"                         % "joda-time"         % V.jodaTime
+    val useragent = "eu.bitwalker"                     % "UserAgentUtils"    % V.useragent
+    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind"  % V.jackson
+    val snakeYaml = "org.yaml"                         % "snakeyaml"         % V.snakeYaml
+    val uaParser = "com.github.ua-parser"              % "uap-java"          % V.uaParser
+    val postgresDriver = "org.postgresql"              % "postgresql"        % V.postgresDriver
+    val mysqlConnector = "com.mysql"                   % "mysql-connector-j" % V.mysqlConnector
+    val hikariCP = ("com.zaxxer"                       % "HikariCP"          % V.hikariCP)
       .exclude("org.slf4j", "slf4j-api")
     val jaywayJsonpath = "com.jayway.jsonpath"    % "json-path"      % V.jaywayJsonpath
     val jsonsmart = "net.minidev"                 % "json-smart"     % V.jsonsmart
