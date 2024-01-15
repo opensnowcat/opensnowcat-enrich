@@ -70,13 +70,13 @@ object Containers {
   def localstackMappedPort = localstack.getMappedPort(localstackPort)
 
   def enrich(
-              configPath: String,
-              testName: String,
-              needsLocalstack: Boolean,
-              enrichments: List[Enrichment],
-              uuid: String = UUID.randomUUID().toString,
-              waitLogMessage: String = "Running Enrich"
-            ): Resource[IO, JGenericContainer[_]] = {
+    configPath: String,
+    testName: String,
+    needsLocalstack: Boolean,
+    enrichments: List[Enrichment],
+    uuid: String = UUID.randomUUID().toString,
+    waitLogMessage: String = "Running Enrich"
+  ): Resource[IO, JGenericContainer[_]] = {
     val streams = IntegrationTestConfig.getStreams(uuid)
 
     val container = GenericContainer(
@@ -184,9 +184,9 @@ object Containers {
     }
 
   private def startContainerWithLogs(
-                                      container: JGenericContainer[_],
-                                      loggerName: String
-                                    ): JGenericContainer[_] = {
+    container: JGenericContainer[_],
+    loggerName: String
+  ): JGenericContainer[_] = {
     val logger = LoggerFactory.getLogger(loggerName)
     val logs = new Slf4jLogConsumer(logger)
     container.start()
@@ -214,10 +214,10 @@ object Containers {
   // start() is blocking.
   // Calling start() on an already started container has no effect.
   private def startLocalstack(
-                               needsLocalstack: Boolean,
-                               region: String,
-                               streams: IntegrationTestConfig.Streams
-                             ): Unit =
+    needsLocalstack: Boolean,
+    region: String,
+    streams: IntegrationTestConfig.Streams
+  ): Unit =
     synchronized {
       if (needsLocalstack) {
         localstack.start()
@@ -230,10 +230,10 @@ object Containers {
     }
 
   private def createStreams(
-                             localstackPort: Int,
-                             region: String,
-                             streams: IntegrationTestConfig.Streams
-                           ): Unit = {
+    localstackPort: Int,
+    region: String,
+    streams: IntegrationTestConfig.Streams
+  ): Unit = {
     import software.amazon.awssdk.services._
 
     val endpoint = java.net.URI.create(s"http://127.0.0.4:$localstackPort")
@@ -255,40 +255,49 @@ object Containers {
       kinesisClient.createStream(kinesis.model.CreateStreamRequest.builder.streamName(stream).shardCount(1).build)
     }
 
-    def getKinesisARN(streamName: String): String = {
-      kinesisClient.describeStream(kinesis.model.DescribeStreamRequest.builder.streamName(streamName).build()).streamDescription().streamARN()
-    }
+    def getKinesisARN(streamName: String): String =
+      kinesisClient
+        .describeStream(kinesis.model.DescribeStreamRequest.builder.streamName(streamName).build())
+        .streamDescription()
+        .streamARN()
 
-    val eventbridgeStreams = List(
-      streams.eventbridgeGood -> getKinesisARN(streams.kinesisOutputGood),
-      streams.eventbridgeBad -> getKinesisARN(streams.kinesisOutputBad))
+    val eventbridgeStreams = List(streams.eventbridgeGood -> getKinesisARN(streams.kinesisOutputGood),
+                                  streams.eventbridgeBad -> getKinesisARN(streams.kinesisOutputBad)
+    )
 
-    eventbridgeStreams.foreach { case (eventbridgeStream, kinesisStreamARN) =>
-      // event-bus
-      eventBridgeClient.createEventBus(eventbridge.model.CreateEventBusRequest.builder()
-        .name(eventbridgeStream.eventBusName)
-        .build()
-      )
+    eventbridgeStreams.foreach {
+      case (eventbridgeStream, kinesisStreamARN) =>
+        // event-bus
+        eventBridgeClient.createEventBus(
+          eventbridge.model.CreateEventBusRequest
+            .builder()
+            .name(eventbridgeStream.eventBusName)
+            .build()
+        )
 
-      // rule
-      val ruleName = s"rule-${eventbridgeStream.eventBusName}"
-      val eventPattern = s"""{ "source": ["${eventbridgeStream.eventBusSource}"] }"""//.replace("\"", "\\\"")
-      eventBridgeClient.putRule(eventbridge.model.PutRuleRequest.builder()
-        .eventBusName(eventbridgeStream.eventBusName)
-        .name(ruleName)
-        .eventPattern(eventPattern)
-        .build()
-      )
+        // rule
+        val ruleName = s"rule-${eventbridgeStream.eventBusName}"
+        val eventPattern = s"""{ "source": ["${eventbridgeStream.eventBusSource}"] }""" //.replace("\"", "\\\"")
+        eventBridgeClient.putRule(
+          eventbridge.model.PutRuleRequest
+            .builder()
+            .eventBusName(eventbridgeStream.eventBusName)
+            .name(ruleName)
+            .eventPattern(eventPattern)
+            .build()
+        )
 
-      // target
-      val targetId = s"${eventbridgeStream.eventBusName}-target".take(64)
-      val targetCreationResult = eventBridgeClient.putTargets(eventbridge.model.PutTargetsRequest.builder()
-        .eventBusName(eventbridgeStream.eventBusName)
-        .rule(ruleName)
-        .targets(eventbridge.model.Target.builder().id(targetId).arn(kinesisStreamARN).build())
-        .build()
-      )
-      assert(targetCreationResult.failedEntryCount == 0, s"Target creation failed: $targetCreationResult")
+        // target
+        val targetId = s"${eventbridgeStream.eventBusName}-target".take(64)
+        val targetCreationResult = eventBridgeClient.putTargets(
+          eventbridge.model.PutTargetsRequest
+            .builder()
+            .eventBusName(eventbridgeStream.eventBusName)
+            .rule(ruleName)
+            .targets(eventbridge.model.Target.builder().id(targetId).arn(kinesisStreamARN).build())
+            .build()
+        )
+        assert(targetCreationResult.failedEntryCount == 0, s"Target creation failed: $targetCreationResult")
     }
   }
 }

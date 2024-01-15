@@ -17,10 +17,10 @@ import org.slf4j.LoggerFactory
 
 import cats.implicits._
 
-import cats.effect.{Resource, Sync, Async, ContextShift, Blocker}
+import cats.effect.{Async, Blocker, ContextShift, Resource, Sync}
 
 import org.http4s.client.{JavaNetClientBuilder, Client => Http4sClient}
-import org.http4s.{Request ,Method, Uri}
+import org.http4s.{Method, Request, Uri}
 
 import org.testcontainers.containers.{BindMode, GenericContainer => JGenericContainer, Network}
 import org.testcontainers.containers.wait.strategy.Wait
@@ -34,7 +34,7 @@ object Containers {
 
   //TODO Tests fail with the latest 1.3.0 version!
   private val nsqVersion = "v1.2.1"
-  
+
   case class NetworkInfo(
     networkAlias: String,
     broadcastAddress: String,
@@ -65,45 +65,45 @@ object Containers {
     for {
       network <- network()
       topology = NetworkTopology(
-        lookup1 = NetworkInfo(networkAlias = "nsqlookupd", broadcastAddress = "nsqlookupd", httpPort = 4161, tcpPort = 4160),
-        lookup2 = NetworkInfo(networkAlias = "nsqlookupd2", broadcastAddress = "nsqlookupd2", httpPort = 4261, tcpPort = 4260),
-        nsqd1 = NetworkInfo(networkAlias = "nsqd", broadcastAddress = "nsqd", httpPort = 4151, tcpPort = 4150),
-        nsqd2 = NetworkInfo(networkAlias = "nsqd2", broadcastAddress = "127.0.0.1", httpPort = 4251, tcpPort = 4250),
-        sourceTopic = "RawEvents",
-        goodDestTopic = "EnrichedEvents",
-        badDestTopic = "BadEnrichedEvents"
-      )
+                   lookup1 = NetworkInfo(networkAlias = "nsqlookupd", broadcastAddress = "nsqlookupd", httpPort = 4161, tcpPort = 4160),
+                   lookup2 = NetworkInfo(networkAlias = "nsqlookupd2", broadcastAddress = "nsqlookupd2", httpPort = 4261, tcpPort = 4260),
+                   nsqd1 = NetworkInfo(networkAlias = "nsqd", broadcastAddress = "nsqd", httpPort = 4151, tcpPort = 4150),
+                   nsqd2 = NetworkInfo(networkAlias = "nsqd2", broadcastAddress = "127.0.0.1", httpPort = 4251, tcpPort = 4250),
+                   sourceTopic = "RawEvents",
+                   goodDestTopic = "EnrichedEvents",
+                   badDestTopic = "BadEnrichedEvents"
+                 )
       _ <- nsqlookupd(network, topology.lookup1)
       _ <- nsqlookupd(network, topology.lookup2)
       _ <- nsqd(
-          network,
-          topology.nsqd1,
-          lookupAddress = s"${topology.lookup1.networkAlias}:${topology.lookup1.tcpPort}"
-        )
+             network,
+             topology.nsqd1,
+             lookupAddress = s"${topology.lookup1.networkAlias}:${topology.lookup1.tcpPort}"
+           )
       _ <- nsqd(
-          network,
-          topology.nsqd2,
-          lookupAddress = s"${topology.lookup2.networkAlias}:${topology.lookup2.tcpPort}"
-        )
+             network,
+             topology.nsqd2,
+             lookupAddress = s"${topology.lookup2.networkAlias}:${topology.lookup2.tcpPort}"
+           )
       _ <- Resource.eval(createTopics[F](blocker, topology))
       _ <- nsqToNsq(
-          network,
-          sourceAddress = s"${topology.nsqd1.networkAlias}:${topology.nsqd1.tcpPort}",
-          destinationAddress = s"${topology.nsqd2.networkAlias}:${topology.nsqd2.tcpPort}",
-          sourceTopic = topology.goodDestTopic,
-          destinationTopic = topology.goodDestTopic
-        )
+             network,
+             sourceAddress = s"${topology.nsqd1.networkAlias}:${topology.nsqd1.tcpPort}",
+             destinationAddress = s"${topology.nsqd2.networkAlias}:${topology.nsqd2.tcpPort}",
+             sourceTopic = topology.goodDestTopic,
+             destinationTopic = topology.goodDestTopic
+           )
       _ <- nsqToNsq(
-          network,
-          sourceAddress = s"${topology.nsqd1.networkAlias}:${topology.nsqd1.tcpPort}",
-          destinationAddress = s"${topology.nsqd2.networkAlias}:${topology.nsqd2.tcpPort}",
-          sourceTopic = topology.badDestTopic,
-          destinationTopic = topology.badDestTopic
-        )
+             network,
+             sourceAddress = s"${topology.nsqd1.networkAlias}:${topology.nsqd1.tcpPort}",
+             destinationAddress = s"${topology.nsqd2.networkAlias}:${topology.nsqd2.tcpPort}",
+             sourceTopic = topology.badDestTopic,
+             destinationTopic = topology.badDestTopic
+           )
       _ <- enrich(network, topology)
     } yield topology
 
-  private def createTopics[F[_] : Async : ContextShift](blocker: Blocker, topology: NetworkTopology): F[Unit] = {
+  private def createTopics[F[_]: Async: ContextShift](blocker: Blocker, topology: NetworkTopology): F[Unit] = {
     val client = JavaNetClientBuilder[F](blocker).create
     for {
       _ <- createTopic(client, topology.sourceTopic, 4151)
@@ -114,7 +114,11 @@ object Containers {
     } yield ()
   }
 
-  private def createTopic[F[_] : Async : ContextShift](client: Http4sClient[F], topic: String, port: Int): F[Unit] = {
+  private def createTopic[F[_]: Async: ContextShift](
+    client: Http4sClient[F],
+    topic: String,
+    port: Int
+  ): F[Unit] = {
     val request = Request[F](
       method = Method.POST,
       Uri.unsafeFromString(s"http://127.0.0.1:$port/topic/create?topic=$topic")
@@ -127,15 +131,13 @@ object Containers {
       Sync[F].delay {
         Network.newNetwork()
       }
-    )(
-      n => Sync[F].delay(n.close())
-    )
+    )(n => Sync[F].delay(n.close()))
 
   private def nsqlookupd[F[_]: Sync](
     network: Network,
     networkInfo: NetworkInfo
   ): Resource[F, JGenericContainer[_]] =
-    Resource.make (
+    Resource.make(
       Sync[F].delay {
         val container = FixedHostPortGenericContainer(
           imageName = s"nsqio/nsq:$nsqVersion",
@@ -143,7 +145,7 @@ object Containers {
             "/nsqlookupd",
             s"--broadcast-address=${networkInfo.broadcastAddress}",
             s"--http-address=0.0.0.0:${networkInfo.httpPort}",
-            s"--tcp-address=0.0.0.0:${networkInfo.tcpPort}",
+            s"--tcp-address=0.0.0.0:${networkInfo.tcpPort}"
           ),
           exposedPorts = List(networkInfo.httpPort, networkInfo.tcpPort),
           exposedContainerPort = networkInfo.httpPort,
@@ -154,11 +156,9 @@ object Containers {
         container.container.withNetworkAliases(networkInfo.networkAlias)
         startContainerWithLogs(container.container, "nsqlookupd")
       }
-    )(
-      e => Sync[F].delay(e.stop())
-    )
+    )(e => Sync[F].delay(e.stop()))
 
-  private def nsqd[F[_] : Sync](
+  private def nsqd[F[_]: Sync](
     network: Network,
     networkInfo: NetworkInfo,
     lookupAddress: String
@@ -185,11 +185,9 @@ object Containers {
         container.container.withNetworkAliases(networkInfo.networkAlias)
         startContainerWithLogs(container.container, "nsqd")
       }
-    )(
-      e => Sync[F].delay(e.stop())
-    )
+    )(e => Sync[F].delay(e.stop()))
 
-  private def nsqToNsq[F[_] : Sync](
+  private def nsqToNsq[F[_]: Sync](
     network: Network,
     sourceAddress: String,
     sourceTopic: String,
@@ -205,17 +203,15 @@ object Containers {
             s"--nsqd-tcp-address=$sourceAddress",
             s"--topic=$sourceTopic",
             s"--destination-nsqd-tcp-address=$destinationAddress",
-            s"--destination-topic=$destinationTopic",
-          ),
+            s"--destination-topic=$destinationTopic"
+          )
         )
         container.container.withNetwork(network)
         startContainerWithLogs(container.container, "nsq_to_nsq")
       }
-    )(
-      e => Sync[F].delay(e.stop())
-    )
+    )(e => Sync[F].delay(e.stop()))
 
-  private def enrich[F[_] : Sync](
+  private def enrich[F[_]: Sync](
     network: Network,
     topology: NetworkTopology
   ): Resource[F, JGenericContainer[_]] =
@@ -263,9 +259,7 @@ object Containers {
         container.container.withNetwork(network)
         startContainerWithLogs(container.container, "enrich")
       }
-    )(
-      e => Sync[F].delay(e.stop())
-    )
+    )(e => Sync[F].delay(e.stop()))
 
   private def startContainerWithLogs(
     container: JGenericContainer[_],

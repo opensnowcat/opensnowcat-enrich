@@ -50,13 +50,15 @@ object utils extends CatsIO {
       val bad = asBad(outputStream(blocker, KinesisConfig.badStreamConfig(localstackPort, streams.bad)))
 
       collectorPayloads =>
-        enriched.merge(bad)
+        enriched
+          .merge(bad)
           .interruptAfter(3.minutes)
           .concurrently(collectorPayloads.evalMap(bytes => rawSink(List(bytes))))
     }
 
   private def outputStream(blocker: Blocker, config: Input.Kinesis): Stream[IO, Array[Byte]] =
-    Source.init[IO](blocker, config, KinesisConfig.monitoring)
+    Source
+      .init[IO](blocker, config, KinesisConfig.monitoring)
       .map(KinesisRun.getPayload)
 
   private def asGood(source: Stream[IO, Array[Byte]]): Stream[IO, OutputRow.Good] =
@@ -84,11 +86,12 @@ object utils extends CatsIO {
     }
 
   def parseOutput(output: List[OutputRow], testName: String): (List[Event], List[BadRow]) = {
-    val good = output.collect { case OutputRow.Good(e) => e}
+    val good = output.collect { case OutputRow.Good(e) => e }
     println(s"[$testName] Bad rows:")
-    val bad = output.collect { case OutputRow.Bad(b) =>
-      println(s"[$testName] ${b.compact}")
-      b
+    val bad = output.collect {
+      case OutputRow.Bad(b) =>
+        println(s"[$testName] ${b.compact}")
+        b
     }
     (good, bad)
   }

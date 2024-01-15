@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 
 import cats.implicits._
 
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Sync, Timer, Async}
+import cats.effect.{Async, Blocker, ConcurrentEffect, ContextShift, Sync, Timer}
 import cats.effect.concurrent.Ref
 
 import fs2.Stream
@@ -55,18 +55,24 @@ object Utils {
       blocker <- Blocker[F]
       topology <- Containers.createContainers[F](blocker)
       sink <- Sink.init[F](
-        blocker,
-        OutNsq(
-          topology.sourceTopic,
-          "127.0.0.1",
-          topology.nsqd1.tcpPort,
-          backoffPolicy
-        )
-      )
+                blocker,
+                OutNsq(
+                  topology.sourceTopic,
+                  "127.0.0.1",
+                  topology.nsqd1.tcpPort,
+                  backoffPolicy
+                )
+              )
     } yield (blocker, topology, sink)
 
-  def generateEvents[F[_]: Sync: ContextShift: Timer](sink: ByteSink[F], goodCount: Long, badCount: Long, topology: NetworkTopology): Stream[F, Unit] =
-    CollectorPayloadGen.generate[F](goodCount, badCount)
+  def generateEvents[F[_]: Sync: ContextShift: Timer](
+    sink: ByteSink[F],
+    goodCount: Long,
+    badCount: Long,
+    topology: NetworkTopology
+  ): Stream[F, Unit] =
+    CollectorPayloadGen
+      .generate[F](goodCount, badCount)
       .evalMap(events => sink(List(events)))
       .onComplete(fs2.Stream.eval(Logger[F].info(s"Random data has been generated and sent to ${topology.sourceTopic}")))
 
@@ -83,55 +89,57 @@ object Utils {
     ref: Ref[F, AggregateGood],
     topology: NetworkTopology
   ): Stream[F, Unit] =
-    Source.init[F](
-      blocker,
-      InNsq(
-        topology.goodDestTopic,
-        "EnrichedChannel",
-        "127.0.0.1",
-        topology.lookup2.httpPort,
-        maxBufferQueueSize,
-        backoffPolicy
+    Source
+      .init[F](
+        blocker,
+        InNsq(
+          topology.goodDestTopic,
+          "EnrichedChannel",
+          "127.0.0.1",
+          topology.lookup2.httpPort,
+          maxBufferQueueSize,
+          backoffPolicy
+        )
       )
-    ).evalMap(aggregateGood(_, ref))
+      .evalMap(aggregateGood(_, ref))
 
   def consumeBad[F[_]: ConcurrentEffect: ContextShift](
     blocker: Blocker,
     ref: Ref[F, AggregateBad],
     topology: NetworkTopology
   ): Stream[F, Unit] =
-    Source.init[F](
-      blocker,
-      InNsq(
-        topology.badDestTopic,
-        "BadRowsChannel",
-        "127.0.0.1",
-        topology.lookup2.httpPort,
-        maxBufferQueueSize,
-        backoffPolicy
+    Source
+      .init[F](
+        blocker,
+        InNsq(
+          topology.badDestTopic,
+          "BadRowsChannel",
+          "127.0.0.1",
+          topology.lookup2.httpPort,
+          maxBufferQueueSize,
+          backoffPolicy
+        )
       )
-    ).evalMap(aggregateBad(_, ref))
+      .evalMap(aggregateBad(_, ref))
 
-  def aggregateGood[F[_]: Sync](r: Record[F], ref: Ref[F, AggregateGood]): F[Unit] = {
+  def aggregateGood[F[_]: Sync](r: Record[F], ref: Ref[F, AggregateGood]): F[Unit] =
     for {
       e <- Sync[F].delay(Event.parse(new String(r.data)).getOrElse(throw new RuntimeException("can't parse enriched event")))
       _ <- r.ack
       _ <- ref.update(updateAggregateGood(_, e))
     } yield ()
-  }
 
-  def aggregateBad[F[_]: Sync](r: Record[F], ref: Ref[F, AggregateBad]): F[Unit] = {
+  def aggregateBad[F[_]: Sync](r: Record[F], ref: Ref[F, AggregateBad]): F[Unit] =
     for {
       s <- Sync[F].delay(new String(r.data))
       br = CommonUtils.parseBadRow(s) match {
-        case Right(br) => br
-        case Left(e) =>
-          throw new RuntimeException(s"Can't decode bad row $s. Error: $e")
-      }
+             case Right(br) => br
+             case Left(e) =>
+               throw new RuntimeException(s"Can't decode bad row $s. Error: $e")
+           }
       _ <- r.ack
       _ <- ref.update(updateAggregateBad(_, br))
     } yield ()
-  }
 
   def updateAggregateGood(aggregate: AggregateGood, e: Event): AggregateGood =
     e :: aggregate

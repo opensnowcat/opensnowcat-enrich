@@ -24,43 +24,46 @@ object IntegrationTestConfig {
   val region = "eu-central-1"
   val endpoint = "localhost"
 
-  def eventBridgeOutputStreamConfig(localstackPort: Int, stream: EventbridgeStream) = Output.Eventbridge(
-    eventBusName = stream.eventBusName,
-    eventBusSource = stream.eventBusSource,
-    region = Some(region),
-    backoffPolicy = BackoffPolicy(10.millis, 10.seconds, Some(10)),
-    throttledBackoffPolicy = BackoffPolicy(10.millis, 10.seconds, Some(10)),
-    recordLimit = 10,
-    byteLimit = 100000,
-    customEndpoint = Some(URI.create(getEndpoint(localstackPort))),
-    collector = None,
-    payload = None
-  )
+  def eventBridgeOutputStreamConfig(localstackPort: Int, stream: EventbridgeStream) =
+    Output.Eventbridge(
+      eventBusName = stream.eventBusName,
+      eventBusSource = stream.eventBusSource,
+      region = Some(region),
+      backoffPolicy = BackoffPolicy(10.millis, 10.seconds, Some(10)),
+      throttledBackoffPolicy = BackoffPolicy(10.millis, 10.seconds, Some(10)),
+      recordLimit = 10,
+      byteLimit = 100000,
+      customEndpoint = Some(URI.create(getEndpoint(localstackPort))),
+      collector = None,
+      payload = None
+    )
 
-  def kinesisOutputStreamConfig(localstackPort: Int, streamName: String) = Output.Kinesis(
-    streamName,
-    Some(region),
-    None,
-    BackoffPolicy(10.millis, 10.seconds, Some(10)),
-    BackoffPolicy(100.millis, 1.second, None),
-    500,
-    5242880,
-    Some(URI.create(getEndpoint(localstackPort))),
-    jsonOutput = false
-  )
+  def kinesisOutputStreamConfig(localstackPort: Int, streamName: String) =
+    Output.Kinesis(
+      streamName,
+      Some(region),
+      None,
+      BackoffPolicy(10.millis, 10.seconds, Some(10)),
+      BackoffPolicy(100.millis, 1.second, None),
+      500,
+      5242880,
+      Some(URI.create(getEndpoint(localstackPort))),
+      jsonOutput = false
+    )
 
-  def kinesisInputStreamConfig(localstackPort: Int, streamName: String) = Input.Kinesis(
-    UUID.randomUUID().toString,
-    streamName,
-    Some(region),
-    Input.Kinesis.InitPosition.TrimHorizon,
-    Input.Kinesis.Retrieval.Polling(1000),
-    1000,
-    BackoffPolicy(10.millis, 10.seconds, Some(10)),
-    Some(URI.create(getEndpoint(localstackPort))),
-    Some(URI.create(getEndpoint(localstackPort))),
-    Some(URI.create(getEndpoint(localstackPort)))
-  )
+  def kinesisInputStreamConfig(localstackPort: Int, streamName: String) =
+    Input.Kinesis(
+      UUID.randomUUID().toString,
+      streamName,
+      Some(region),
+      Input.Kinesis.InitPosition.TrimHorizon,
+      Input.Kinesis.Retrieval.Polling(1000),
+      1000,
+      BackoffPolicy(10.millis, 10.seconds, Some(10)),
+      Some(URI.create(getEndpoint(localstackPort))),
+      Some(URI.create(getEndpoint(localstackPort))),
+      Some(URI.create(getEndpoint(localstackPort)))
+    )
 
   val monitoring = Monitoring(
     None,
@@ -71,26 +74,25 @@ object IntegrationTestConfig {
     s"http://$endpoint:$localstackPort"
 
   case class EventbridgeStream(
-                                eventBusName: String,
-                                eventBusSource: String
-                              )
-  case class Streams(
-                      kinesisInput: String, // events are received on this kinesis stream
-                      eventbridgeGood: EventbridgeStream, // enriched events get routed to this event bridge stream
-                      eventbridgeBad: EventbridgeStream, // bad events get routed to this event bridge stream
-                      kinesisOutputGood: String, // eventbridge routes good events to this kinesis stream
-                      kinesisOutputBad: String // eventbridge routes bad events to this kinesis stream
-                    )
-
-  def getStreams(uuid: String): Streams = Streams(
-    kinesisInput = s"kinesis-input-$uuid",
-    eventbridgeGood = EventbridgeStream(
-      eventBusName = s"eventbridge-output-good-name-$uuid",
-      eventBusSource = s"eventbridge-output-good-source-$uuid"),
-    eventbridgeBad = EventbridgeStream(
-      eventBusName = s"eventbridge-output-bad-name-$uuid",
-      eventBusSource = s"eventbridge-output-bad-source-$uuid"),
-    kinesisOutputGood = s"kinesis-output-good-$uuid",
-    kinesisOutputBad = s"kinesis-output-bad-$uuid"
+    eventBusName: String,
+    eventBusSource: String
   )
+  case class Streams(
+    kinesisInput: String, // events are received on this kinesis stream
+    eventbridgeGood: EventbridgeStream, // enriched events get routed to this event bridge stream
+    eventbridgeBad: EventbridgeStream, // bad events get routed to this event bridge stream
+    kinesisOutputGood: String, // eventbridge routes good events to this kinesis stream
+    kinesisOutputBad: String // eventbridge routes bad events to this kinesis stream
+  )
+
+  def getStreams(uuid: String): Streams =
+    Streams(
+      kinesisInput = s"kinesis-input-$uuid",
+      eventbridgeGood =
+        EventbridgeStream(eventBusName = s"eventbridge-output-good-name-$uuid", eventBusSource = s"eventbridge-output-good-source-$uuid"),
+      eventbridgeBad =
+        EventbridgeStream(eventBusName = s"eventbridge-output-bad-name-$uuid", eventBusSource = s"eventbridge-output-bad-source-$uuid"),
+      kinesisOutputGood = s"kinesis-output-good-$uuid",
+      kinesisOutputBad = s"kinesis-output-bad-$uuid"
+    )
 }

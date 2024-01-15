@@ -36,14 +36,16 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
 
   "enrich-eventbridge" should {
     "be able to parse the minimal config" in {
-      Containers.enrich(
-        configPath = "config/config.eventbridge.minimal.hocon",
-        testName = "minimal",
-        needsLocalstack = false,
-        enrichments = Nil
-      ).use { e =>
-        IO(e.getLogs must contain("Running Enrich"))
-      }
+      Containers
+        .enrich(
+          configPath = "config/config.eventbridge.minimal.hocon",
+          testName = "minimal",
+          needsLocalstack = false,
+          enrichments = Nil
+        )
+        .use { e =>
+          IO(e.getLogs must contain("Running Enrich"))
+        }
     }
 
     // TODO: Enable these tests, we need to find a way to parse the flattened events
@@ -130,22 +132,24 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
 //    }
 
     "shutdown when it receives a SIGTERM" in {
-      Containers.enrich(
-        configPath = "modules/eventbridge/src/it/resources/enrich/enrich-localstack.hocon",
-        testName = "stop",
-        needsLocalstack = true,
-        enrichments = Nil,
-        waitLogMessage = "enrich.metrics"
-      ).use { enrich =>
-        for {
-          _ <- IO(println("stop - Sending signal"))
-          _ <- IO(enrich.getDockerClient().killContainerCmd(enrich.getContainerId()).withSignal("TERM").exec())
-          _ <- Containers.waitUntilStopped(enrich)
-        } yield {
-          enrich.isRunning() must beFalse
-          enrich.getLogs() must contain("Enrich stopped")
+      Containers
+        .enrich(
+          configPath = "modules/eventbridge/src/it/resources/enrich/enrich-localstack.hocon",
+          testName = "stop",
+          needsLocalstack = true,
+          enrichments = Nil,
+          waitLogMessage = "enrich.metrics"
+        )
+        .use { enrich =>
+          for {
+            _ <- IO(println("stop - Sending signal"))
+            _ <- IO(enrich.getDockerClient().killContainerCmd(enrich.getContainerId()).withSignal("TERM").exec())
+            _ <- Containers.waitUntilStopped(enrich)
+          } yield {
+            enrich.isRunning() must beFalse
+            enrich.getLogs() must contain("Enrich stopped")
+          }
         }
-      }
     }
   }
 }
