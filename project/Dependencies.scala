@@ -32,7 +32,7 @@ object Dependencies {
     // Java
     val commonsCodec = "1.16.0"
     val commonsText = "1.11.0"
-    val jodaTime = "2.10.14"
+    val jodaTime = "2.12.6"
     val useragent = "1.21"
     val uaParser = "1.6.1"
     val snakeYaml = "2.2"
