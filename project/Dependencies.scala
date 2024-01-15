@@ -79,7 +79,7 @@ object Dependencies {
     val jackson = "2.16.1"
     val config = "1.3.4"
 
-    val decline = "1.4.0"
+    val decline = "2.4.1"
     val fs2 = "2.5.11"
     val catsEffect = "2.5.0"
     val fs2PubSub = "0.18.1"
