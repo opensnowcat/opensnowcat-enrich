@@ -21,7 +21,7 @@ import _root_.io.circe.syntax._
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import cats.effect.{Async, Clock, ContextShift, Sync}
+import cats.effect.{Async, Clock, Sync}
 
 import cats.implicits._
 import cats.data.{EitherT, NonEmptyList}

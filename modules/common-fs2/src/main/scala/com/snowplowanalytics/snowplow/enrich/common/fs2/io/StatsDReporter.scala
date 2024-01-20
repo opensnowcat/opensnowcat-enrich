@@ -17,11 +17,12 @@ import cats.implicits._
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 import java.nio.charset.StandardCharsets.UTF_8
 
-import cats.effect.{Blocker, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Resource, Sync}
 
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.MetricsReporters
+import cats.effect.Temporal
 
 /**
  * Reports metrics to a StatsD server over UDP
@@ -43,15 +44,11 @@ object StatsDReporter {
    * so there could be a delay in following a DNS record change.  For the Docker image we release
    * the cache time is 30 seconds.
    */
-  def make[F[_]: Sync: ContextShift: Timer](
-    blocker: Blocker,
-    config: MetricsReporters.StatsD
+  def make[F[_]: Sync: ContextShift: Temporal](config: MetricsReporters.StatsD
   ): Resource[F, Metrics.Reporter[F]] =
     Resource.fromAutoCloseable(Sync[F].delay(new DatagramSocket)).map(impl[F](blocker, config, _))
 
-  def impl[F[_]: Sync: ContextShift: Timer](
-    blocker: Blocker,
-    config: MetricsReporters.StatsD,
+  def impl[F[_]: Sync: ContextShift: Temporal](config: MetricsReporters.StatsD,
     socket: DatagramSocket
   ): Metrics.Reporter[F] =
     new Metrics.Reporter[F] {
@@ -83,9 +80,7 @@ object StatsDReporter {
       snapshot.remoteAdaptersFailureCount.map(cnt => Metrics.RemoteAdaptersFailureCounterName -> cnt.toString) ++
       snapshot.remoteAdaptersTimeoutCount.map(cnt => Metrics.RemoteAdaptersTimeoutCounterName -> cnt.toString)
 
-  def sendMetric[F[_]: ContextShift: Sync](
-    blocker: Blocker,
-    socket: DatagramSocket,
+  def sendMetric[F[_]: ContextShift: Sync](socket: DatagramSocket,
     addr: InetAddress,
     port: Int
   )(

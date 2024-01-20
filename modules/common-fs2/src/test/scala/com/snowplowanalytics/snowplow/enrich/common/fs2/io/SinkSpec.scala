@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common.fs2.io
 
 import cats.implicits._
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.effect.testing.specs2.CatsIO
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters._

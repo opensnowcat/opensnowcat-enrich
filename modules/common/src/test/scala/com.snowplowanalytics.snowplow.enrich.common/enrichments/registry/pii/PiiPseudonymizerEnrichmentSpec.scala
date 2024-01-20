@@ -16,7 +16,7 @@ import cats.data.Validated
 import cats.syntax.option._
 import cats.syntax.validated._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 
 import cats.effect.testing.specs2.CatsIO
 

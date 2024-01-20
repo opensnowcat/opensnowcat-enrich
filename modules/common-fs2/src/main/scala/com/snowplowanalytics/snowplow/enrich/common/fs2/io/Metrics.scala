@@ -14,8 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common.fs2.io
 
 import cats.implicits._
 import cats.{Applicative, Monad}
-import cats.effect.concurrent.Ref
-import cats.effect.{Async, Blocker, Clock, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Async, Clock, ConcurrentEffect, Resource, Sync}
 
 import fs2.Stream
 
@@ -24,6 +23,7 @@ import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.MetricsReporters
+import cats.effect.{ Ref, Temporal }
 
 trait Metrics[F[_]] {
 
@@ -85,9 +85,7 @@ object Metrics {
     def report(snapshot: MetricSnapshot): F[Unit]
   }
 
-  def build[F[_]: ContextShift: ConcurrentEffect: Timer](
-    blocker: Blocker,
-    config: MetricsReporters,
+  def build[F[_]: ContextShift: ConcurrentEffect: Temporal](config: MetricsReporters,
     remoteAdaptersEnabled: Boolean
   ): F[Metrics[F]] =
     config match {
@@ -95,9 +93,7 @@ object Metrics {
       case MetricsReporters(statsd, stdout, _) => impl[F](blocker, statsd, stdout, remoteAdaptersEnabled)
     }
 
-  private def impl[F[_]: ContextShift: ConcurrentEffect: Timer](
-    blocker: Blocker,
-    statsd: Option[MetricsReporters.StatsD],
+  private def impl[F[_]: ContextShift: ConcurrentEffect: Temporal](statsd: Option[MetricsReporters.StatsD],
     stdout: Option[MetricsReporters.Stdout],
     remoteAdaptersEnabled: Boolean
   ): F[Metrics[F]] =
@@ -214,7 +210,7 @@ object Metrics {
       )
   }
 
-  def reporterStream[F[_]: Sync: Timer: ContextShift](
+  def reporterStream[F[_]: Sync: Temporal: ContextShift](
     reporter: Resource[F, Reporter[F]],
     metrics: MetricRefs[F],
     period: FiniteDuration,
@@ -227,7 +223,7 @@ object Metrics {
       _ <- Stream.eval(rep.report(snapshot))
     } yield ()
 
-  def stdoutReporter[F[_]: Sync: ContextShift: Timer](
+  def stdoutReporter[F[_]: Sync: ContextShift: Temporal](
     config: MetricsReporters.Stdout
   ): F[Reporter[F]] =
     for {

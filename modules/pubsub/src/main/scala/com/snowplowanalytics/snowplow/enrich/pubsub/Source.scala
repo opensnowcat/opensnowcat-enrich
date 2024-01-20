@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.pubsub
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Sync}
+import cats.effect.{Concurrent, Sync}
 
 import com.google.api.gax.batching.FlowControlSettings
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior
@@ -26,13 +26,11 @@ import fs2.Stream
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input
 
-import cats.effect.{Blocker, ContextShift, Sync}
+import cats.effect.Sync
 
 object Source {
 
-  def init[F[_]: Concurrent: ContextShift](
-    blocker: Blocker,
-    input: Input
+  def init[F[_]: Concurrent: ContextShift](input: Input
   ): Stream[F, ConsumerRecord[F, Array[Byte]]] =
     input match {
       case p: Input.PubSub =>
@@ -41,9 +39,7 @@ object Source {
         Stream.raiseError[F](new IllegalArgumentException(s"Input $i is not PubSub"))
     }
 
-  def pubSub[F[_]: Concurrent: ContextShift](
-    blocker: Blocker,
-    input: Input.PubSub
+  def pubSub[F[_]: Concurrent: ContextShift](input: Input.PubSub
   ): Stream[F, ConsumerRecord[F, Array[Byte]]] = {
     val onFailedTerminate: Throwable => F[Unit] =
       e => Sync[F].delay(System.err.println(s"Cannot terminate ${e.getMessage}"))

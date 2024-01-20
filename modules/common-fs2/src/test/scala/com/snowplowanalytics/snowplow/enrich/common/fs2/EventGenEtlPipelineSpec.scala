@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common.fs2
 
 import cats.data.{Validated, ValidatedNel}
 import cats.effect.testing.specs2.CatsIO
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.implicits._
 import com.snowplowanalytics.iglu.client.IgluCirceClient
 import com.snowplowanalytics.iglu.client.resolver.registries.Registry

@@ -17,26 +17,23 @@ import java.util.UUID
 
 import cats.Parallel
 import cats.implicits._
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{Concurrent, ConcurrentEffect, Resource}
 
 import fs2.kafka._
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
+import cats.effect.Temporal
 
 object Sink {
 
-  def init[F[_]: ConcurrentEffect: ContextShift: Parallel: Timer](
-    blocker: Blocker,
-    output: Output
+  def init[F[_]: ConcurrentEffect: ContextShift: Parallel: Temporal](output: Output
   ): Resource[F, ByteSink[F]] =
     for {
       sink <- initAttributed(blocker, output)
     } yield (records: List[Array[Byte]]) => sink(records.map(AttributedData(_, UUID.randomUUID().toString, Map.empty)))
 
-  def initAttributed[F[_]: ConcurrentEffect: ContextShift: Parallel: Timer](
-    blocker: Blocker,
-    output: Output
+  def initAttributed[F[_]: ConcurrentEffect: ContextShift: Parallel: Temporal](output: Output
   ): Resource[F, AttributedByteSink[F]] =
     output match {
       case k: Output.Kafka =>
@@ -51,9 +48,7 @@ object Sink {
       case o => Resource.eval(Concurrent[F].raiseError(new IllegalArgumentException(s"Output $o is not Kafka")))
     }
 
-  private def mkProducer[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
-    output: Output.Kafka
+  private def mkProducer[F[_]: ConcurrentEffect: ContextShift](output: Output.Kafka
   ): Resource[F, KafkaProducer[F, String, Array[Byte]]] = {
     val producerSettings =
       ProducerSettings[F, String, Array[Byte]]

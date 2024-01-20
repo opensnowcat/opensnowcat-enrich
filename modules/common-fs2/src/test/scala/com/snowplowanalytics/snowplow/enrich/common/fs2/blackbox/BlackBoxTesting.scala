@@ -16,7 +16,7 @@ import scala.collection.JavaConverters._
 
 import org.specs2.mutable.Specification
 
-import cats.effect.{Blocker, IO, Resource}
+import cats.effect.{IO, Resource}
 
 import cats.effect.testing.specs2.CatsIO
 

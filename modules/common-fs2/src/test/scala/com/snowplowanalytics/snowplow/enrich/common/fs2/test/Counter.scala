@@ -17,12 +17,12 @@ import java.util.concurrent.TimeUnit
 import cats.Monad
 import cats.syntax.flatMap._
 
-import cats.effect.concurrent.Ref
 import cats.effect.{Clock, Sync}
 
 import fs2.Stream
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Metrics
+import cats.effect.Ref
 
 /** Metrics container for testing */
 case class Counter(

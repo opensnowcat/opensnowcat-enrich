@@ -13,11 +13,11 @@
 package com.snowplowanalytics.snowplow.enrich.common.fs2.test
 
 import cats.effect.Sync
-import cats.effect.concurrent.Ref
 import fs2.Stream
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.experimental.Metadata
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.experimental.Metadata.{EntitiesAndCount, MetadataEvent}
+import cats.effect.Ref
 
 object AggregatesSpec {
   def init[F[_]: Sync] = Ref.of[F, Map[MetadataEvent, EntitiesAndCount]](Map.empty)

@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.utils
 
-import cats.effect.{ContextShift, Resource, Sync}
+import cats.effect.{Resource, Sync}
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext

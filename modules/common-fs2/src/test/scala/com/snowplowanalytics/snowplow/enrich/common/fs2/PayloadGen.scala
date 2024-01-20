@@ -15,8 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.fs2
 import java.nio.file.{Path, Paths}
 import java.util.Base64
 
-import cats.effect.{Blocker, IO}
-import cats.effect.concurrent.Ref
+import cats.effect.IO
 
 import cats.effect.testing.specs2.CatsIO
 
@@ -32,6 +31,7 @@ import org.joda.time.{DateTimeZone, LocalDate}
 import org.scalacheck.{Arbitrary, Gen}
 
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
+import cats.effect.{ Ref, Resource }
 
 object PayloadGen extends CatsIO {
 
@@ -100,9 +100,9 @@ object PayloadGen extends CatsIO {
   def write(dir: Path, cardinality: Long): IO[Unit] =
     for {
       counter <- Ref.of[IO, Int](0)
-      dir <- Blocker[IO].use(b => createDirectory[IO](b, dir))
+      dir <- Resource.unit[IO].use(b => createDirectory[IO](b, dir))
       filename = counter.updateAndGet(_ + 1).map(i => Paths.get(s"${dir.toAbsolutePath}/payload.$i.thrift"))
-      _ <- Blocker[IO].use { b =>
+      _ <- Resource.unit[IO].use { b =>
              val result =
                for {
                  payload <- payloadStream.take(cardinality)

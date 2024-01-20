@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.nsq
 
 import scala.collection.JavaConverters._
 
-import cats.effect.{Blocker, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Resource, Sync}
 
 import cats.syntax.all._
 
@@ -28,23 +28,20 @@ import com.snowplowanalytics.client.nsq.NSQProducer
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{BackoffPolicy, Output}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Retries
+import cats.effect.Temporal
 
 object Sink {
 
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def init[F[_]: Sync: ContextShift: Timer](
-    blocker: Blocker,
-    output: Output
+  def init[F[_]: Sync: ContextShift: Temporal](output: Output
   ): Resource[F, ByteSink[F]] =
     for {
       sink <- initAttributed(blocker, output)
     } yield (records: List[Array[Byte]]) => sink(records.map(AttributedData(_, "", Map.empty)))
 
-  def initAttributed[F[_]: Sync: ContextShift: Timer](
-    blocker: Blocker,
-    output: Output
+  def initAttributed[F[_]: Sync: ContextShift: Temporal](output: Output
   ): Resource[F, AttributedByteSink[F]] =
     output match {
       case config: Output.Nsq =>
@@ -54,7 +51,7 @@ object Sink {
         Resource.eval(Sync[F].raiseError(new IllegalArgumentException(s"Output $c is not NSQ")))
     }
 
-  private def createNsqProducer[F[_]: Sync: ContextShift](blocker: Blocker, config: Output.Nsq): Resource[F, NSQProducer] =
+  private def createNsqProducer[F[_]: Sync: ContextShift](config: Output.Nsq): Resource[F, NSQProducer] =
     Resource.make(
       Sync[F].delay {
         val producer = new NSQProducer()
@@ -67,9 +64,7 @@ object Sink {
         .handleErrorWith(e => Logger[F].error(s"Cannot terminate NSQ producer ${e.getMessage}"))
     )
 
-  private def sinkBatch[F[_]: Sync: ContextShift: Timer](
-    blocker: Blocker,
-    producer: NSQProducer,
+  private def sinkBatch[F[_]: Sync: ContextShift: Temporal](producer: NSQProducer,
     topic: String,
     backoffPolicy: BackoffPolicy
   )(

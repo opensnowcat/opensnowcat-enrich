@@ -21,8 +21,7 @@ import scala.util.control.NonFatal
 import cats.{Applicative, Parallel}
 import cats.implicits._
 
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.{Concurrent, ConcurrentEffect, Resource, Sync}
 
 import retry.{RetryDetails, RetryPolicies, RetryPolicy, retryingOnSomeErrors}
 
@@ -36,6 +35,8 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import com.snowplowanalytics.snowplow.enrich.common.utils.ShiftExecution
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients
+import cats.effect.{ Ref, Temporal }
+import cats.effect.std.Semaphore
 
 /** Code in charge of downloading and updating the assets used by enrichments (e.g. MaxMind/IAB DBs). */
 object Assets {
@@ -63,9 +64,7 @@ object Assets {
      * @param clients Clients to download the URIS.
      * @param enrichments Configurations of the enrichments. Contains the list of assets.
      */
-    def make[F[_]: ConcurrentEffect: Timer: ContextShift](
-      blocker: Blocker,
-      sem: Semaphore[F],
+    def make[F[_]: ConcurrentEffect: Temporal: ContextShift](sem: Semaphore[F],
       clients: Clients[F],
       assets: List[Asset]
     ): F[State[F]] =
@@ -76,9 +75,7 @@ object Assets {
         _ <- sem.release
       } yield State(hashes, clients)
 
-    def build[F[_]: ConcurrentEffect: Timer: ContextShift](
-      blocker: Blocker,
-      clients: Clients[F],
+    def build[F[_]: ConcurrentEffect: Temporal: ContextShift](clients: Clients[F],
       assets: List[Asset]
     ): F[Map[URI, Hash]] =
       for {
@@ -95,11 +92,11 @@ object Assets {
                   }
       } yield hashes.toMap
 
-    def buildFromLocal[F[_]: Sync: ContextShift](blocker: Blocker, assets: List[Asset]): F[List[(URI, String, Option[Hash])]] =
+    def buildFromLocal[F[_]: Sync: ContextShift](assets: List[Asset]): F[List[(URI, String, Option[Hash])]] =
       assets.traverse { case (uri, path) => local[F](blocker, path).map(hash => (uri, path, hash)) }
 
     /** Checks if file already exists on filesystem. */
-    def local[F[_]: Sync: ContextShift](blocker: Blocker, path: String): F[Option[Hash]] = {
+    def local[F[_]: Sync: ContextShift](path: String): F[Option[Hash]] = {
       val fpath = Paths.get(path)
       exists(blocker, fpath).ifM(
         Hash.fromStream(readAll(fpath, blocker, 1024)).map(_.some),
@@ -132,9 +129,7 @@ object Assets {
   )
 
   /** Initializes the [[updateStream]] if refresh period is specified. */
-  def run[F[_]: ConcurrentEffect: ContextShift: Parallel: Timer, A](
-    blocker: Blocker,
-    shifter: ShiftExecution[F],
+  def run[F[_]: ConcurrentEffect: ContextShift: Parallel: Temporal, A](shifter: ShiftExecution[F],
     sem: Semaphore[F],
     updatePeriod: Option[FiniteDuration],
     assetsState: Assets.State[F],
@@ -155,9 +150,7 @@ object Assets {
    * Creates an update stream that periodically checks if new versions of assets are available.
    * If that's the case, updates them locally for the enrichments and updates the state.
    */
-  def updateStream[F[_]: ConcurrentEffect: ContextShift: Parallel: Timer](
-    blocker: Blocker,
-    shifter: ShiftExecution[F],
+  def updateStream[F[_]: ConcurrentEffect: ContextShift: Parallel: Temporal](shifter: ShiftExecution[F],
     sem: Semaphore[F],
     state: State[F],
     enrichments: Ref[F, Environment.Enrichments[F]],
@@ -187,17 +180,13 @@ object Assets {
    * @return For each URI the temporary path and the hash of the file is returned,
    *         as well as the asset path on disk.
    */
-  def downloadAll[F[_]: ConcurrentEffect: ContextShift: Timer](
-    blocker: Blocker,
-    dir: Path,
+  def downloadAll[F[_]: ConcurrentEffect: ContextShift: Temporal](dir: Path,
     clients: Clients[F],
     assets: List[Asset]
   ): Resource[F, List[Downloaded]] =
     assets.traverse(download(blocker, dir, clients, _))
 
-  def download[F[_]: ConcurrentEffect: ContextShift: Timer](
-    blocker: Blocker,
-    dir: Path,
+  def download[F[_]: ConcurrentEffect: ContextShift: Temporal](dir: Path,
     clients: Clients[F],
     asset: Asset
   ): Resource[F, Downloaded] =
@@ -223,9 +212,7 @@ object Assets {
    * 2. Updates the state of the assets with new hash(es)
    * 3. Updates the enrichments config
    */
-  def update[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
-    shifter: ShiftExecution[F],
+  def update[F[_]: ConcurrentEffect: ContextShift](shifter: ShiftExecution[F],
     state: State[F],
     enrichments: Ref[F, Environment.Enrichments[F]],
     newAssets: List[Downloaded]
@@ -250,9 +237,7 @@ object Assets {
   def getCurDir[F[_]: Sync]: F[Path] =
     Sync[F].delay(Paths.get("").toAbsolutePath)
 
-  def downloadAndHash[F[_]: Concurrent: ContextShift: Timer](
-    blocker: Blocker,
-    clients: Clients[F],
+  def downloadAndHash[F[_]: Concurrent: ContextShift: Temporal](clients: Clients[F],
     uri: URI,
     destination: Path
   ): F[Hash] = {
@@ -260,7 +245,7 @@ object Assets {
     Logger[F].info(s"Downloading $uri") *> retryDownload(Hash.fromStream(stream))
   }
 
-  def retryDownload[F[_]: Sync: Timer, A](download: F[A]): F[A] =
+  def retryDownload[F[_]: Sync: Temporal, A](download: F[A]): F[A] =
     retryingOnSomeErrors[A](retryPolicy[F], worthRetrying, onError[F])(download)
 
   def retryPolicy[F[_]: Applicative]: RetryPolicy[F] =

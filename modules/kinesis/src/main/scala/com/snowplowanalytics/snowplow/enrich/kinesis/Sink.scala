@@ -23,8 +23,7 @@ import cats.data.Validated
 import cats.implicits._
 import cats.{Monoid, Parallel}
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
-import cats.effect.concurrent.Ref
+import cats.effect.{Concurrent, Resource, Sync}
 
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -41,23 +40,20 @@ import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Retries
+import cats.effect.{ Ref, Temporal }
 
 object Sink {
 
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def init[F[_]: Concurrent: ContextShift: Parallel: Timer](
-    blocker: Blocker,
-    output: Output
+  def init[F[_]: Concurrent: ContextShift: Parallel: Temporal](output: Output
   ): Resource[F, ByteSink[F]] =
     for {
       sink <- initAttributed(blocker, output)
     } yield (records: List[Array[Byte]]) => sink(records.map(AttributedData(_, UUID.randomUUID().toString, Map.empty)))
 
-  def initAttributed[F[_]: Concurrent: ContextShift: Parallel: Timer](
-    blocker: Blocker,
-    output: Output
+  def initAttributed[F[_]: Concurrent: ContextShift: Parallel: Temporal](output: Output
   ): Resource[F, AttributedByteSink[F]] =
     output match {
       case o: Output.Kinesis =>
@@ -101,9 +97,7 @@ object Sink {
                 }
     } yield exists
 
-  private def writeToKinesis[F[_]: ContextShift: Parallel: Sync: Timer](
-    blocker: Blocker,
-    config: Output.Kinesis,
+  private def writeToKinesis[F[_]: ContextShift: Parallel: Sync: Temporal](config: Output.Kinesis,
     kinesis: AmazonKinesis,
     records: List[PutRecordsRequestEntry]
   ): F[Unit] = {
@@ -180,9 +174,7 @@ object Sink {
    *  If we are throttled by kinesis, the list contains throttled records and records that gave internal errors.
    *  If there is an exception, or if all records give internal errors, then we retry using the policy.
    */
-  private def tryWriteToKinesis[F[_]: ContextShift: Sync: Timer](
-    blocker: Blocker,
-    config: Output.Kinesis,
+  private def tryWriteToKinesis[F[_]: ContextShift: Sync: Temporal](config: Output.Kinesis,
     kinesis: AmazonKinesis,
     records: List[PutRecordsRequestEntry],
     retryPolicy: RetryPolicy[F]

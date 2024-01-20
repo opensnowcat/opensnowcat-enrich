@@ -18,24 +18,25 @@ import java.nio.channels.FileChannel
 
 import cats.implicits._
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync}
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.{Concurrent, Resource, Sync}
 import fs2.Hotswap
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output.{FileSystem => FileSystemConfig}
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.ByteSink
+import cats.effect.Ref
+import cats.effect.std.Semaphore
 
 object FileSink {
 
-  def fileSink[F[_]: Concurrent: ContextShift](config: FileSystemConfig, blocker: Blocker): Resource[F, ByteSink[F]] =
+  def fileSink[F[_]: Concurrent: ContextShift](config: FileSystemConfig): Resource[F, ByteSink[F]] =
     config.maxBytes match {
       case Some(max) => rotatingFileSink(config.file, max, blocker)
       case None => singleFileSink(config.file, blocker)
     }
 
   /** Writes all events to a single file. Used when `maxBytes` is missing from configuration */
-  def singleFileSink[F[_]: Concurrent: ContextShift](path: Path, blocker: Blocker): Resource[F, ByteSink[F]] =
+  def singleFileSink[F[_]: Concurrent: ContextShift](path: Path): Resource[F, ByteSink[F]] =
     for {
       channel <- makeChannel(blocker, path)
       sem <- Resource.eval(Semaphore(1L))
@@ -56,9 +57,7 @@ object FileSink {
    */
   def rotatingFileSink[F[_]: Concurrent: ContextShift](
     path: Path,
-    maxBytes: Long,
-    blocker: Blocker
-  ): Resource[F, ByteSink[F]] =
+    maxBytes: Long): Resource[F, ByteSink[F]] =
     for {
       (hs, first) <- Hotswap(makeFile(blocker, 1, path))
       ref <- Resource.eval(Ref.of(first))
@@ -82,14 +81,12 @@ object FileSink {
     bytes: Int
   )
 
-  private def makeChannel[F[_]: Sync: ContextShift](blocker: Blocker, path: Path): Resource[F, FileChannel] =
+  private def makeChannel[F[_]: Sync: ContextShift](path: Path): Resource[F, FileChannel] =
     Resource.fromAutoCloseableBlocking(blocker) {
       Sync[F].delay(FileChannel.open(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE))
     }
 
-  private def makeFile[F[_]: Sync: ContextShift](
-    blocker: Blocker,
-    index: Int,
+  private def makeFile[F[_]: Sync: ContextShift](index: Int,
     base: Path
   ): Resource[F, FileState] = {
     val path = base.resolveSibling(f"${base.getFileName}%s.$index%04d")
@@ -98,9 +95,7 @@ object FileSink {
     }
   }
 
-  private def writeLine[F[_]: Sync: ContextShift](
-    blocker: Blocker,
-    state: FileState,
+  private def writeLine[F[_]: Sync: ContextShift](state: FileState,
     bytes: Array[Byte]
   ): F[FileState] =
     blocker
@@ -110,9 +105,7 @@ object FileSink {
       }
       .as(state.copy(bytes = state.bytes + bytes.length + 1))
 
-  private def maybeRotate[F[_]: Sync: ContextShift](
-    blocker: Blocker,
-    hs: Hotswap[F, FileState],
+  private def maybeRotate[F[_]: Sync: ContextShift](hs: Hotswap[F, FileState],
     base: Path,
     state: FileState,
     maxBytes: Long,

@@ -18,7 +18,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import cats.data.NonEmptyList
 import cats.implicits._
 
-import cats.effect.{ConcurrentEffect, Resource, Sync, Timer}
+import cats.effect.{ConcurrentEffect, Resource, Sync}
 
 import fs2.Stream
 
@@ -36,13 +36,14 @@ import com.snowplowanalytics.snowplow.scalatracker.emitters.http4s.Http4sEmitter
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Telemetry => TelemetryConfig}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Cloud
+import cats.effect.Temporal
 
 object Telemetry {
 
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def run[F[_]: ConcurrentEffect: Timer, A](env: Environment[F, A]): Stream[F, Unit] =
+  def run[F[_]: ConcurrentEffect: Temporal, A](env: Environment[F, A]): Stream[F, Unit] =
     env.telemetryConfig.disable match {
       case true =>
         Stream.empty.covary[F]
@@ -65,7 +66,7 @@ object Telemetry {
           }
     }
 
-  private def initTracker[F[_]: ConcurrentEffect: Timer](
+  private def initTracker[F[_]: ConcurrentEffect: Temporal](
     config: TelemetryConfig,
     appName: String,
     client: HttpClient[F]

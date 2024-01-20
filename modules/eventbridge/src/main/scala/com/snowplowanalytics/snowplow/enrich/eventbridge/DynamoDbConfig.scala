@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-import cats.effect.{Blocker, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Resource, Sync}
 
 import cats.Applicative
 import cats.implicits._
@@ -36,6 +36,7 @@ import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBu
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.{Base64Hocon, CliConfig, EncodedHoconOrPath}
+import cats.effect.Temporal
 
 object DynamoDbConfig {
 
@@ -55,16 +56,14 @@ object DynamoDbConfig {
    * Retrieves JSONs from DynamoDB if cli arguments start with dynamodb:
    *  and passes them as base64 encoded JSONs
    */
-  def updateCliConfig[F[_]: ContextShift: Sync: Timer](blocker: Blocker, original: CliConfig): F[CliConfig] =
+  def updateCliConfig[F[_]: ContextShift: Sync: Temporal](original: CliConfig): F[CliConfig] =
     for {
       resolver <- updateArg[F](blocker, original.resolver, getResolver[F])
       enrichments <- updateArg[F](blocker, original.enrichments, getEnrichments[F])
       updated = original.copy(resolver = resolver, enrichments = enrichments)
     } yield updated
 
-  private def updateArg[F[_]: ContextShift: Sync: Timer](
-    blocker: Blocker,
-    orig: EncodedHoconOrPath,
+  private def updateArg[F[_]: ContextShift: Sync: Temporal](orig: EncodedHoconOrPath,
     getConfig: (Blocker, String, String, String) => F[Base64Hocon]
   ): F[EncodedHoconOrPath] =
     orig match {
@@ -76,9 +75,7 @@ object DynamoDbConfig {
         }
     }
 
-  private def getResolver[F[_]: ContextShift: Sync: Timer](
-    blocker: Blocker,
-    region: String,
+  private def getResolver[F[_]: ContextShift: Sync: Temporal](region: String,
     table: String,
     key: String
   ): F[Base64Hocon] = {
@@ -103,9 +100,7 @@ object DynamoDbConfig {
     }
   }
 
-  private def getEnrichments[F[_]: ContextShift: Sync: Timer](
-    blocker: Blocker,
-    region: String,
+  private def getEnrichments[F[_]: ContextShift: Sync: Temporal](region: String,
     table: String,
     prefix: String
   ): F[Base64Hocon] =
@@ -143,7 +138,7 @@ object DynamoDbConfig {
         .build()
     })(c => Sync[F].delay(c.shutdown))
 
-  private def withRetry[F[_]: Sync: Timer, A](f: F[A]): F[A] =
+  private def withRetry[F[_]: Sync: Temporal, A](f: F[A]): F[A] =
     retryingOnSomeErrors[A](retryPolicy[F], worthRetrying, onError[F])(f)
 
   private def retryPolicy[F[_]: Applicative]: RetryPolicy[F] =

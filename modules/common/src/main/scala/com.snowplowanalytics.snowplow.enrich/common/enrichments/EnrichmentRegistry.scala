@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments
 import cats.Monad
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 
-import cats.effect.{Async, Blocker, Clock, ContextShift}
+import cats.effect.{Async, Clock}
 import cats.implicits._
 
 import io.circe._
@@ -102,7 +102,6 @@ object EnrichmentRegistry {
   // todo: ValidatedNel?
   def build[F[_]: Async: Clock: ContextShift](
     confs: List[EnrichmentConf],
-    blocker: Blocker,
     shifter: ShiftExecution[F],
     httpClient: HttpClient[F]
   ): EitherT[F, String, EnrichmentRegistry[F]] =

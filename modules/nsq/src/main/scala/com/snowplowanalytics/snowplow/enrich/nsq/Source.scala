@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.nsq
 
 import cats.syntax.all._
 
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync}
+import cats.effect.{ConcurrentEffect, Resource, Sync}
 
 import fs2.Stream
 
@@ -35,9 +35,7 @@ object Source {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def init[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
-    input: Input
+  def init[F[_]: ConcurrentEffect: ContextShift](input: Input
   ): Stream[F, Record[F]] =
     input match {
       case config: Input.Nsq =>
@@ -50,9 +48,7 @@ object Source {
         Stream.raiseError[F](new IllegalArgumentException(s"Input $i is not NSQ"))
     }
 
-  private def startConsumer[F[_]: Sync: ContextShift: ConcurrentEffect](
-    blocker: Blocker,
-    queue: Queue[F, Either[Throwable, Record[F]]],
+  private def startConsumer[F[_]: Sync: ContextShift: ConcurrentEffect](queue: Queue[F, Either[Throwable, Record[F]]],
     config: Input.Nsq
   ): Resource[F, NSQConsumer] =
     Resource.make(

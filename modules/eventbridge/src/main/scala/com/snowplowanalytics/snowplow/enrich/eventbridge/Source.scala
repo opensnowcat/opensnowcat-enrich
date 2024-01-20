@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
+import cats.effect.{ConcurrentEffect, Resource, Sync}
 import cats.implicits._
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input.Kinesis.InitPosition
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Input, Monitoring}
@@ -34,12 +34,11 @@ import software.amazon.kinesis.retrieval.polling.PollingConfig
 
 import java.net.{InetAddress, URI}
 import java.util.{Date, UUID}
+import cats.effect.Temporal
 
 object Source {
 
-  def init[F[_]: ConcurrentEffect: ContextShift: Timer](
-    blocker: Blocker,
-    input: Input,
+  def init[F[_]: ConcurrentEffect: ContextShift: Temporal](input: Input,
     monitoring: Monitoring
   ): Stream[F, CommittableRecord] =
     input match {
@@ -54,9 +53,7 @@ object Source {
         Stream.raiseError[F](new IllegalArgumentException(s"Input $i is not Kinesis"))
     }
 
-  def kinesis[F[_]: ConcurrentEffect: ContextShift: Sync: Timer](
-    blocker: Blocker,
-    kinesisConfig: Input.Kinesis,
+  def kinesis[F[_]: ConcurrentEffect: ContextShift: Sync: Temporal](kinesisConfig: Input.Kinesis,
     region: String,
     monitoring: Monitoring
   ): Stream[F, CommittableRecord] = {

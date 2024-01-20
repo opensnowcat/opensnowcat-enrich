@@ -23,9 +23,10 @@ import cats.Monad
 import cats.data.EitherT
 import cats.implicits._
 
-import cats.effect.{Async, Blocker, Bracket, ContextShift, Resource, Sync}
+import cats.effect.{Async, Resource, Sync}
 
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery.Input.ExtractedValue
+import cats.effect.MonadCancel
 
 // DbExecutor must have much smaller interface, ideally without any JDBC types
 /** Side-effecting ability to connect to database */
@@ -80,14 +81,14 @@ object DbExecutor {
 
   def sync[F[_]: ContextShift: Sync]: DbExecutor[F] =
     new DbExecutor[F] {
-      def getConnection(dataSource: DataSource, blocker: Blocker): Resource[F, Connection] =
+      def getConnection(dataSource: DataSource): Resource[F, Connection] =
         Resource.fromAutoCloseable(blocker.blockOn(Sync[F].delay(dataSource.getConnection())))
 
       def execute(query: PreparedStatement): EitherT[F, Throwable, ResultSet] =
         Sync[F].delay(query.executeQuery()).attemptT
 
       def convert(resultSet: ResultSet, names: JsonOutput.PropertyNameMode): EitherT[F, Throwable, List[Json]] =
-        EitherT(Bracket[F, Throwable].bracket(Sync[F].pure(resultSet)) { set =>
+        EitherT(MonadCancel[F, Throwable].bracket(Sync[F].pure(resultSet)) { set =>
           val hasNext = Sync[F].delay(set.next()).attemptT
           val convert = transform(set, names)(this, Monad[F])
           convert.whileM[List](hasNext).value
@@ -195,6 +196,6 @@ object DbExecutor {
       if (intMap.keys.size == placeholderCount) true else false
     }
 
-  def getConnection[F[_]: Monad: DbExecutor](dataSource: DataSource, blocker: Blocker): Resource[F, Connection] =
+  def getConnection[F[_]: Monad: DbExecutor](dataSource: DataSource): Resource[F, Connection] =
     DbExecutor[F].getConnection(dataSource, blocker)
 }
