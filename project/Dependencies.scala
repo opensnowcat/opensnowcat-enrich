@@ -81,7 +81,7 @@ object Dependencies {
 
     val decline = "2.4.1"
     val fs2 = "2.5.11"
-    val catsEffect = "2.5.5"
+    val catsEffect = "3.5.3"
     val fs2PubSub = "0.18.1"
     val fs2Aws = "3.1.1"
     val fs2Kafka = "1.10.0"
