@@ -83,13 +83,13 @@ class JsonPathSpec extends Specification {
     JsonPath.query("$.store.unicorns", someJson) must beRight(Nil)
 
   def e4 =
-    JsonPath.query(".notJsonPath", someJson) must beLeft.like {
-      case f => f must beEqualTo("'$' expected but '.' found")
+    JsonPath.query(".notJsonPath", someJson) must beLeft.like { case f =>
+      f must beEqualTo("'$' expected but '.' found")
     }
 
   def e5 =
-    JsonPath.query("$.store.book[a]", someJson) must beLeft.like {
-      case f => f must beEqualTo("':' expected but 'a' found")
+    JsonPath.query("$.store.book[a]", someJson) must beLeft.like { case f =>
+      f must beEqualTo("':' expected but 'a' found")
     }
 
   def e6 =

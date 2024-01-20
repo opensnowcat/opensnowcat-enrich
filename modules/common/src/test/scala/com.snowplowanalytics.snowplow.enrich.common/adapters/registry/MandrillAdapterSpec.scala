@@ -82,8 +82,8 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidatedMa
           "events_mandrill=something".some,
           "no `mandrill_events` parameter provided"
         ) |> { (_, str, expected) =>
-      adapterWithDefaultSchemas.payloadBodyToEvents(str) must beLeft(expected)
-    }
+        adapterWithDefaultSchemas.payloadBodyToEvents(str) must beLeft(expected)
+      }
 
   def e3 = {
     val bodyStr = "mandrill_events=%5B%7B%22event%22%3A%22click%7D%5D"

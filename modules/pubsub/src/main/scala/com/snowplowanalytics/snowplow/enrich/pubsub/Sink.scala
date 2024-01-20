@@ -77,8 +77,7 @@ object Sink {
     }.void
 
   private def dropOversizedAttributes[A](r: AttributedData[A]): Map[String, String] =
-    r.attributes.filter {
-      case (_, value) =>
-        value.getBytes(StandardCharsets.UTF_8).length <= maxAttributeBytesLength
+    r.attributes.filter { case (_, value) =>
+      value.getBytes(StandardCharsets.UTF_8).length <= maxAttributeBytesLength
     }
 }

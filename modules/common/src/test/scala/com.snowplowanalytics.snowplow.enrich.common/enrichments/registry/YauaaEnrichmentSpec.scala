@@ -253,9 +253,8 @@ class YauaaEnrichmentSpec extends Specification with ValidatedMatchers {
 
   /** Helper to check that a certain field of a parsed user agent has the expected value. */
   def checkYauaaParsingForField(expectedResults: Map[String, String], fieldName: String) =
-    expectedResults.map {
-      case (userAgent, expectedField) =>
-        yauaaEnrichment.analyzeUserAgent(userAgent, Nil)(decapitalize(fieldName)) shouldEqual expectedField
+    expectedResults.map { case (userAgent, expectedField) =>
+      yauaaEnrichment.analyzeUserAgent(userAgent, Nil)(decapitalize(fieldName)) shouldEqual expectedField
     }.toList
 
   "decapitalize should" >> {

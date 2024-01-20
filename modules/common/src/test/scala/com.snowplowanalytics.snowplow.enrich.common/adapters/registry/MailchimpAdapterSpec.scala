@@ -120,8 +120,8 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
         "type" -> "subscribe",
         "id" -> "some_id"
       ).toOpt |> { (_, params, expected) =>
-      adapterWithDefaultSchemas.reformatParameters(params) mustEqual expected
-    }
+        adapterWithDefaultSchemas.reformatParameters(params) mustEqual expected
+      }
 
   def e6 = {
     val body = "type=subscribe&data%5Bmerges%5D%5BLNAME%5D=Beemster"
@@ -218,33 +218,33 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
       "Valid, type email" !! "upemail" ! "iglu:com.mailchimp/email_address_change/jsonschema/1-0-0" |
       "Valid, type cleaned" !! "cleaned" ! "iglu:com.mailchimp/cleaned_email/jsonschema/1-0-0" |
       "Valid, type campaign" !! "campaign" ! "iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0" |> { (_, schema, expected) =>
-      val body = "type=" + schema
-      val payload = CollectorPayload(
-        Shared.api,
-        Nil,
-        ContentType.some,
-        body.some,
-        Shared.cljSource,
-        Shared.context
-      )
-      val expectedJson =
-        "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{\"type\":\"" + schema + "\"}}}"
-      adapterWithDefaultSchemas
-        .toRawEvents(payload, SpecHelpers.client)
-        .map(
-          _ must beValid(
-            NonEmptyList.one(
-              RawEvent(
-                Shared.api,
-                Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson).toOpt,
-                ContentType.some,
-                Shared.cljSource,
-                Shared.context
+        val body = "type=" + schema
+        val payload = CollectorPayload(
+          Shared.api,
+          Nil,
+          ContentType.some,
+          body.some,
+          Shared.cljSource,
+          Shared.context
+        )
+        val expectedJson =
+          "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\"" + expected + "\",\"data\":{\"type\":\"" + schema + "\"}}}"
+        adapterWithDefaultSchemas
+          .toRawEvents(payload, SpecHelpers.client)
+          .map(
+            _ must beValid(
+              NonEmptyList.one(
+                RawEvent(
+                  Shared.api,
+                  Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson).toOpt,
+                  ContentType.some,
+                  Shared.cljSource,
+                  Shared.context
+                )
               )
             )
           )
-        )
-    }
+      }
 
   def e9 =
     "SPEC NAME" || "SCHEMA TYPE" | "EXPECTED OUTPUT" |
@@ -258,17 +258,17 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
         adapterWithDefaultSchemas.EventSchemaMap,
         "cannot determine event type: type parameter empty"
       ) |> { (_, schema, expected) =>
-      val body = "type=" + schema
-      val payload = CollectorPayload(
-        Shared.api,
-        Nil,
-        ContentType.some,
-        body.some,
-        Shared.cljSource,
-        Shared.context
-      )
-      adapterWithDefaultSchemas.toRawEvents(payload, SpecHelpers.client).map(_ must beInvalid(NonEmptyList.one(expected)))
-    }
+        val body = "type=" + schema
+        val payload = CollectorPayload(
+          Shared.api,
+          Nil,
+          ContentType.some,
+          body.some,
+          Shared.cljSource,
+          Shared.context
+        )
+        adapterWithDefaultSchemas.toRawEvents(payload, SpecHelpers.client).map(_ must beInvalid(NonEmptyList.one(expected)))
+      }
 
   def e10 = {
     val body =

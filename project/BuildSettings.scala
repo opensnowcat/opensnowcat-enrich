@@ -161,7 +161,7 @@ object BuildSettings {
   )
 
   lazy val assemblySettings = Seq(
-    assembly / assemblyJarName := { s"${moduleName.value}-${version.value}.jar" },
+    assembly / assemblyJarName := s"${moduleName.value}-${version.value}.jar",
     assembly / assemblyMergeStrategy := {
       case x if x.endsWith(".properties") => MergeStrategy.first
       case x if x.endsWith("public-suffix-list.txt") => MergeStrategy.first

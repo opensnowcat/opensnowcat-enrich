@@ -65,8 +65,8 @@ class ExtractPlatformSpec extends Specification with DataTables {
       "invalid empty" !! "" ! err("").asLeft |
       "invalid null" !! null ! err(null).asLeft |
       "invalid platform" !! "ma" ! err("ma").asLeft |> { (_, input, expected) =>
-      MiscEnrichments.extractPlatform(FieldName, input) must_== expected
-    }
+        MiscEnrichments.extractPlatform(FieldName, input) must_== expected
+      }
 }
 
 class ExtractIpSpec extends Specification with DataTables {
@@ -86,8 +86,8 @@ class ExtractIpSpec extends Specification with DataTables {
       // ConversionUtils.makeTsvSafe returns null for empty string
       "empty" !! "" ! Right(null) |
       "null" !! null ! Right(null) |> { (_, input, expected) =>
-      MiscEnrichments.extractIp("ip", input) must_== expected
-    }
+        MiscEnrichments.extractIp("ip", input) must_== expected
+      }
 
 }
 

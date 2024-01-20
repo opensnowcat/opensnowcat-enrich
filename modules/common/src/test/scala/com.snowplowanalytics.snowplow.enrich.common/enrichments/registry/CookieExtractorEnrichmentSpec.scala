@@ -67,8 +67,8 @@ class CookieExtractorEnrichmentSpec extends Specification {
     val actual = CookieExtractorEnrichment(cookieKeys)
       .extract(List("Cookie: " + cookies.mkString(";")))
 
-    actual must beLike {
-      case cookies @ _ :: _ :: _ :: _ :: _ :: Nil => cookies must_== expected
+    actual must beLike { case cookies @ _ :: _ :: _ :: _ :: _ :: Nil =>
+      cookies must_== expected
     }
   }
 }

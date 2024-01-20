@@ -119,10 +119,9 @@ object Sink {
                                    (output.collector.contains(true), "collector", () => host.asJson)
             )
 
-            attachments.foldLeft(eventJson) {
-              case (current, (include, key, getValue)) =>
-                if (include) current.deepMerge(Map(key -> getValue()).asJson)
-                else current
+            attachments.foldLeft(eventJson) { case (current, (include, key, getValue)) =>
+              if (include) current.deepMerge(Map(key -> getValue()).asJson)
+              else current
             }
           case Validated.Invalid(error) =>
             Map("error" -> error.toString, "tsv" -> base64TSV).asJson
@@ -161,10 +160,9 @@ object Sink {
                     .retryingOnFailures(
                       policy = policyForThrottling,
                       wasSuccessful = _.isEmpty,
-                      onFailure = {
-                        case (result, retryDetails) =>
-                          val msg = failureMessageForThrottling(result, config.eventBusName)
-                          Logger[F].warn(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
+                      onFailure = { case (result, retryDetails) =>
+                        val msg = failureMessageForThrottling(result, config.eventBusName)
+                        Logger[F].warn(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
                       }
                     )
       _ <- if (failures.isEmpty) Sync[F].unit
@@ -190,18 +188,17 @@ object Sink {
     )
 
     records
-      .foldLeft(List.empty[Batch]) {
-        case (acc, record) =>
-          val recordSize = getRecordSize(record)
-          acc match {
-            case head :: tail =>
-              if (head.count + 1 > recordLimit || head.size + recordSize > sizeLimit)
-                List(Batch(recordSize, 1, List(record))) ++ List(head) ++ tail
-              else
-                List(Batch(head.size + recordSize, head.count + 1, record :: head.records)) ++ tail
-            case Nil =>
-              List(Batch(recordSize, 1, List(record)))
-          }
+      .foldLeft(List.empty[Batch]) { case (acc, record) =>
+        val recordSize = getRecordSize(record)
+        acc match {
+          case head :: tail =>
+            if (head.count + 1 > recordLimit || head.size + recordSize > sizeLimit)
+              List(Batch(recordSize, 1, List(record))) ++ List(head) ++ tail
+            else
+              List(Batch(head.size + recordSize, head.count + 1, record :: head.records)) ++ tail
+          case Nil =>
+            List(Batch(recordSize, 1, List(record)))
+        }
       }
       .map(_.records)
   }
@@ -227,10 +224,9 @@ object Sink {
         .retryingOnFailuresAndAllErrors(
           policy = retryPolicy,
           wasSuccessful = r => !r.shouldRetrySameBatch,
-          onFailure = {
-            case (result, retryDetails) =>
-              val msg = failureMessageForInternalErrors(events, config.eventBusName, result)
-              Logger[F].error(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
+          onFailure = { case (result, retryDetails) =>
+            val msg = failureMessageForInternalErrors(events, config.eventBusName, result)
+            Logger[F].error(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
           },
           onError = (exception, retryDetails) =>
             Logger[F]
@@ -284,16 +280,15 @@ object Sink {
       if (prr.failedEntryCount().toInt =!= 0)
         records
           .zip(prr.entries().asScala)
-          .foldMap {
-            case (orig, recordResult) =>
-              Option(recordResult.errorCode()) match {
-                case None =>
-                  TryBatchResult(Vector.empty, true, false, None)
-                case Some("ThrottlingException") =>
-                  TryBatchResult(Vector(orig), false, true, None)
-                case Some(_) =>
-                  TryBatchResult(Vector(orig), false, false, Option(recordResult.errorMessage()))
-              }
+          .foldMap { case (orig, recordResult) =>
+            Option(recordResult.errorCode()) match {
+              case None =>
+                TryBatchResult(Vector.empty, true, false, None)
+              case Some("ThrottlingException") =>
+                TryBatchResult(Vector(orig), false, true, None)
+              case Some(_) =>
+                TryBatchResult(Vector(orig), false, false, Option(recordResult.errorMessage()))
+            }
           }
       else
         TryBatchResult(Vector.empty, true, false, None)

@@ -73,17 +73,16 @@ class AssetsSpec extends Specification with CatsIO with ScalaCheck {
           files <- SpecHelpers.filesResource(blocker, TestFiles)
         } yield (blocker, files)
 
-      resources.use {
-        case (blocker, _) =>
-          for {
-            assetExistsBefore <- exists[IO](blocker, path)
-            hash <- assetsInit
-            assetExists <- exists[IO](blocker, path)
-          } yield {
-            assetExistsBefore must beFalse
-            hash must beTrue
-            assetExists must beTrue
-          }
+      resources.use { case (blocker, _) =>
+        for {
+          assetExistsBefore <- exists[IO](blocker, path)
+          hash <- assetsInit
+          assetExists <- exists[IO](blocker, path)
+        } yield {
+          assetExistsBefore must beFalse
+          hash must beTrue
+          assetExists must beTrue
+        }
       }
     }
   }
@@ -101,9 +100,8 @@ class AssetsSpec extends Specification with CatsIO with ScalaCheck {
 
       Stream
         .resource(resources)
-        .evalMap {
-          case (blocker, state) =>
-            Assets.downloadAndHash(blocker, state.clients, uri, path)
+        .evalMap { case (blocker, state) =>
+          Assets.downloadAndHash(blocker, state.clients, uri, path)
         }
         .withHttp
         .haltAfter(5.second)
@@ -133,9 +131,8 @@ class AssetsSpec extends Specification with CatsIO with ScalaCheck {
 
           val update = Stream
             .resource(resources)
-            .flatMap {
-              case (blocker, shift, sem, enrichments) =>
-                Assets.updateStream[IO](blocker, shift, sem, state, enrichments, 1.second, List(uri -> filename))
+            .flatMap { case (blocker, shift, sem, enrichments) =>
+              Assets.updateStream[IO](blocker, shift, sem, state, enrichments, 1.second, List(uri -> filename))
             }
             .haltAfter(2.second)
 

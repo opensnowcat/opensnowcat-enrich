@@ -110,8 +110,8 @@ final case class JavascriptScriptEnrichment(schemaKey: SchemaKey, rawFunction: S
                   .map(_.toList)
                   .leftMap { s =>
                     val msg = s.toList
-                      .map {
-                        case (error, json) => s"error code:[${error.code}],json:[${json.noSpaces}]"
+                      .map { case (error, json) =>
+                        s"error code:[${error.code}],json:[${json.noSpaces}]"
                       }
                       .mkString(";")
                     s"Resulting contexts are not self-desribing. Error(s): [$msg]"

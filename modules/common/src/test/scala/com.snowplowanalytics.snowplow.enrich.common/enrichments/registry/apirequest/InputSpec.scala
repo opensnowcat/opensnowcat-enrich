@@ -224,8 +224,8 @@ class InputSpec extends Specification with ValidatedMatchers with CatsIO {
       customContexts = Nil, // This should have been an error?
       unstructEvent = None
     )
-    templateContext must beInvalid.like {
-      case errors => errors.toList must have length 3
+    templateContext must beInvalid.like { case errors =>
+      errors.toList must have length 3
     }
   }
 
@@ -233,8 +233,8 @@ class InputSpec extends Specification with ValidatedMatchers with CatsIO {
     val event = new EnrichedEvent
     val pojoInput = Input.Pojo("someKey", "app_id")
     val templateContext: ValidatedNel[String, Option[Any]] = pojoInput.pull(event, Nil, Nil, None)
-    templateContext must beValid.like {
-      case map => map must beNone
+    templateContext must beValid.like { case map =>
+      map must beNone
     }
   }
 
@@ -264,8 +264,8 @@ class InputSpec extends Specification with ValidatedMatchers with CatsIO {
         _ = event.setUser_id("chuwy")
         // time in true_tstamp won't be found
         request <- enrichment.lookup(event, Nil, Nil, None)
-      } yield request must beValid.like {
-        case response => response must be(Nil)
+      } yield request must beValid.like { case response =>
+        response must be(Nil)
       }
     }
   }

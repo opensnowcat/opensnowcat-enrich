@@ -63,8 +63,8 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
       "Valid, update one value" !! json"""{"type":"null"}""" ! json"""{"type":null}""" |
       "Valid, update multiple values" !! json"""{"type":"null","some":"null"}""" ! json"""{"type":null,"some":null}""" |
       "Valid, update nested values" !! json"""{"type": {"some":"null"}}""" ! json"""{"type":{"some":null}}""" |> { (_, input, expected) =>
-      adapterWithDefaultSchemas.reformatParameters(input) mustEqual expected
-    }
+        adapterWithDefaultSchemas.reformatParameters(input) mustEqual expected
+      }
 
   def e2 = {
     val json = json"""{"type":"incident.trigger"}"""
@@ -77,9 +77,9 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
       "Valid, update one value" !! json"""{"created_on":"2014-11-12T18:53:47 00:00"}""" ! json"""{"created_on":"2014-11-12T18:53:47+00:00"}""" |
       "Valid, update multiple values" !! json"""{"created_on":"2014-11-12T18:53:47 00:00","last_status_change_on":"2014-11-12T18:53:47 00:00"}""" ! json"""{"created_on":"2014-11-12T18:53:47+00:00","last_status_change_on":"2014-11-12T18:53:47+00:00"}""" |
       "Valid, update nested values" !! json"""{"created_on":"2014-12-15T08:19:54Z","nested":{"created_on":"2014-11-12T18:53:47 00:00"}}""" ! json"""{"created_on":"2014-12-15T08:19:54Z","nested":{"created_on":"2014-11-12T18:53:47+00:00"}}""" |> {
-      (_, input, expected) =>
-        adapterWithDefaultSchemas.reformatParameters(input) mustEqual expected
-    }
+        (_, input, expected) =>
+          adapterWithDefaultSchemas.reformatParameters(input) mustEqual expected
+      }
 
   def e4 = {
     val bodyStr =
@@ -109,8 +109,8 @@ class PagerdutyAdapterSpec extends Specification with DataTables with ValidatedM
           """{"somekey":"key"}""".some,
           "field `messages` is not an array"
         ) |> { (_, input, expected) =>
-      adapterWithDefaultSchemas.payloadBodyToEvents(input) must beLeft(expected)
-    }
+        adapterWithDefaultSchemas.payloadBodyToEvents(input) must beLeft(expected)
+      }
 
   def e6 = {
     val bodyStr =

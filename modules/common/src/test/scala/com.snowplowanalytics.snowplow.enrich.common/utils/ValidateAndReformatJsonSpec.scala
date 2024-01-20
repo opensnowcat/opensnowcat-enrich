@@ -32,8 +32,8 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables {
       {
         "a": 23
       }""" ! """{"a":23}""" |> { (_, str, expected) =>
-      JsonUtils.validateAndReformatJson(str) must beRight(expected)
-    }
+        JsonUtils.validateAndReformatJson(str) must beRight(expected)
+      }
 
   def err1 = s"invalid json: exhausted input"
   def err2: (String, Int, Int) => String =
@@ -47,7 +47,7 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables {
       "Double colons" !! """{"a"::2}""" ! err2(":2}", 1, 6) |
       "Random noise" !! "^45fj_" ! err2("^45fj_", 1, 1) |
       "Bad key" !! """{9:"a"}""" ! err3("""9:"a"}""", 1, 2) |> { (_, str, expected) =>
-      JsonUtils.validateAndReformatJson(str) must beLeft(expected)
-    }
+        JsonUtils.validateAndReformatJson(str) must beLeft(expected)
+      }
 
 }

@@ -71,16 +71,16 @@ class SchemaEnrichmentSpec extends Specification with DataTables {
         "jsonschema",
         SchemaVer.Full(1, 0, 0)
       ) |> { (_, event, unstruct, expected) =>
-      val schema = SchemaEnrichment.extractSchema(event, unstruct)
-      schema must beRight(Some(expected))
-    }
+        val schema = SchemaEnrichment.extractSchema(event, unstruct)
+        schema must beRight(Some(expected))
+      }
 
   def e2 =
     "SPEC NAME" || "EVENT" |
       "unknown event" !! event("unknown") |
       "missing event" !! event(null) |> { (_, event) =>
-      SchemaEnrichment.extractSchema(event, None) must beLeft
-    }
+        SchemaEnrichment.extractSchema(event, None) must beLeft
+      }
 
   def event(eventType: String) = {
     val event: EnrichedEvent = new EnrichedEvent()

@@ -169,11 +169,11 @@ class ExplodeUriSpec extends Specification with DataTables {
       "Tab & newline in #" !! "http://psy.bz/oracles/psycards.html?view=print#detail%09is%0Acorrupted" ! "http" ! "psy.bz" ! 80 ! Some(
         "/oracles/psycards.html"
       ) ! Some("view=print") ! Some("detail%09is%0Acorrupted") |> { (_, uri, scheme, host, port, path, query, fragment) =>
-      val actual = ConversionUtils.explodeUri(new URI(uri))
-      val expected = ConversionUtils.UriComponents(scheme, host, port, path, query, fragment)
-      actual must_== expected
+        val actual = ConversionUtils.explodeUri(new URI(uri))
+        val expected = ConversionUtils.UriComponents(scheme, host, port, path, query, fragment)
+        actual must_== expected
 
-    }
+      }
 }
 
 class FixTabsNewlinesSpec extends Specification with DataTables {
@@ -198,8 +198,8 @@ class FixTabsNewlinesSpec extends Specification with DataTables {
       "String with everything" !! "Hi	\u0002�\u0020\bJo\t\u0002" ! "Hi%s� Jo%s"
         .format(SafeTab, SafeTab)
         .some |> { (_, str, expected) =>
-      ConversionUtils.fixTabsNewlines(str) must_== expected
-    }
+        ConversionUtils.fixTabsNewlines(str) must_== expected
+      }
 }
 
 // TODO: note that we have some functionality tweaks planned.
@@ -236,8 +236,8 @@ class DecodeBase64UrlSpec extends Specification with DataTables with ScalaCheck 
       "JS Tracker JSON #1" !! "eyJwcm9kdWN0X2lkIjoiQVNPMDEwNDMiLCJjYXRlZ29yeSI6IkRyZXNzZXMiLCJicmFuZCI6IkFDTUUiLCJyZXR1cm5pbmciOnRydWUsInByaWNlIjo0OS45NSwic2l6ZXMiOlsieHMiLCJzIiwibCIsInhsIiwieHhsIl0sImF2YWlsYWJsZV9zaW5jZSRkdCI6MTU4MDF9" ! """{"product_id":"ASO01043","category":"Dresses","brand":"ACME","returning":true,"price":49.95,"sizes":["xs","s","l","xl","xxl"],"available_since$dt":15801}""" |
       "Unescaped characters" !! "äöü - &" ! "" |
       "Blank string" !! "" ! "" |> { (_, str, expected) =>
-      ConversionUtils.decodeBase64Url(str) must beRight(expected)
-    }
+        ConversionUtils.decodeBase64Url(str) must beRight(expected)
+      }
 }
 
 class ValidateUuidSpec extends Specification with DataTables with ScalaCheck {
@@ -254,11 +254,11 @@ class ValidateUuidSpec extends Specification with DataTables with ScalaCheck {
       "Lowercase UUID #2" !! "a729d278-110a-4ac6-845b-d1f12ce45ac7" ! "a729d278-110a-4ac6-845b-d1f12ce45ac7" |
       "Uppercase UUID #1" !! "A729D278-110A-4AC6-845B-D1F12CE45AC7" ! "a729d278-110a-4ac6-845b-d1f12ce45ac7" |
       "Uppercase UUID #2" !! "F732D278-120E-4AB6-845B-C1F11CD85DC7" ! "f732d278-120e-4ab6-845b-c1f11cd85dc7" |> {
-      // Note: MS-style {GUID} is not supported
+        // Note: MS-style {GUID} is not supported
 
-      (_, str, expected) =>
-        ConversionUtils.validateUuid(FieldName, str) must beRight(expected)
-    }
+        (_, str, expected) =>
+          ConversionUtils.validateUuid(FieldName, str) must beRight(expected)
+      }
 
   // A bit of fun: the chances of generating a valid UUID at random are
   // so low that we can just use ScalaCheck here. Checks null too
@@ -349,8 +349,8 @@ class StringToDoubleLikeSpec extends Specification with DataTables {
       "NaN" !! "NaN" ! err("NaN") |
       "English string" !! "hi & bye" ! err("hi & bye") |
       "Vietnamese name" !! "Trịnh Công Sơn" ! err("Trịnh Công Sơn") |> { (_, str, expected) =>
-      ConversionUtils.stringToDoubleLike(FieldName, str) must beLeft(expected)
-    }
+        ConversionUtils.stringToDoubleLike(FieldName, str) must beLeft(expected)
+      }
 
   def e2 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
@@ -367,8 +367,8 @@ class StringToDoubleLikeSpec extends Specification with DataTables {
       "Sci. notation #1" !! "4.321768E3" ! "4321.768" |
       "Sci. notation #2" !! "6.72E9" ! "6720000000" |
       "Sci. notation #3" !! "7.51E-9" ! "0.00000000751" |> { (_, str, expected) =>
-      ConversionUtils.stringToDoubleLike(FieldName, str) must beRight(expected)
-    }
+        ConversionUtils.stringToDoubleLike(FieldName, str) must beRight(expected)
+      }
 
   val BigNumber = "78694235323.00000001" // Redshift only supports 15 significant digits for a Double
   def e3 = ConversionUtils.stringToDoubleLike(FieldName, BigNumber) must beRight(BigNumber)
@@ -391,8 +391,8 @@ class StringToJIntegerSpec extends Specification with DataTables {
       "Hexadecimal number" !! "0x54" ! err |
       "NaN" !! "NaN" ! err |
       "Sci. notation" !! "6.72E5" ! err |> { (_, str, expected) =>
-      ConversionUtils.stringToJInteger(str) must beLeft(expected)
-    }
+        ConversionUtils.stringToJInteger(str) must beLeft(expected)
+      }
 
   def e2 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
@@ -401,8 +401,8 @@ class StringToJIntegerSpec extends Specification with DataTables {
       "Negative integer #1" !! "-2012103" ! -2012103 |
       "Negative integer #2" !! "-1" ! -1 |
       "Null" !! null ! null |> { (_, str, expected) =>
-      ConversionUtils.stringToJInteger(str) must beRight(expected)
-    }
+        ConversionUtils.stringToJInteger(str) must beRight(expected)
+      }
 }
 
 class StringToBooleanLikeJByteSpec extends Specification with DataTables {
@@ -432,15 +432,15 @@ class StringToBooleanLikeJByteSpec extends Specification with DataTables {
       "Large number" !! "19,999.99" ! err("19,999.99") |
       "Text #1" !! "a" ! err("a") |
       "Text #2" !! "0x54" ! err("0x54") |> { (_, str, expected) =>
-      ConversionUtils.stringToBooleanLikeJByte(FieldName, str) must beLeft(expected)
-    }
+        ConversionUtils.stringToBooleanLikeJByte(FieldName, str) must beLeft(expected)
+      }
 
   def e2 =
     "SPEC NAME" || "INPUT STR" | "EXPECTED" |
       "True aka 1" !! "1" ! 1.toByte |
       "False aka 0" !! "0" ! 0.toByte |> { (_, str, expected) =>
-      ConversionUtils.stringToBooleanLikeJByte(FieldName, str) must beRight(expected)
-    }
+        ConversionUtils.stringToBooleanLikeJByte(FieldName, str) must beRight(expected)
+      }
 }
 
 class ExtractQueryStringSpec extends Specification {

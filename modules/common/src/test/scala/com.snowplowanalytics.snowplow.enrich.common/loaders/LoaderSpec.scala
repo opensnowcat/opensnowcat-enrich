@@ -70,8 +70,8 @@ class LoaderSpec extends Specification with DataTables with ValidatedMatchers {
           "tid" -> "483686"
         ) |
         "Empty querystring" !! None ! toNameValuePairs() |> { (_, qs, expected) =>
-        loader.parseQuerystring(qs, Encoding) must beRight(expected)
-      }
+          loader.parseQuerystring(qs, Encoding) must beRight(expected)
+        }
     }
 
     // TODO: test invalid querystrings

@@ -125,10 +125,9 @@ object Sink {
                     .retryingOnFailures(
                       policy = policyForThrottling,
                       wasSuccessful = _.isEmpty,
-                      onFailure = {
-                        case (result, retryDetails) =>
-                          val msg = failureMessageForThrottling(result, config.streamName)
-                          Logger[F].warn(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
+                      onFailure = { case (result, retryDetails) =>
+                        val msg = failureMessageForThrottling(result, config.streamName)
+                        Logger[F].warn(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
                       }
                     )
       _ <- if (failures.isEmpty) Sync[F].unit
@@ -154,18 +153,17 @@ object Sink {
     )
 
     records
-      .foldLeft(List.empty[Batch]) {
-        case (acc, record) =>
-          val recordSize = getRecordSize(record)
-          acc match {
-            case head :: tail =>
-              if (head.count + 1 > recordLimit || head.size + recordSize > sizeLimit)
-                List(Batch(recordSize, 1, List(record))) ++ List(head) ++ tail
-              else
-                List(Batch(head.size + recordSize, head.count + 1, record :: head.records)) ++ tail
-            case Nil =>
-              List(Batch(recordSize, 1, List(record)))
-          }
+      .foldLeft(List.empty[Batch]) { case (acc, record) =>
+        val recordSize = getRecordSize(record)
+        acc match {
+          case head :: tail =>
+            if (head.count + 1 > recordLimit || head.size + recordSize > sizeLimit)
+              List(Batch(recordSize, 1, List(record))) ++ List(head) ++ tail
+            else
+              List(Batch(head.size + recordSize, head.count + 1, record :: head.records)) ++ tail
+          case Nil =>
+            List(Batch(recordSize, 1, List(record)))
+        }
       }
       .map(_.records)
   }
@@ -194,10 +192,9 @@ object Sink {
         .retryingOnFailuresAndAllErrors(
           policy = retryPolicy,
           wasSuccessful = r => !r.shouldRetrySameBatch,
-          onFailure = {
-            case (result, retryDetails) =>
-              val msg = failureMessageForInternalErrors(records, config.streamName, result)
-              Logger[F].error(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
+          onFailure = { case (result, retryDetails) =>
+            val msg = failureMessageForInternalErrors(records, config.streamName, result)
+            Logger[F].error(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
           },
           onError = (exception, retryDetails) =>
             Logger[F]
@@ -274,16 +271,15 @@ object Sink {
       if (prr.getFailedRecordCount.toInt =!= 0)
         records
           .zip(prr.getRecords.asScala)
-          .foldMap {
-            case (orig, recordResult) =>
-              Option(recordResult.getErrorCode) match {
-                case None =>
-                  TryBatchResult(Vector.empty, true, false, None)
-                case Some("ProvisionedThroughputExceededException") =>
-                  TryBatchResult(Vector(orig), false, true, None)
-                case Some(_) =>
-                  TryBatchResult(Vector(orig), false, false, Option(recordResult.getErrorMessage))
-              }
+          .foldMap { case (orig, recordResult) =>
+            Option(recordResult.getErrorCode) match {
+              case None =>
+                TryBatchResult(Vector.empty, true, false, None)
+              case Some("ProvisionedThroughputExceededException") =>
+                TryBatchResult(Vector(orig), false, true, None)
+              case Some(_) =>
+                TryBatchResult(Vector(orig), false, false, Option(recordResult.getErrorMessage))
+            }
           }
       else
         TryBatchResult(Vector.empty, true, false, None)

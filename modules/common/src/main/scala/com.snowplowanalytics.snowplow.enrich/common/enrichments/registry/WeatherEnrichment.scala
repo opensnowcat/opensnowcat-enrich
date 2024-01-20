@@ -148,13 +148,12 @@ final case class WeatherEnrichment[F[_]: Monad](schemaKey: SchemaKey, client: OW
         } yield transformed.asJson
       case (a, b, c) =>
         val failures = List((a, "geo_latitude"), (b, "geo_longitude"), (c, "derived_tstamp"))
-          .collect {
-            case (None, n) =>
-              FailureDetails.EnrichmentFailure(
-                enrichmentInfo,
-                FailureDetails.EnrichmentFailureMessage
-                  .InputData(n, none, "missing")
-              )
+          .collect { case (None, n) =>
+            FailureDetails.EnrichmentFailure(
+              enrichmentInfo,
+              FailureDetails.EnrichmentFailureMessage
+                .InputData(n, none, "missing")
+            )
           }
         EitherT.leftT(
           NonEmptyList

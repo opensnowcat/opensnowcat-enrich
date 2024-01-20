@@ -544,10 +544,10 @@ case class GoogleAnalyticsAdapter(schemas: GoogleAnalyticsSchemas) extends Adapt
                           ).toValidatedNel
       // better-monadic-for doesn't work for some reason?
       result <- (
-                    translationTable,
-                    schemaVal,
-                    simpleContexts,
-                    compositeContexts
+                  translationTable,
+                  schemaVal,
+                  simpleContexts,
+                  compositeContexts
                 ).mapN { (trTable, schema, contexts, compContexts) =>
                   val contextJsons = (contexts.toList ++ compContexts)
                     .collect {
@@ -587,15 +587,13 @@ case class GoogleAnalyticsAdapter(schemas: GoogleAnalyticsSchemas) extends Adapt
   ): Either[FailureDetails.AdapterFailure, Map[String, FieldType]] = {
     val m = originalParams
       .collect { case (k, Some(v)) => (k, v) }
-      .foldLeft(Map.empty[String, Either[FailureDetails.AdapterFailure, FieldType]]) {
-        case (m, (fieldName, value)) =>
-          translationTable
-            .get(fieldName)
-            .map {
-              case KVTranslation(newName, translation) =>
-                m + (newName -> translation(value))
-            }
-            .getOrElse(m)
+      .foldLeft(Map.empty[String, Either[FailureDetails.AdapterFailure, FieldType]]) { case (m, (fieldName, value)) =>
+        translationTable
+          .get(fieldName)
+          .map { case KVTranslation(newName, translation) =>
+            m + (newName -> translation(value))
+          }
+          .getOrElse(m)
       }
     traverseMap(m)
   }
@@ -610,12 +608,11 @@ case class GoogleAnalyticsAdapter(schemas: GoogleAnalyticsSchemas) extends Adapt
     originalParams: Map[String, Option[String]],
     translationTable: Map[String, String]
   ): Map[String, Option[String]] =
-    originalParams.foldLeft(Map.empty[String, Option[String]]) {
-      case (m, (fieldName, value)) =>
-        translationTable
-          .get(fieldName)
-          .map(newName => m + (newName -> value))
-          .getOrElse(m)
+    originalParams.foldLeft(Map.empty[String, Option[String]]) { case (m, (fieldName, value)) =>
+      translationTable
+        .get(fieldName)
+        .map(newName => m + (newName -> value))
+        .getOrElse(m)
     }
 
   /**
@@ -635,18 +632,17 @@ case class GoogleAnalyticsAdapter(schemas: GoogleAnalyticsSchemas) extends Adapt
       .collect { case (k, Some(v)) => (k, v) }
       .foldLeft(
         Map.empty[SchemaKey, Map[String, ValidatedNel[FailureDetails.AdapterFailure, FieldType]]]
-      ) {
-        case (m, (fieldName, value)) =>
-          fieldToSchemaMap
-            .get(fieldName)
-            .map { schema =>
-              // this is safe when fieldToSchemaMap is built from referenceTable
-              val KVTranslation(newName, translation) = referenceTable(schema)(fieldName)
-              val trTable = m.getOrElse(schema, Map.empty) +
-                (newName -> translation(value).toValidatedNel)
-              m + (schema -> trTable)
-            }
-            .getOrElse(m)
+      ) { case (m, (fieldName, value)) =>
+        fieldToSchemaMap
+          .get(fieldName)
+          .map { schema =>
+            // this is safe when fieldToSchemaMap is built from referenceTable
+            val KVTranslation(newName, translation) = referenceTable(schema)(fieldName)
+            val trTable = m.getOrElse(schema, Map.empty) +
+              (newName -> translation(value).toValidatedNel)
+            m + (schema -> trTable)
+          }
+          .getOrElse(m)
       }
       .map { case (k, v) => (k -> traverseMap(v)) }
     traverseMap(m)
@@ -678,8 +674,8 @@ case class GoogleAnalyticsAdapter(schemas: GoogleAnalyticsSchemas) extends Adapt
                      .collect { case (k, Some(v)) => (k, v) }
                      .filterKeys(k => k.exists(_.isDigit))
                      .asRight
-      brokenDown <- composite.toList.sorted.map {
-                      case (k, v) => breakDownCompField(k, v, indicator)
+      brokenDown <- composite.toList.sorted.map { case (k, v) =>
+                      breakDownCompField(k, v, indicator)
                     }.sequence
       partitioned = brokenDown.map(_.partition(_._1.startsWith(indicator))).unzip
       // we additionally make sure we have a rectangular dataset
@@ -690,44 +686,41 @@ case class GoogleAnalyticsAdapter(schemas: GoogleAnalyticsSchemas) extends Adapt
         val m = grouped
           .foldLeft(
             Map.empty[SchemaKey, Map[String, Either[FailureDetails.AdapterFailure, Seq[FieldType]]]]
-          ) {
-            case (m, (fieldName, values)) =>
-              val additions = referenceTable
-                .filter(_.translationTable.contains(fieldName))
-                .map { d =>
-                  // this is safe because of the filter above
-                  val KVTranslation(newName, translation) = d.translationTable(fieldName)
-                  val trTable = m.getOrElse(d.schemaKey, Map.empty) +
-                    (newName -> values.map(v => translation(v)).sequence)
-                  d.schemaKey -> trTable
-                }
-                .toMap
-              m ++ additions
+          ) { case (m, (fieldName, values)) =>
+            val additions = referenceTable
+              .filter(_.translationTable.contains(fieldName))
+              .map { d =>
+                // this is safe because of the filter above
+                val KVTranslation(newName, translation) = d.translationTable(fieldName)
+                val trTable = m.getOrElse(d.schemaKey, Map.empty) +
+                  (newName -> values.map(v => translation(v)).sequence)
+                d.schemaKey -> trTable
+              }
+              .toMap
+            m ++ additions
           }
           .map { case (k, v) => (k -> traverseMap(v)) }
         traverseMap(m)
       }
       // we need to reattach the currency code to the contexts which need it
-      transposed = translated.map {
-                     case (k, m) =>
-                       val values = transpose(m.values.map(_.toList).toList)
-                       k -> (originalParams.get("cu") match {
-                         case Some(Some(currency)) if schemasWithCU.contains(k) =>
-                           values
-                             .map(m.keys zip _)
-                             .map(l => ("currencyCode" -> StringType(currency) :: l.toList).toMap)
-                         case _ =>
-                           values.map(m.keys zip _).map(_.toMap)
-                       })
+      transposed = translated.map { case (k, m) =>
+                     val values = transpose(m.values.map(_.toList).toList)
+                     k -> (originalParams.get("cu") match {
+                       case Some(Some(currency)) if schemasWithCU.contains(k) =>
+                         values
+                           .map(m.keys zip _)
+                           .map(l => ("currencyCode" -> StringType(currency) :: l.toList).toMap)
+                       case _ =>
+                         values.map(m.keys zip _).map(_.toMap)
+                     })
                    }
       // we need to filter out composite contexts which might have been built unnecessarily
       // eg due to ${indicator}pr being in 3 different schemas
       // + 1/0 depending on the presence of currencyCode
       filtered = transposed
-                   .map {
-                     case (k, vs) =>
-                       val minSize = nrCompFieldsPerSchema(k)
-                       k -> vs.filter(fs => fs.size > minSize + fs.get("currencyCode").foldMap(_ => 1))
+                   .map { case (k, vs) =>
+                     val minSize = nrCompFieldsPerSchema(k)
+                     k -> vs.filter(fs => fs.size > minSize + fs.get("currencyCode").foldMap(_ => 1))
                    }
                    .filter(_._2.nonEmpty)
       flattened = filtered.toList.flatMap { case (k, vs) => vs.map(k -> _) }
@@ -824,9 +817,8 @@ case class GoogleAnalyticsAdapter(schemas: GoogleAnalyticsSchemas) extends Adapt
 
   private def traverseMap[G[_]: Functor: Applicative, K, V](m: Map[K, G[V]]): G[Map[K, V]] =
     m.toList
-      .traverse {
-        case (name, vnel) =>
-          vnel.map(m => (name, m))
+      .traverse { case (name, vnel) =>
+        vnel.map(m => (name, m))
       }
       .map(_.toMap)
 }

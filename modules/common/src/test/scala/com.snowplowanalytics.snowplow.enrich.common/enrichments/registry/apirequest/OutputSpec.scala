@@ -37,9 +37,8 @@ class OutputSpec extends Specification {
     output
       .parseResponse("""{"value": 32}""")
       .flatMap(output.extract)
-      .map(output.describeJson) must beRight.like {
-      case context =>
-        context must be equalTo json"""{
+      .map(output.describeJson) must beRight.like { case context =>
+      context must be equalTo json"""{
             "schema": "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
             "data": 32
           }"""
@@ -64,9 +63,8 @@ class OutputSpec extends Specification {
         |}
       """.stripMargin)
       .flatMap(output.extract)
-      .map(output.describeJson) must beRight.like {
-      case context =>
-        context must be equalTo json"""{
+      .map(output.describeJson) must beRight.like { case context =>
+      context must be equalTo json"""{
           "schema": "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
           "data": 42
         }"""

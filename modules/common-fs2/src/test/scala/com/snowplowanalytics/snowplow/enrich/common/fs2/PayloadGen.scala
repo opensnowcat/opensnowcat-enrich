@@ -93,8 +93,8 @@ object PayloadGen extends CatsIO {
 
   val getPageViewArbitrary: Arbitrary[CollectorPayload] = Arbitrary.apply(getPageView)
 
-  val payloadStream = Stream.repeatEval(IO(getPageView.sample)).collect {
-    case Some(x) => x
+  val payloadStream = Stream.repeatEval(IO(getPageView.sample)).collect { case Some(x) =>
+    x
   }
 
   def write(dir: Path, cardinality: Long): IO[Unit] =

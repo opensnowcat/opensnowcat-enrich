@@ -53,8 +53,8 @@ object EventFingerprintEnrichment extends ParseableEnrichment {
       _ <- isParseable(c, schemaKey).leftMap(e => NonEmptyList.one(e))
       // better-monadic-for
       paramsAndAlgo <- (
-                           CirceUtils.extract[List[String]](c, "parameters", "excludeParameters").toValidatedNel,
-                           CirceUtils.extract[String](c, "parameters", "hashAlgorithm").toValidatedNel
+                         CirceUtils.extract[List[String]](c, "parameters", "excludeParameters").toValidatedNel,
+                         CirceUtils.extract[String](c, "parameters", "hashAlgorithm").toValidatedNel
                        ).mapN((_, _)).toEither
       algorithm <- getAlgorithm(paramsAndAlgo._2)
                      .leftMap(e => NonEmptyList.one(e))
@@ -91,14 +91,13 @@ final case class EventFingerprintEnrichment(algorithm: String => String, exclude
    */
   def getEventFingerprint(parameters: RawEventParameters): String = {
     val builder = new StringBuilder
-    parameters.toList.collect { case (k, Some(v)) => (k, v) }.sortWith(_._1 < _._1).foreach {
-      case (key, value) =>
-        if (!excludedParameters.contains(key)) {
-          builder.append(key)
-          builder.append(EventFingerprintEnrichment.UnitSeparator)
-          builder.append(value)
-          builder.append(EventFingerprintEnrichment.UnitSeparator)
-        }
+    parameters.toList.collect { case (k, Some(v)) => (k, v) }.sortWith(_._1 < _._1).foreach { case (key, value) =>
+      if (!excludedParameters.contains(key)) {
+        builder.append(key)
+        builder.append(EventFingerprintEnrichment.UnitSeparator)
+        builder.append(value)
+        builder.append(EventFingerprintEnrichment.UnitSeparator)
+      }
     }
     algorithm(builder.toString)
   }

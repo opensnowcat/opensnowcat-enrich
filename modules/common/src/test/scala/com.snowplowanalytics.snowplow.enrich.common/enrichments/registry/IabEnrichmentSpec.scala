@@ -71,25 +71,24 @@ class IabEnrichmentSpec extends Specification with DataTables with CatsIO {
       "valid UA/IP" !! "Xdroid" ! "192.168.0.1".ip ! false ! "BROWSER" ! "PASSED_ALL" ! "NONE" |
       "valid UA, excluded IP" !! "Mozilla/5.0" ! "192.168.151.21".ip ! true ! "SPIDER_OR_ROBOT" ! "FAILED_IP_EXCLUDE" ! "UNKNOWN" |
       "invalid UA, excluded IP" !! "xonitor" ! "192.168.0.1".ip ! true ! "SPIDER_OR_ROBOT" ! "FAILED_UA_INCLUDE" ! "UNKNOWN" |> {
-      (
-        _,
-        userAgent,
-        ipAddress,
-        expectedSpiderOrRobot,
-        expectedCategory,
-        expectedReason,
-        expectedPrimaryImpact
-      ) =>
-        validConfig.enrichment[IO].map { e =>
-          e.performCheck(userAgent, ipAddress, DateTime.now()) must beRight.like {
-            case check =>
+        (
+          _,
+          userAgent,
+          ipAddress,
+          expectedSpiderOrRobot,
+          expectedCategory,
+          expectedReason,
+          expectedPrimaryImpact
+        ) =>
+          validConfig.enrichment[IO].map { e =>
+            e.performCheck(userAgent, ipAddress, DateTime.now()) must beRight.like { case check =>
               check.spiderOrRobot must_== expectedSpiderOrRobot and
                 (check.category must_== expectedCategory) and
                 (check.reason must_== expectedReason) and
                 (check.primaryImpact must_== expectedPrimaryImpact)
+            }
           }
-        }
-    }
+      }
 
   def e2 = {
     val responseJson =
