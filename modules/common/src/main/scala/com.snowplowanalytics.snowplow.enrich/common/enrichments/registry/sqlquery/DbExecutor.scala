@@ -166,9 +166,8 @@ object DbExecutor {
     placeholderMap: IntMap[ExtractedValue]
   ): Either[Throwable, PreparedStatement] =
     createEmptyStatement(connection, sql).map { preparedStatement =>
-      placeholderMap.foreach {
-        case (index, value) =>
-          value.set(preparedStatement, index)
+      placeholderMap.foreach { case (index, value) =>
+        value.set(preparedStatement, index)
       }
       preparedStatement
     }

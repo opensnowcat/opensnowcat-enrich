@@ -40,8 +40,8 @@ class CollectorPayloadSpec extends Specification with DataTables with ScalaCheck
         "Valid #3" !! "/i?foo=1&bar=2" ! true |
         "Invalid #1" !! "/blah/i" ! false |
         "Invalid #2" !! "i" ! false |> { (_, path, expected) =>
-        CollectorPayload.isIceRequest(path) must_== expected
-      }
+          CollectorPayload.isIceRequest(path) must_== expected
+        }
     }
   }
 

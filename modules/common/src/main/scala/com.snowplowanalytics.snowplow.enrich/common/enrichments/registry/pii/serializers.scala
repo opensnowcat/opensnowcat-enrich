@@ -23,13 +23,12 @@ object serializers {
     case m: JsonModifiedField => m.asJson
   }
 
-  implicit val piiStrategyEncoder: Encoder[PiiStrategy] = Encoder.instance {
-    case s: PiiStrategyPseudonymize =>
-      Json.obj(
-        "pseudonymize" := Json.obj(
-          "hashFunction" := s.functionName
-        )
+  implicit val piiStrategyEncoder: Encoder[PiiStrategy] = Encoder.instance { case s: PiiStrategyPseudonymize =>
+    Json.obj(
+      "pseudonymize" := Json.obj(
+        "hashFunction" := s.functionName
       )
+    )
   }
 
   implicit val piiModifiedFieldsEncoder: Encoder[PiiModifiedFields] =
@@ -42,14 +41,13 @@ object serializers {
           "data" := Json.obj(
             "pii" :=
               a.modifiedFields
-                .foldLeft(Map.empty[String, List[ModifiedField]]) {
-                  case (m, mf) =>
-                    mf match {
-                      case s: ScalarModifiedField =>
-                        m + ("pojo" -> (s :: m.getOrElse("pojo", List.empty[ModifiedField])))
-                      case j: JsonModifiedField =>
-                        m + ("json" -> (j :: m.getOrElse("json", List.empty[ModifiedField])))
-                    }
+                .foldLeft(Map.empty[String, List[ModifiedField]]) { case (m, mf) =>
+                  mf match {
+                    case s: ScalarModifiedField =>
+                      m + ("pojo" -> (s :: m.getOrElse("pojo", List.empty[ModifiedField])))
+                    case j: JsonModifiedField =>
+                      m + ("json" -> (j :: m.getOrElse("json", List.empty[ModifiedField])))
+                  }
                 }
                 .asJson,
             "strategy" := a.strategy.asJson

@@ -198,12 +198,10 @@ class ParsedConfigsSpec extends Specification with CatsIO {
       val in = Base64Hocon(ConfigFactory.parseString(hocon))
 
       ParsedConfigs.parseHoconToJson[IO](Left(in)).value.map { result =>
-        result must beRight.like {
-          case json =>
-            json.asObject must beSome.like {
-              case jsonObj =>
-                jsonObj("abc").flatMap(_.asString) must beSome("xyz")
-            }
+        result must beRight.like { case json =>
+          json.asObject must beSome.like { case jsonObj =>
+            jsonObj("abc").flatMap(_.asString) must beSome("xyz")
+          }
         }
       }
     }

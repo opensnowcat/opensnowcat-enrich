@@ -96,8 +96,8 @@ object DynamoDbConfig {
                      case None =>
                        Sync[F].raiseError[String](new RuntimeException(s"Can't retrieve resolver in DynamoDB at $region/$table/$key"))
                    }
-        tsConfig <- Sync[F].delay(ConfigFactory.parseString(jsonStr)).adaptError {
-                      case e => new RuntimeException("Cannot parse resolver from dynamodb", e)
+        tsConfig <- Sync[F].delay(ConfigFactory.parseString(jsonStr)).adaptError { case e =>
+                      new RuntimeException("Cannot parse resolver from dynamodb", e)
                     }
       } yield Base64Hocon(tsConfig)
     }
@@ -123,8 +123,8 @@ object DynamoDbConfig {
                     .traverse { jsonStr =>
                       Sync[F].delay(ConfigFactory.parseString(jsonStr))
                     }
-                    .adaptError {
-                      case e => new RuntimeException("Cannot parse enrichment config from dynamodb", e)
+                    .adaptError { case e =>
+                      new RuntimeException("Cannot parse enrichment config from dynamodb", e)
                     }
       } yield {
         val tsConfig = ConfigFactory

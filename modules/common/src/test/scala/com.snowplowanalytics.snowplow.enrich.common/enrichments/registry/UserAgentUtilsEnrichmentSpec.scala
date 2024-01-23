@@ -30,34 +30,34 @@ class UserAgentUtilsEnrichmentSpec extends Specification with DataTables {
           "11.0"
         ) ! "Browser" ! "TRIDENT" ! (("Windows 7", "Windows", "Microsoft Corporation")) ! "Computer" ! false | {
 
-        (
-          _,
-          input,
-          browserName,
-          browserFamily,
-          browserVersion,
-          browserType,
-          browserRenderEngine,
-          osFields,
-          deviceType,
-          deviceIsMobile
-        ) =>
-          val expected = ClientAttributes(
+          (
+            _,
+            input,
             browserName,
             browserFamily,
             browserVersion,
             browserType,
             browserRenderEngine,
-            osFields._1,
-            osFields._2,
-            osFields._3,
+            osFields,
             deviceType,
             deviceIsMobile
-          )
-          UserAgentUtilsEnrichment(schemaKey).extractClientAttributes(input) must beRight(
-            expected
-          )
-      }
+          ) =>
+            val expected = ClientAttributes(
+              browserName,
+              browserFamily,
+              browserVersion,
+              browserType,
+              browserRenderEngine,
+              osFields._1,
+              osFields._2,
+              osFields._3,
+              deviceType,
+              deviceIsMobile
+            )
+            UserAgentUtilsEnrichment(schemaKey).extractClientAttributes(input) must beRight(
+              expected
+            )
+        }
     }
   }
 }

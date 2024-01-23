@@ -63,11 +63,11 @@ class RefererParserEnrichmentSpec extends Specification with DataTables with Cat
       "Unknown referer" !! "http://www.spyfu.com/domain.aspx?d=3897225171967988459" ! UnknownReferer(
         Medium.Unknown
       ) |> { (_, refererUri, referer) =>
-      (for {
-        c <- EitherT.fromEither[IO](
-               RefererParserEnrichment
-                 .parse(
-                   json"""{
+        (for {
+          c <- EitherT.fromEither[IO](
+                 RefererParserEnrichment
+                   .parse(
+                     json"""{
               "name": "referer_parser",
               "vendor": "com.snowplowanalytics.snowplow",
               "enabled": true,
@@ -77,23 +77,23 @@ class RefererParserEnrichmentSpec extends Specification with DataTables with Cat
                 "database": "referer-tests.json"
               }
             }""",
-                   SchemaKey(
-                     "com.snowplowanalytics.snowplow",
-                     "referer_parser",
-                     "jsonschema",
-                     SchemaVer.Full(2, 0, 0)
-                   ),
-                   true
-                 )
-                 .toEither
-                 .leftMap(_.head)
-             )
-        e <- c.enrichment[IO]
-        res = e.extractRefererDetails(new URI(refererUri), PageHost)
-      } yield res).value.map(_ must beRight.like {
-        case o => o must beSome(referer)
-      })
-    }
+                     SchemaKey(
+                       "com.snowplowanalytics.snowplow",
+                       "referer_parser",
+                       "jsonschema",
+                       SchemaVer.Full(2, 0, 0)
+                     ),
+                     true
+                   )
+                   .toEither
+                   .leftMap(_.head)
+               )
+          e <- c.enrichment[IO]
+          res = e.extractRefererDetails(new URI(refererUri), PageHost)
+        } yield res).value.map(_ must beRight.like { case o =>
+          o must beSome(referer)
+        })
+      }
 
   def e2 =
     (for {
@@ -128,14 +128,13 @@ class RefererParserEnrichmentSpec extends Specification with DataTables with Cat
               ),
               PageHost
             )
-    } yield res).value.map(_ must beRight.like {
-      case o =>
-        o must beSome(
-          SearchReferer(
-            Medium.Search,
-            "Google",
-            Some("gateway    oracle    cards    denise    linn")
-          )
+    } yield res).value.map(_ must beRight.like { case o =>
+      o must beSome(
+        SearchReferer(
+          Medium.Search,
+          "Google",
+          Some("gateway    oracle    cards    denise    linn")
         )
+      )
     })
 }

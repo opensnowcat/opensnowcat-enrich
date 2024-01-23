@@ -139,8 +139,8 @@ object PiiPseudonymizerEnrichment extends ParseableEnrichment {
     val fixedObject = for {
       hashedFields <- hashed.asObject
       originalFields <- original.asObject
-      newFields = hashedFields.toList.flatMap {
-                    case (k, v) => originalFields(k).map(origV => (k, removeAddedFields(v, origV)))
+      newFields = hashedFields.toList.flatMap { case (k, v) =>
+                    originalFields(k).map(origV => (k, removeAddedFields(v, origV)))
                   }
     } yield Json.fromFields(newFields)
 

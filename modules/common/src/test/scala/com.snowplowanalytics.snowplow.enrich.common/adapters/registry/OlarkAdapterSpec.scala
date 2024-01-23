@@ -315,13 +315,12 @@ class OlarkAdapterSpec extends Specification with DataTables with ValidatedMatch
     )
     adapterWithDefaultSchemas
       .toRawEvents(payload, SpecHelpers.client)
-      .map(_ must beInvalid.like {
-        case nel =>
-          nel.size must_== 1
-          nel.head must haveClass[FailureDetails.AdapterFailure.NotJson]
-          val f = nel.head.asInstanceOf[FailureDetails.AdapterFailure.NotJson]
-          f.field must_== "data"
-          f.error must_== """invalid json: expected json value got 'kind":...' (line 1, column 1)"""
+      .map(_ must beInvalid.like { case nel =>
+        nel.size must_== 1
+        nel.head must haveClass[FailureDetails.AdapterFailure.NotJson]
+        val f = nel.head.asInstanceOf[FailureDetails.AdapterFailure.NotJson]
+        f.field must_== "data"
+        f.error must_== """invalid json: expected json value got 'kind":...' (line 1, column 1)"""
       })
   }
 }

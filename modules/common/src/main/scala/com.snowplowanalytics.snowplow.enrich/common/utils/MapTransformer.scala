@@ -137,46 +137,44 @@ object MapTransformer {
     transformMap: TransformMap,
     setters: SettersMap
   ): ValidatedNel[FailureDetails.EnrichmentFailure, Int] = {
-    val results: List[Either[FailureDetails.EnrichmentFailure, Int]] = sourceMap.map {
-      case (key, in) =>
-        transformMap.get(key) match {
-          case Some((func, field)) =>
-            func(key, in) match {
-              //weird issue with type inference when using map
-              case Left(e) => e.asLeft[Int]
-              case Right(s) =>
-                field match {
-                  case f: String =>
-                    val result = s.asInstanceOf[AnyRef]
-                    setters(f).invoke(obj, result)
-                    1.asRight // +1 to the count of fields successfully set
-                  case Tuple2(f1: String, f2: String) =>
-                    val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
-                    setters(f1).invoke(obj, result._1)
-                    setters(f2).invoke(obj, result._2)
-                    2.asRight // +2 to the count of fields successfully set
-                  case Tuple3(f1: String, f2: String, f3: String) =>
-                    val result = s.asInstanceOf[Tuple3[AnyRef, AnyRef, AnyRef]]
-                    setters(f1).invoke(obj, result._1)
-                    setters(f2).invoke(obj, result._2)
-                    setters(f3).invoke(obj, result._3)
-                    3.asRight // +3 to the count of fields successfully set
-                  case Tuple4(f1: String, f2: String, f3: String, f4: String) =>
-                    val result = s.asInstanceOf[Tuple4[AnyRef, AnyRef, AnyRef, AnyRef]]
-                    setters(f1).invoke(obj, result._1)
-                    setters(f2).invoke(obj, result._2)
-                    setters(f3).invoke(obj, result._3)
-                    setters(f4).invoke(obj, result._4)
-                    4.asRight // +4 to the count of fields successfully set
-                }
-            }
-          case None => 0.asRight // Key not found: zero fields updated
-        }
+    val results: List[Either[FailureDetails.EnrichmentFailure, Int]] = sourceMap.map { case (key, in) =>
+      transformMap.get(key) match {
+        case Some((func, field)) =>
+          func(key, in) match {
+            //weird issue with type inference when using map
+            case Left(e) => e.asLeft[Int]
+            case Right(s) =>
+              field match {
+                case f: String =>
+                  val result = s.asInstanceOf[AnyRef]
+                  setters(f).invoke(obj, result)
+                  1.asRight // +1 to the count of fields successfully set
+                case Tuple2(f1: String, f2: String) =>
+                  val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
+                  setters(f1).invoke(obj, result._1)
+                  setters(f2).invoke(obj, result._2)
+                  2.asRight // +2 to the count of fields successfully set
+                case Tuple3(f1: String, f2: String, f3: String) =>
+                  val result = s.asInstanceOf[Tuple3[AnyRef, AnyRef, AnyRef]]
+                  setters(f1).invoke(obj, result._1)
+                  setters(f2).invoke(obj, result._2)
+                  setters(f3).invoke(obj, result._3)
+                  3.asRight // +3 to the count of fields successfully set
+                case Tuple4(f1: String, f2: String, f3: String, f4: String) =>
+                  val result = s.asInstanceOf[Tuple4[AnyRef, AnyRef, AnyRef, AnyRef]]
+                  setters(f1).invoke(obj, result._1)
+                  setters(f2).invoke(obj, result._2)
+                  setters(f3).invoke(obj, result._3)
+                  setters(f4).invoke(obj, result._4)
+                  4.asRight // +4 to the count of fields successfully set
+              }
+          }
+        case None => 0.asRight // Key not found: zero fields updated
+      }
     }.toList
 
-    results.foldLeft(0.validNel[FailureDetails.EnrichmentFailure]) {
-      case (acc, e) =>
-        acc.combine(e.toValidatedNel)
+    results.foldLeft(0.validNel[FailureDetails.EnrichmentFailure]) { case (acc, e) =>
+      acc.combine(e.toValidatedNel)
     }
   }
 

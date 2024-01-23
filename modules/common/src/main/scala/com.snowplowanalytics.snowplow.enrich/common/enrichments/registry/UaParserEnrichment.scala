@@ -59,8 +59,8 @@ object UaParserEnrichment extends ParseableEnrichment {
     if (conf.hcursor.downField("parameters").downField("uri").focus.isDefined)
       (for {
         uriAndDb <- (
-                        CirceUtils.extract[String](conf, "parameters", "uri").toValidatedNel,
-                        CirceUtils.extract[String](conf, "parameters", "database").toValidatedNel
+                      CirceUtils.extract[String](conf, "parameters", "uri").toValidatedNel,
+                      CirceUtils.extract[String](conf, "parameters", "database").toValidatedNel
                     ).mapN((_, _)).toEither
         source <- getDatabaseUri(uriAndDb._1, uriAndDb._2).leftMap(NonEmptyList.one)
       } yield (source, localFile)).toValidated.map(_.some)

@@ -93,9 +93,8 @@ object Metadata {
   private def submit[F[_]: Sync: Clock](reporter: MetadataReporter[F], ref: MetadataEventsRef[F]): F[Unit] =
     for {
       snapshot <- MetadataEventsRef.snapshot(ref)
-      _ <- snapshot.aggregates.toList.traverse {
-             case (event, entitiesAndCount) =>
-               reporter.report(snapshot.periodStart, snapshot.periodEnd, event, entitiesAndCount)
+      _ <- snapshot.aggregates.toList.traverse { case (event, entitiesAndCount) =>
+             reporter.report(snapshot.periodStart, snapshot.periodEnd, event, entitiesAndCount)
            }
     } yield ()
 

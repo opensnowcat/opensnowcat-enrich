@@ -316,9 +316,8 @@ class ApiRequestEnrichmentIntegrationTest extends Specification with ValidatedMa
           e
         }
         context <- enrichment.lookup(event, Nil, Nil, None)
-      } yield context must beValid.like {
-        case context =>
-          context must contain(IntegrationTests.correctResultContext) and (context must have size 1)
+      } yield context must beValid.like { case context =>
+        context must contain(IntegrationTests.correctResultContext) and (context must have size 1)
       }
     }
   }
@@ -353,12 +352,11 @@ class ApiRequestEnrichmentIntegrationTest extends Specification with ValidatedMa
                      List(IntegrationTests.customContexts),
                      Some(IntegrationTests.unstructEvent)
                    )
-      } yield context must beValid.like {
-        case contexts =>
-          contexts must contain(
-            beJson(IntegrationTests.correctResultContext3),
-            beJson(IntegrationTests.correctResultContext2)
-          ) and (contexts must have size 2)
+      } yield context must beValid.like { case contexts =>
+        contexts must contain(
+          beJson(IntegrationTests.correctResultContext3),
+          beJson(IntegrationTests.correctResultContext2)
+        ) and (contexts must have size 2)
       }
     }
   }
@@ -374,10 +372,9 @@ class ApiRequestEnrichmentIntegrationTest extends Specification with ValidatedMa
           e
         }
         context <- enrichment.lookup(event, Nil, Nil, None)
-      } yield context must beValid.like {
-        case contexts =>
-          (contexts must have size 1) and (contexts must contain(IntegrationTests.correctResultContext4)) and
-            (CirceValidator.validate(contexts.head.data, IntegrationTests.schema) must beRight)
+      } yield context must beValid.like { case contexts =>
+        (contexts must have size 1) and (contexts must contain(IntegrationTests.correctResultContext4)) and
+          (CirceValidator.validate(contexts.head.data, IntegrationTests.schema) must beRight)
       }
     }
   }

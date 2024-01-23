@@ -57,8 +57,8 @@ object SpecHelpers extends CatsIO {
   /** Clean-up predefined list of files */
   def filesCleanup(blocker: Blocker, files: List[Path]): IO[Unit] =
     files.traverse_ { path =>
-      deleteIfExists[IO](blocker, path).recover {
-        case _: NoSuchFileException => false
+      deleteIfExists[IO](blocker, path).recover { case _: NoSuchFileException =>
+        false
       }
     }
 

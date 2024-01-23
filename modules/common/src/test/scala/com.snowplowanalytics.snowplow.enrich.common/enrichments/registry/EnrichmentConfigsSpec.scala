@@ -243,9 +243,9 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
       "Configuration" | "Custom Rules" |
         configWithDefaultRules !! None |
         configWithExternalRules !! Some((new URI(externalUri + database), "./ua-parser-rules.yml")) |> { (config, expected) =>
-        val result = UaParserEnrichment.parse(config, schemaKey)
-        result must beValid(UaParserConf(schemaKey, expected))
-      }
+          val result = UaParserEnrichment.parse(config, schemaKey)
+          result must beValid(UaParserConf(schemaKey, expected))
+        }
     }
   }
 
@@ -318,8 +318,8 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         SchemaVer.Full(1, 0, 0)
       )
       val result = EventFingerprintEnrichment.parse(refererParserJson, schemaKey)
-      result must beValid.like {
-        case enr => enr.algorithm("sample") must beEqualTo("5e8ff9bf55ba3508199d22e984129be6")
+      result must beValid.like { case enr =>
+        enr.algorithm("sample") must beEqualTo("5e8ff9bf55ba3508199d22e984129be6")
       }
     }
   }
@@ -380,26 +380,25 @@ class EnrichmentConfigsSpec extends Specification with ValidatedMatchers with Da
         SchemaVer.Full(2, 0, 0)
       )
       val result = PiiPseudonymizerEnrichment.parse(piiPseudonymizerEnrichmentJson, schemaKey)
-      result must beValid.like {
-        case piiRes: PiiPseudonymizerConf =>
-          (piiRes.strategy must haveClass[PiiStrategyPseudonymize]) and
-            (piiRes.strategy
-              .asInstanceOf[PiiStrategyPseudonymize]
-              .hashFunction("1234".getBytes("UTF-8"))
-              must_== "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4") and
-            (piiRes.fieldList.size must_== 2) and
-            (piiRes.fieldList(0) must haveClass[PiiScalar]) and
-            (piiRes.fieldList(0).asInstanceOf[PiiScalar].fieldMutator must_== ScalarMutators
-              .get("user_id")
-              .get) and
-            (piiRes.fieldList(1).asInstanceOf[PiiJson].fieldMutator must_== JsonMutators
-              .get("contexts")
-              .get) and
-            (piiRes
-              .fieldList(1)
-              .asInstanceOf[PiiJson]
-              .schemaCriterion must_== SchemaCriterion("com.acme", "email_sent", "jsonschema", 1)) and
-            (piiRes.fieldList(1).asInstanceOf[PiiJson].jsonPath must_== "$.emailAddress")
+      result must beValid.like { case piiRes: PiiPseudonymizerConf =>
+        (piiRes.strategy must haveClass[PiiStrategyPseudonymize]) and
+          (piiRes.strategy
+            .asInstanceOf[PiiStrategyPseudonymize]
+            .hashFunction("1234".getBytes("UTF-8"))
+            must_== "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4") and
+          (piiRes.fieldList.size must_== 2) and
+          (piiRes.fieldList(0) must haveClass[PiiScalar]) and
+          (piiRes.fieldList(0).asInstanceOf[PiiScalar].fieldMutator must_== ScalarMutators
+            .get("user_id")
+            .get) and
+          (piiRes.fieldList(1).asInstanceOf[PiiJson].fieldMutator must_== JsonMutators
+            .get("contexts")
+            .get) and
+          (piiRes
+            .fieldList(1)
+            .asInstanceOf[PiiJson]
+            .schemaCriterion must_== SchemaCriterion("com.acme", "email_sent", "jsonschema", 1)) and
+          (piiRes.fieldList(1).asInstanceOf[PiiJson].jsonPath must_== "$.emailAddress")
       }
     }
   }

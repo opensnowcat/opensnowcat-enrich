@@ -265,39 +265,38 @@ object Containers {
                                   streams.eventbridgeBad -> getKinesisARN(streams.kinesisOutputBad)
     )
 
-    eventbridgeStreams.foreach {
-      case (eventbridgeStream, kinesisStreamARN) =>
-        // event-bus
-        eventBridgeClient.createEventBus(
-          eventbridge.model.CreateEventBusRequest
-            .builder()
-            .name(eventbridgeStream.eventBusName)
-            .build()
-        )
+    eventbridgeStreams.foreach { case (eventbridgeStream, kinesisStreamARN) =>
+      // event-bus
+      eventBridgeClient.createEventBus(
+        eventbridge.model.CreateEventBusRequest
+          .builder()
+          .name(eventbridgeStream.eventBusName)
+          .build()
+      )
 
-        // rule
-        val ruleName = s"rule-${eventbridgeStream.eventBusName}"
-        val eventPattern = s"""{ "source": ["${eventbridgeStream.eventBusSource}"] }""" //.replace("\"", "\\\"")
-        eventBridgeClient.putRule(
-          eventbridge.model.PutRuleRequest
-            .builder()
-            .eventBusName(eventbridgeStream.eventBusName)
-            .name(ruleName)
-            .eventPattern(eventPattern)
-            .build()
-        )
+      // rule
+      val ruleName = s"rule-${eventbridgeStream.eventBusName}"
+      val eventPattern = s"""{ "source": ["${eventbridgeStream.eventBusSource}"] }""" //.replace("\"", "\\\"")
+      eventBridgeClient.putRule(
+        eventbridge.model.PutRuleRequest
+          .builder()
+          .eventBusName(eventbridgeStream.eventBusName)
+          .name(ruleName)
+          .eventPattern(eventPattern)
+          .build()
+      )
 
-        // target
-        val targetId = s"${eventbridgeStream.eventBusName}-target".take(64)
-        val targetCreationResult = eventBridgeClient.putTargets(
-          eventbridge.model.PutTargetsRequest
-            .builder()
-            .eventBusName(eventbridgeStream.eventBusName)
-            .rule(ruleName)
-            .targets(eventbridge.model.Target.builder().id(targetId).arn(kinesisStreamARN).build())
-            .build()
-        )
-        assert(targetCreationResult.failedEntryCount == 0, s"Target creation failed: $targetCreationResult")
+      // target
+      val targetId = s"${eventbridgeStream.eventBusName}-target".take(64)
+      val targetCreationResult = eventBridgeClient.putTargets(
+        eventbridge.model.PutTargetsRequest
+          .builder()
+          .eventBusName(eventbridgeStream.eventBusName)
+          .rule(ruleName)
+          .targets(eventbridge.model.Target.builder().id(targetId).arn(kinesisStreamARN).build())
+          .build()
+      )
+      assert(targetCreationResult.failedEntryCount == 0, s"Target creation failed: $targetCreationResult")
     }
   }
 }

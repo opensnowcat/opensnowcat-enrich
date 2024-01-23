@@ -154,8 +154,8 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
           SchemaMap,
           "no schema associated with the provided type parameter"
         ) |> { (_, et, expected) =>
-      BaseAdapter.lookupSchema(et, SchemaMap) must beLeft(expected)
-    }
+        BaseAdapter.lookupSchema(et, SchemaMap) must beLeft(expected)
+      }
 
   def e6 = {
     val expected = FailureDetails.AdapterFailure.SchemaMapping(
@@ -233,27 +233,27 @@ class AdapterSpec extends Specification with DataTables with ValidatedMatchers {
     "SPEC NAME" || "JSON" | "EXPECTED OUTPUT" |
       "Change one value" !! json"""{"ts":1415709559}""" ! json"""{ "ts": "2014-11-11T12:39:19.000Z" }""" |
       "Change multiple values" !! json"""{"ts":1415709559,"ts":1415700000}""" !
-        json"""{ "ts": "2014-11-11T12:39:19.000Z", "ts": "2014-11-11T10:00:00.000Z"}""" |
+      json"""{ "ts": "2014-11-11T12:39:19.000Z", "ts": "2014-11-11T10:00:00.000Z"}""" |
       "Change nested values" !! json"""{"ts":1415709559,"nested":{"ts":1415700000}}""" !
-        json"""{ "ts": "2014-11-11T12:39:19.000Z", "nested": {"ts": "2014-11-11T10:00:00.000Z" }}""" |
+      json"""{ "ts": "2014-11-11T12:39:19.000Z", "nested": {"ts": "2014-11-11T10:00:00.000Z" }}""" |
       "Change nested string values" !! json"""{"ts":1415709559,"nested":{"ts":"1415700000"}}""" !
-        json"""{ "ts": "2014-11-11T12:39:19.000Z", "nested": { "ts": "2014-11-11T10:00:00.000Z" }}""" |
+      json"""{ "ts": "2014-11-11T12:39:19.000Z", "nested": { "ts": "2014-11-11T10:00:00.000Z" }}""" |
       "JStrings should also be changed" !! json"""{"ts":"1415709559"}""" !
-        json"""{ "ts" : "2014-11-11T12:39:19.000Z" }""" |> { (_, json, expected) =>
-      BaseAdapter.cleanupJsonEventValues(json, None, List("ts")) mustEqual expected
-    }
+      json"""{ "ts" : "2014-11-11T12:39:19.000Z" }""" |> { (_, json, expected) =>
+        BaseAdapter.cleanupJsonEventValues(json, None, List("ts")) mustEqual expected
+      }
 
   def e10 =
     "SPEC NAME" || "JSON" | "EXPECTED OUTPUT" |
       "Remove 'event'->'type'" !! json"""{"an_event":"type"}""" ! json"""{}""" |
       "Not remove existing values" !! json"""{"abc":1415709559, "an_event":"type", "cba":"type"}""" !
-        json"""{ "abc": 1415709559, "cba": "type" }""" |
+      json"""{ "abc": 1415709559, "cba": "type" }""" |
       "Works with ts value subs" !! json"""{"ts":1415709559, "an_event":"type", "abc":"type"}""" !
-        json"""{ "ts": "2014-11-11T12:39:19.000Z", "abc": "type" }""" |
+      json"""{ "ts": "2014-11-11T12:39:19.000Z", "abc": "type" }""" |
       "Removes nested values" !! json"""{"abc":"abc","nested":{"an_event":"type"}}""" !
-        json"""{ "abc": "abc", "nested": {}}""" |> { (_, json, expected) =>
-      BaseAdapter.cleanupJsonEventValues(json, ("an_event", "type").some, List("ts")) mustEqual
-        expected
-    }
+      json"""{ "abc": "abc", "nested": {}}""" |> { (_, json, expected) =>
+        BaseAdapter.cleanupJsonEventValues(json, ("an_event", "type").some, List("ts")) mustEqual
+          expected
+      }
 
 }

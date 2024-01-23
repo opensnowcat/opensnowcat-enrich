@@ -703,27 +703,26 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
       )
 
       decimals
-        .traverse {
-          case (input, expected) =>
-            val parameters = Map(
-              "e" -> "ue",
-              "tv" -> "js-0.13.1",
-              "p" -> "web",
-              "ev_va" -> input
-            ).toOpt
-            val rawEvent = RawEvent(api, parameters, None, source, context)
-            val enriched = EnrichmentManager.enrichEvent[IO](
-              enrichmentReg,
-              client,
-              processor,
-              timestamp,
-              rawEvent,
-              AcceptInvalid.featureFlags,
-              IO.unit
-            )
-            enriched.value.map(_ must beRight { ee: EnrichedEvent =>
-              ee.se_value.toString must_== expected
-            })
+        .traverse { case (input, expected) =>
+          val parameters = Map(
+            "e" -> "ue",
+            "tv" -> "js-0.13.1",
+            "p" -> "web",
+            "ev_va" -> input
+          ).toOpt
+          val rawEvent = RawEvent(api, parameters, None, source, context)
+          val enriched = EnrichmentManager.enrichEvent[IO](
+            enrichmentReg,
+            client,
+            processor,
+            timestamp,
+            rawEvent,
+            AcceptInvalid.featureFlags,
+            IO.unit
+          )
+          enriched.value.map(_ must beRight { ee: EnrichedEvent =>
+            ee.se_value.toString must_== expected
+          })
         }
     }
 
@@ -1038,9 +1037,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
         result <- EnrichmentManager
                     .getIabContext[IO](Some(iab))
                     .runS(inputState)
-      } yield result must beLike {
-        case acc: EnrichmentManager.Accumulation =>
-          (acc.errors must beEmpty) and (acc.contexts must beEmpty)
+      } yield result must beLike { case acc: EnrichmentManager.Accumulation =>
+        (acc.errors must beEmpty) and (acc.contexts must beEmpty)
       }
     }
 
@@ -1054,9 +1052,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
         result <- EnrichmentManager
                     .getIabContext[IO](Some(iab))
                     .runS(inputState)
-      } yield result must beLike {
-        case acc: EnrichmentManager.Accumulation =>
-          (acc.errors must beEmpty) and (acc.contexts must beEmpty)
+      } yield result must beLike { case acc: EnrichmentManager.Accumulation =>
+        (acc.errors must beEmpty) and (acc.contexts must beEmpty)
       }
     }
 
@@ -1070,9 +1067,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
         result <- EnrichmentManager
                     .getIabContext[IO](Some(iab))
                     .runS(inputState)
-      } yield result must beLike {
-        case acc: EnrichmentManager.Accumulation =>
-          (acc.errors must beEmpty) and (acc.contexts must beEmpty)
+      } yield result must beLike { case acc: EnrichmentManager.Accumulation =>
+        (acc.errors must beEmpty) and (acc.contexts must beEmpty)
       }
     }
 
@@ -1087,9 +1083,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
         result <- EnrichmentManager
                     .getIabContext[IO](Some(iab))
                     .runS(inputState)
-      } yield result must beLike {
-        case acc: EnrichmentManager.Accumulation =>
-          (acc.errors must beEmpty) and (acc.contexts must beEmpty)
+      } yield result must beLike { case acc: EnrichmentManager.Accumulation =>
+        (acc.errors must beEmpty) and (acc.contexts must beEmpty)
       }
     }
 
@@ -1104,9 +1099,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
         result <- EnrichmentManager
                     .getIabContext[IO](Some(iab))
                     .runS(inputState)
-      } yield result must beLike {
-        case acc: EnrichmentManager.Accumulation =>
-          (acc.errors must beEmpty) and (acc.contexts must beEmpty)
+      } yield result must beLike { case acc: EnrichmentManager.Accumulation =>
+        (acc.errors must beEmpty) and (acc.contexts must beEmpty)
       }
     }
 
@@ -1121,9 +1115,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
         result <- EnrichmentManager
                     .getIabContext[IO](Some(iab))
                     .runS(inputState)
-      } yield result must beLike {
-        case acc: EnrichmentManager.Accumulation =>
-          (acc.errors must beEmpty) and (acc.contexts must not beEmpty)
+      } yield result must beLike { case acc: EnrichmentManager.Accumulation =>
+        (acc.errors must beEmpty) and (acc.contexts must not beEmpty)
       }
     }
   }
@@ -1135,9 +1128,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
       EnrichmentManager
         .getCollectorVersionSet[IO]
         .runS(inputState)
-        .map(_ must beLike {
-          case acc: EnrichmentManager.Accumulation =>
-            acc.errors must not beEmpty
+        .map(_ must beLike { case acc: EnrichmentManager.Accumulation =>
+          acc.errors must not beEmpty
         })
     }
 
@@ -1148,9 +1140,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
       EnrichmentManager
         .getCollectorVersionSet[IO]
         .runS(inputState)
-        .map(_ must beLike {
-          case acc: EnrichmentManager.Accumulation =>
-            acc.errors must not beEmpty
+        .map(_ must beLike { case acc: EnrichmentManager.Accumulation =>
+          acc.errors must not beEmpty
         })
     }
 
@@ -1161,9 +1152,8 @@ class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsI
       EnrichmentManager
         .getCollectorVersionSet[IO]
         .runS(inputState)
-        .map(_ must beLike {
-          case acc: EnrichmentManager.Accumulation =>
-            acc.errors must beEmpty
+        .map(_ must beLike { case acc: EnrichmentManager.Accumulation =>
+          acc.errors must beEmpty
         })
     }
   }

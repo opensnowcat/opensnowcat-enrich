@@ -88,10 +88,9 @@ object utils extends CatsIO {
   def parseOutput(output: List[OutputRow], testName: String): (List[Event], List[BadRow]) = {
     val good = output.collect { case OutputRow.Good(e) => e }
     println(s"[$testName] Bad rows:")
-    val bad = output.collect {
-      case OutputRow.Bad(b) =>
-        println(s"[$testName] ${b.compact}")
-        b
+    val bad = output.collect { case OutputRow.Bad(b) =>
+      println(s"[$testName] ${b.compact}")
+      b
     }
     (good, bad)
   }

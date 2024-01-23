@@ -150,14 +150,12 @@ object ParsedConfigs {
     }
 
   private[config] def attributesFromFields(attributes: Set[String]): EnrichedEvent => Map[String, String] = {
-    val fields = ParsedConfigs.enrichedFieldsMap.filter {
-      case (s, _) =>
-        attributes.contains(s)
+    val fields = ParsedConfigs.enrichedFieldsMap.filter { case (s, _) =>
+      attributes.contains(s)
     }
     (ee: EnrichedEvent) =>
-      fields.flatMap {
-        case (k, f) =>
-          Option(f.get(ee)).map(v => k -> v.toString)
+      fields.flatMap { case (k, f) =>
+        Option(f.get(ee)).map(v => k -> v.toString)
       }
   }
 

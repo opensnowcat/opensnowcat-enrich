@@ -31,23 +31,22 @@ class EnrichNsqSpec extends Specification with CatsIO {
     "emit the correct number of enriched events and bad rows" in {
       val nbGood = 100L
       val nbBad = 10L
-      mkResources[IO].use {
-        case (blocker, topology, sink) =>
-          for {
-            refGood <- Ref.of[IO, AggregateGood](Nil)
-            refBad <- Ref.of[IO, AggregateBad](Nil)
-            _ <- generateEvents(sink, nbGood, nbBad, topology)
-                   .merge(consume(blocker, refGood, refBad, topology))
-                   .interruptAfter(30.seconds)
-                   .attempt
-                   .compile
-                   .drain
-            aggregateGood <- refGood.get
-            aggregateBad <- refBad.get
-          } yield {
-            aggregateGood.size === nbGood
-            aggregateBad.size === nbBad
-          }
+      mkResources[IO].use { case (blocker, topology, sink) =>
+        for {
+          refGood <- Ref.of[IO, AggregateGood](Nil)
+          refBad <- Ref.of[IO, AggregateBad](Nil)
+          _ <- generateEvents(sink, nbGood, nbBad, topology)
+                 .merge(consume(blocker, refGood, refBad, topology))
+                 .interruptAfter(30.seconds)
+                 .attempt
+                 .compile
+                 .drain
+          aggregateGood <- refGood.get
+          aggregateBad <- refBad.get
+        } yield {
+          aggregateGood.size === nbGood
+          aggregateBad.size === nbBad
+        }
       }
     }
   }

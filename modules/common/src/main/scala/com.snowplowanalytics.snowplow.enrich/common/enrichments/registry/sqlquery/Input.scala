@@ -250,9 +250,8 @@ object Input {
    */
   def isConsistent[V](intMap: IntMap[V]): Boolean = {
     val sortedKeys = intMap.keys.toList.sorted
-    val (_, result) = sortedKeys.foldLeft((0, true)) {
-      case ((prev, accum), cur) =>
-        (cur, (prev + 1) == cur && accum)
+    val (_, result) = sortedKeys.foldLeft((0, true)) { case ((prev, accum), cur) =>
+      (cur, (prev + 1) == cur && accum)
     }
     result && sortedKeys.headOption.forall(_ == 1)
   }

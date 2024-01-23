@@ -300,9 +300,8 @@ object ConversionUtils {
    */
   def extractQuerystring(uri: URI, encoding: Charset): Either[FailureDetails.EnrichmentFailure, QueryStringParameters] =
     Try(URLEncodedUtils.parse(uri, encoding).asScala.map(p => (p.getName -> Option(p.getValue))))
-      .recoverWith {
-        case NonFatal(_) =>
-          Try(Url.parse(uri.toString).query.params)
+      .recoverWith { case NonFatal(_) =>
+        Try(Url.parse(uri.toString).query.params)
       } match {
       case util.Success(params) => params.toList.asRight
       case util.Failure(e) =>
