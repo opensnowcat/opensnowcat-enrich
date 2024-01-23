@@ -49,8 +49,8 @@ class IpAddressExtractorSpec extends Specification with DataTables {
         "IPv6 quoted correctly in Forwarded header" !! List(
           "Forwarded: for=\"[2001:0db8:85a3:0000:0000:8a2e:0370:7334]\", \"129.78.128.66\""
         ) ! "2001:0db8:85a3:0000:0000:8a2e:0370:7334" |> { (_, headers, expected) =>
-        IpAddressExtractor.extractIpAddress(headers, Default) must_== expected
-      }
+          IpAddressExtractor.extractIpAddress(headers, Default) must_== expected
+        }
     }
 
     "prioritize X-Forwarded-For over Forwarded: for=" in {
@@ -79,8 +79,8 @@ class IpAddressExtractorSpec extends Specification with DataTables {
         "Incorrect X-FORWARDED-FOR field" !! "incorrect" ! Default |
         "One IP in X-FORWARDED-FOR field" !! "129.78.138.66" ! "129.78.138.66" |
         "Two IPs in X-FORWARDED-FOR field" !! "129.78.138.66,%20129.78.64.103" ! "129.78.138.66" |> { (_, xForwardedFor, expected) =>
-        IpAddressExtractor.extractIpAddress(xForwardedFor, Default) must_== expected
-      }
+          IpAddressExtractor.extractIpAddress(xForwardedFor, Default) must_== expected
+        }
     }
   }
 }

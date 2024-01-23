@@ -82,11 +82,10 @@ class ApiRequestEnrichmentSpec extends Specification with CatsIO {
 
       val testWithHttp = HttpServer.resource *> TestEnvironment.make(input, List(enrichment))
       testWithHttp.use { test =>
-        test.run().map {
-          case (bad, pii, good) =>
-            (bad must be empty)
-            (pii must be empty)
-            (good.map(_.derived_contexts) must contain(exactly(expected)))
+        test.run().map { case (bad, pii, good) =>
+          (bad must be empty)
+          (pii must be empty)
+          (good.map(_.derived_contexts) must contain(exactly(expected)))
         }
       }
     }

@@ -75,9 +75,8 @@ class EtlPipelineSpec extends Specification with ValidatedMatchers with CatsIO {
                     AcceptInvalid.featureFlags,
                     IO.unit
                   )
-    } yield output must be like {
-      case a :: b :: c :: d :: Nil =>
-        (a must beValid).and(b must beInvalid).and(c must beInvalid).and(d must beInvalid)
+    } yield output must be like { case a :: b :: c :: d :: Nil =>
+      (a must beValid).and(b must beInvalid).and(c must beInvalid).and(d must beInvalid)
     }
 
   def e2 =

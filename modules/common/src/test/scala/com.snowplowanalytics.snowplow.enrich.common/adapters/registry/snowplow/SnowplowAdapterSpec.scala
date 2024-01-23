@@ -293,18 +293,18 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidatedMa
             "invalid json: expected json value got 'body' (line 1, column 1)"
           )
         ) |> { (_, querystring, contentType, body, expected) =>
-      val payload = CollectorPayload(
-        Snowplow.Tp2,
-        querystring,
-        contentType,
-        body,
-        Shared.source,
-        Shared.context
-      )
-      Tp2Adapter
-        .toRawEvents(payload, SpecHelpers.client)
-        .map(_ must beInvalid(expected))
-    }
+        val payload = CollectorPayload(
+          Snowplow.Tp2,
+          querystring,
+          contentType,
+          body,
+          Shared.source,
+          Shared.context
+        )
+        Tp2Adapter
+          .toRawEvents(payload, SpecHelpers.client)
+          .map(_ must beInvalid(expected))
+      }
 
   def e8 = {
     val payload = CollectorPayload(
@@ -464,21 +464,21 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidatedMa
             )
           )
         ) |> { (_, json, expected) =>
-      val body = SpecHelpers.toSelfDescJson(json, "payload_data")
-      val payload =
-        CollectorPayload(
-          Snowplow.Tp2,
-          Nil,
-          ApplicationJson.some,
-          body.some,
-          Shared.source,
-          Shared.context
-        )
+        val body = SpecHelpers.toSelfDescJson(json, "payload_data")
+        val payload =
+          CollectorPayload(
+            Snowplow.Tp2,
+            Nil,
+            ApplicationJson.some,
+            body.some,
+            Shared.source,
+            Shared.context
+          )
 
-      Tp2Adapter
-        .toRawEvents(payload, SpecHelpers.client)
-        .map(_ must beInvalid(expected))
-    }
+        Tp2Adapter
+          .toRawEvents(payload, SpecHelpers.client)
+          .map(_ must beInvalid(expected))
+      }
 
   def e11 = {
     val payload = CollectorPayload(

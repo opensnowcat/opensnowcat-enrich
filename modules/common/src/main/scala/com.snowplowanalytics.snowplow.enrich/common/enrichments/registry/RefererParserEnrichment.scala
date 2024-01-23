@@ -50,9 +50,9 @@ object RefererParserEnrichment extends ParseableEnrichment {
       _ <- isParseable(c, schemaKey).leftMap(NonEmptyList.one)
       // better-monadic-for
       conf <- (
-                  CirceUtils.extract[String](c, "parameters", "uri").toValidatedNel,
-                  CirceUtils.extract[String](c, "parameters", "database").toValidatedNel,
-                  CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toValidatedNel
+                CirceUtils.extract[String](c, "parameters", "uri").toValidatedNel,
+                CirceUtils.extract[String](c, "parameters", "database").toValidatedNel,
+                CirceUtils.extract[List[String]](c, "parameters", "internalDomains").toValidatedNel
               ).mapN { (uri, db, domains) =>
                 (uri, db, domains)
               }.toEither

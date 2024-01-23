@@ -60,9 +60,9 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidatedMat
     "SPEC NAME" || "JSON" | "EXPECTED OUTPUT" |
       "Remove action field" !! json"""{"action":"assign","agent":"smith"}""" ! json"""{"agent":"smith"}""" |
       "Nothing removed" !! json"""{"actions":"assign","agent":"smith"}""" ! json"""{"actions":"assign","agent":"smith"}""" |> {
-      (_, json, expected) =>
-        adapterWithDefaultSchemas.reformatParameters(json) mustEqual expected
-    }
+        (_, json, expected) =>
+          adapterWithDefaultSchemas.reformatParameters(json) mustEqual expected
+      }
 
   def e2 = {
     val nvPairs = SpecHelpers.toNameValuePairs("p" -> "(u'apps',)")

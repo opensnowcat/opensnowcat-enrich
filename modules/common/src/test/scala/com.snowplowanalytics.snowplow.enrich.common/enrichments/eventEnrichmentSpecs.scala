@@ -50,8 +50,8 @@ class ExtractEventTypeSpec extends Specification with DataTables {
       "structured event" !! "se" ! "struct" |
       "structured event (legacy)" !! "ev" ! "struct" |
       "ad impression (legacy)" !! "ad" ! "ad_impression" |> { (_, input, expected) =>
-      EventEnrichments.extractEventType(FieldName, input) must beRight(expected)
-    }
+        EventEnrichments.extractEventType(FieldName, input) must beRight(expected)
+      }
 
   def e2 =
     "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
@@ -59,8 +59,8 @@ class ExtractEventTypeSpec extends Specification with DataTables {
       "empty string" !! "" ! err("") |
       "unrecognized #1" !! "e" ! err("e") |
       "unrecognized #2" !! "evnt" ! err("evnt") |> { (_, input, expected) =>
-      EventEnrichments.extractEventType(FieldName, input) must beLeft(expected)
-    }
+        EventEnrichments.extractEventType(FieldName, input) must beLeft(expected)
+      }
 
   val SeventiesTstamp = Some(new DateTime(0, DateTimeZone.UTC))
   val BCTstamp = SeventiesTstamp.map(_.minusYears(2000))
@@ -100,8 +100,8 @@ class ExtractEventTypeSpec extends Specification with DataTables {
         )
         .asLeft |
       "Valid ts" !! (("f", "1")) ! "1970-01-01 00:00:00.001".asRight |> { (_, input, expected) =>
-      EventEnrichments.extractTimestamp(input._1, input._2) must_== expected
-    }
+        EventEnrichments.extractTimestamp(input._1, input._2) must_== expected
+      }
 }
 
 class DerivedTimestampSpec extends Specification with DataTables {
@@ -117,12 +117,12 @@ class DerivedTimestampSpec extends Specification with DataTables {
       "dvce_sent_tstamp after dvce_created_tstamp" !! "2014-04-29 09:00:54.000" ! "2014-04-29 09:00:54.001" ! "2014-04-29 09:00:54.000" ! null ! "2014-04-29 09:00:53.999" |
       "true_tstamp override" !! "2014-04-29 09:00:54.001" ! "2014-04-29 09:00:54.000" ! "2014-04-29 09:00:54.000" ! "2000-01-01 00:00:00.000" ! "2000-01-01 00:00:00.000" |> {
 
-      (_, created, sent, collected, truth, expected) =>
-        EventEnrichments.getDerivedTimestamp(
-          Option(sent),
-          Option(created),
-          Option(collected),
-          Option(truth)
-        ) must beRight(Option(expected))
-    }
+        (_, created, sent, collected, truth, expected) =>
+          EventEnrichments.getDerivedTimestamp(
+            Option(sent),
+            Option(created),
+            Option(collected),
+            Option(truth)
+          ) must beRight(Option(expected))
+      }
 }

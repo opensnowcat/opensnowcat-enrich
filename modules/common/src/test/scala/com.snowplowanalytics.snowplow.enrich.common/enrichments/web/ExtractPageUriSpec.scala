@@ -42,9 +42,9 @@ class ExtractPageUriSpec extends Specification with DataTables {
       "collector didn't record the referer (rare)" !! None ! originalUri.some ! originalURI.some |
       "collector and tracker URIs differ - use tracker" !! originalUri.some ! customUri.some ! customURI.some |> {
 
-      (_, fromReferer, fromTracker, expected) =>
-        PageEnrichments.extractPageUri(fromReferer, fromTracker) must beRight(expected)
-    }
+        (_, fromReferer, fromTracker, expected) =>
+          PageEnrichments.extractPageUri(fromReferer, fromTracker) must beRight(expected)
+      }
 
   // Truncate
   val truncatedUri = originalUri.take(originalUri.length - 5)

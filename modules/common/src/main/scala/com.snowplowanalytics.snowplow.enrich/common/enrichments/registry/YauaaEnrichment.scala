@@ -106,8 +106,8 @@ final case class YauaaEnrichment(cacheSize: Option[Int]) extends Enrichment {
       case _ =>
         val headerMap = headers
           .map(_.split(": ", 2))
-          .collect {
-            case Array(key, value) => key -> value.replaceAll("^\\s+", "")
+          .collect { case Array(key, value) =>
+            key -> value.replaceAll("^\\s+", "")
           }
           .toMap ++ Map("User-Agent" -> userAgent)
         val parsedUA = uaa.parse(headerMap.asJava)

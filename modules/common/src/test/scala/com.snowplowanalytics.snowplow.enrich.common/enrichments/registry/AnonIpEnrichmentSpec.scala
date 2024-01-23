@@ -61,9 +61,9 @@ class AnonIpEnrichmentSpec extends Specification with DataTables with ScalaCheck
       "ipv6, compat address" !! "::192.168.0.1" ! AnonIPv4Octets(4) ! AnonIPv6Segments(1) ! "0:0:0:0:0:0:c0a8:x" |
       "ipv4 mapped address" !! "::FFFF:152.16.24.123" ! AnonIPv4Octets(2) ! AnonIPv6Segments(4) ! "::FFFF:152.16.x.x" |
       "ipv4 mapped address" !! "::FFFF:152.16.24.123" ! AnonIPv4Octets(4) ! AnonIPv6Segments(4) ! "::FFFF:x.x.x.x" |> {
-      (_, ip, octets, segments, expected) =>
-        AnonIpEnrichment(octets, segments).anonymizeIp(ip) must_== expected
-    }
+        (_, ip, octets, segments, expected) =>
+          AnonIpEnrichment(octets, segments).anonymizeIp(ip) must_== expected
+      }
 
   val ipv4Gen = Gen.listOfN(4, Gen.choose(0, 255)).map(_.mkString("."))
   val octetsNumGen = Gen.choose(1, 4)
@@ -88,38 +88,35 @@ class AnonIpEnrichmentSpec extends Specification with DataTables with ScalaCheck
     } yield ip.updated(segNum - 1, s":${ip(segNum - 1)}")).map(_.mkString(":"))
 
   def e2 =
-    forAll(ipv4Gen, octetsNumGen) {
-      case (ip, octetsNum) =>
-        val anon = AnonIpEnrichment(AnonIPv4Octets(octetsNum), AnonIPv6Segments(1)).anonymizeIp(ip)
-        val countProp = anon.count(_ == 'x') ==== octetsNum
-        val validIpProp = GuavaInetAddress
-          .forString(anon.replace("x", "1"))
-          .isInstanceOf[Inet4Address] ==== true
-        countProp and validIpProp
+    forAll(ipv4Gen, octetsNumGen) { case (ip, octetsNum) =>
+      val anon = AnonIpEnrichment(AnonIPv4Octets(octetsNum), AnonIPv6Segments(1)).anonymizeIp(ip)
+      val countProp = anon.count(_ == 'x') ==== octetsNum
+      val validIpProp = GuavaInetAddress
+        .forString(anon.replace("x", "1"))
+        .isInstanceOf[Inet4Address] ==== true
+      countProp and validIpProp
     }
 
   def e3 =
-    forAll(ipv6Gen, segmentsNumGen) {
-      case (ip, segemntsNum) =>
-        val anon =
-          AnonIpEnrichment(AnonIPv4Octets(1), AnonIPv6Segments(segemntsNum)).anonymizeIp(ip)
-        val countProp = anon.count(_ == 'x') ==== segemntsNum
-        val validIpProp = GuavaInetAddress
-          .forString(anon.replace("x", "1"))
-          .isInstanceOf[Inet6Address] ==== true
-        countProp and validIpProp
+    forAll(ipv6Gen, segmentsNumGen) { case (ip, segemntsNum) =>
+      val anon =
+        AnonIpEnrichment(AnonIPv4Octets(1), AnonIPv6Segments(segemntsNum)).anonymizeIp(ip)
+      val countProp = anon.count(_ == 'x') ==== segemntsNum
+      val validIpProp = GuavaInetAddress
+        .forString(anon.replace("x", "1"))
+        .isInstanceOf[Inet6Address] ==== true
+      countProp and validIpProp
     }
 
   def e4 =
-    forAll(shortenedIPv6Gen, segmentsNumGen) {
-      case (ip, segemntsNum) =>
-        val anon =
-          AnonIpEnrichment(AnonIPv4Octets(1), AnonIPv6Segments(segemntsNum)).anonymizeIp(ip)
-        val countProp = anon.count(_ == 'x') ==== segemntsNum
-        val validIpProp = GuavaInetAddress
-          .forString(anon.replace("x", "1"))
-          .isInstanceOf[Inet6Address] ==== true
-        countProp and validIpProp
+    forAll(shortenedIPv6Gen, segmentsNumGen) { case (ip, segemntsNum) =>
+      val anon =
+        AnonIpEnrichment(AnonIPv4Octets(1), AnonIPv6Segments(segemntsNum)).anonymizeIp(ip)
+      val countProp = anon.count(_ == 'x') ==== segemntsNum
+      val validIpProp = GuavaInetAddress
+        .forString(anon.replace("x", "1"))
+        .isInstanceOf[Inet6Address] ==== true
+      countProp and validIpProp
     }
 
 }

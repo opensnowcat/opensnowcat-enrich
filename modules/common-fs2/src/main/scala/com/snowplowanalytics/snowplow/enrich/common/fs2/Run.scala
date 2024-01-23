@@ -171,10 +171,9 @@ object Run {
       val reporting = env.metrics.report
       val metadata = env.metadata.report
       val flow = enrich.merge(updates).merge(reporting).merge(telemetry).merge(metadata)
-      flow.compile.drain.as(ExitCode.Success).recoverWith {
-        case exception: Throwable =>
-          Logger[F].error(s"An error happened") >>
-            Sync[F].raiseError[ExitCode](exception)
+      flow.compile.drain.as(ExitCode.Success).recoverWith { case exception: Throwable =>
+        Logger[F].error(s"An error happened") >>
+          Sync[F].raiseError[ExitCode](exception)
       }
     }
 

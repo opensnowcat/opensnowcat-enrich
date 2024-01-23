@@ -56,6 +56,6 @@ class ExtractViewDimensionsSpec extends Specification with DataTables {
       "Arabic number" !! "٤٥٦٧x680" ! err("٤٥٦٧x680").asLeft |
       "number > int #1" !! "760x3389336768" ! err2("760x3389336768").asLeft |
       "number > int #2" !! "9989336768x1200" ! err2("9989336768x1200").asLeft |> { (_, input, expected) =>
-      ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
-    }
+        ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
+      }
 }

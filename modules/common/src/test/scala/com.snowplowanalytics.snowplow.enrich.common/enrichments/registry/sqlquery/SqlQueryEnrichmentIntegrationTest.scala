@@ -107,8 +107,8 @@ class SqlQueryEnrichmentIntegrationTest extends Specification with ValidatedMatc
       for {
         enrichment <- SqlQueryEnrichment.parse(configuration, SCHEMA_KEY).map(_.enrichment[IO](blocker, shift)).toOption.get
         contexts <- enrichment.lookup(new EnrichedEvent, Nil, Nil, None)
-      } yield contexts must beValid.like {
-        case List(json) => json must beEqualTo(expected)
+      } yield contexts must beValid.like { case List(json) =>
+        json must beEqualTo(expected)
       }
     }
   }

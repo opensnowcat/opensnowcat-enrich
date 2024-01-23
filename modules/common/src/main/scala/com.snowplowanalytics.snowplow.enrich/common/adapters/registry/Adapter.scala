@@ -98,9 +98,8 @@ trait Adapter {
         }
         JsonObject(
           eventOpt
-            .map {
-              case (k1, v1) =>
-                updatedObj.filter { case (k2, v2) => !(k1 == k2 && Json.fromString(v1) === v2) }
+            .map { case (k1, v1) =>
+              updatedObj.filter { case (k2, v2) => !(k1 == k2 && Json.fromString(v1) === v2) }
             }
             .getOrElse(updatedObj)
             .toList: _*

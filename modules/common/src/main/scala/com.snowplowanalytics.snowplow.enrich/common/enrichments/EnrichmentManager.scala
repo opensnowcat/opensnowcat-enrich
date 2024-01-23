@@ -116,19 +116,18 @@ object EnrichmentManager {
     EitherT {
       accState(registry, raw, inputContexts, unstructEvent, legacyOrder)
         .runS(Accumulation(enriched, Nil, Nil))
-        .map {
-          case Accumulation(_, failures, contexts) =>
-            failures.toNel match {
-              case Some(nel) =>
-                buildEnrichmentFailuresBadRow(
-                  nel,
-                  EnrichedEvent.toPartiallyEnrichedEvent(enriched),
-                  RawEvent.toRawEvent(raw),
-                  processor
-                ).asLeft
-              case None =>
-                contexts.asRight
-            }
+        .map { case Accumulation(_, failures, contexts) =>
+          failures.toNel match {
+            case Some(nel) =>
+              buildEnrichmentFailuresBadRow(
+                nel,
+                EnrichedEvent.toPartiallyEnrichedEvent(enriched),
+                RawEvent.toRawEvent(raw),
+                processor
+              ).asLeft
+            case None =>
+              contexts.asRight
+          }
         }
     }
 
@@ -153,23 +152,21 @@ object EnrichmentManager {
       f: (EnrichedEvent,
         List[SelfDescribingData[Json]]) => F[Either[NonEmptyList[FailureDetails.EnrichmentFailure], List[SelfDescribingData[Json]]]]
     ): EStateT[F, Unit] =
-      EStateT {
-        case Accumulation(event, errors, contexts) =>
-          f(event, contexts).map {
-            case Right(contexts2) => (Accumulation(event, errors, contexts2 ::: contexts), ())
-            case Left(moreErrors) => (Accumulation(event, moreErrors.toList ::: errors, contexts), ())
-          }
+      EStateT { case Accumulation(event, errors, contexts) =>
+        f(event, contexts).map {
+          case Right(contexts2) => (Accumulation(event, errors, contexts2 ::: contexts), ())
+          case Left(moreErrors) => (Accumulation(event, moreErrors.toList ::: errors, contexts), ())
+        }
       }
 
     def fromEitherOpt[F[_]: Applicative, A](
       f: EnrichedEvent => Either[NonEmptyList[FailureDetails.EnrichmentFailure], Option[A]]
     ): EStateT[F, Option[A]] =
-      EStateT {
-        case acc @ Accumulation(event, errors, contexts) =>
-          f(event) match {
-            case Right(opt) => (acc, opt).pure[F]
-            case Left(moreErrors) => (Accumulation(event, moreErrors.toList ::: errors, contexts), Option.empty[A]).pure[F]
-          }
+      EStateT { case acc @ Accumulation(event, errors, contexts) =>
+        f(event) match {
+          case Right(opt) => (acc, opt).pure[F]
+          case Left(moreErrors) => (Accumulation(event, moreErrors.toList ::: errors, contexts), Option.empty[A]).pure[F]
+        }
       }
   }
 
@@ -303,64 +300,62 @@ object EnrichmentManager {
 
   // The load fails if the collector version is not set
   def getCollectorVersionSet[F[_]: Applicative]: EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        event.v_collector match {
-          case "" | null =>
-            NonEmptyList
-              .one(
-                FailureDetails
-                  .EnrichmentFailure(
-                    None,
-                    FailureDetails.EnrichmentFailureMessage
-                      .InputData("v_collector", None, "should be set")
-                  )
-              )
-              .asLeft
-          case _ => Nil.asRight
-        }
+    EStateT.fromEither { case (event, _) =>
+      event.v_collector match {
+        case "" | null =>
+          NonEmptyList
+            .one(
+              FailureDetails
+                .EnrichmentFailure(
+                  None,
+                  FailureDetails.EnrichmentFailureMessage
+                    .InputData("v_collector", None, "should be set")
+                )
+            )
+            .asLeft
+        case _ => Nil.asRight
+      }
     }
 
   // If our IpToGeo enrichment is enabled, get the geo-location from the IP address
   // enrichment doesn't fail to maintain the previous approach where failures were suppressed
   // c.f. https://github.com/snowplow/snowplow/issues/351
   def geoLocation[F[_]: Monad](ipLookups: Option[IpLookupsEnrichment[F]]): EStateT[F, Unit] =
-    EStateT.fromEitherF {
-      case (event, _) =>
-        val ipLookup = for {
-          enrichment <- OptionT.fromOption[F](ipLookups)
-          ip <- OptionT.fromOption[F](Option(event.user_ipaddress))
-          result <- OptionT.liftF(enrichment.extractIpInformation(ip))
-        } yield result
+    EStateT.fromEitherF { case (event, _) =>
+      val ipLookup = for {
+        enrichment <- OptionT.fromOption[F](ipLookups)
+        ip <- OptionT.fromOption[F](Option(event.user_ipaddress))
+        result <- OptionT.liftF(enrichment.extractIpInformation(ip))
+      } yield result
 
-        ipLookup.value.map {
-          case Some(lookup) =>
-            lookup.ipLocation.flatMap(_.toOption).foreach { loc =>
-              event.geo_country = loc.countryCode
-              event.geo_region = loc.region.orNull
-              event.geo_city = loc.city.orNull
-              event.geo_zipcode = loc.postalCode.orNull
-              event.geo_latitude = loc.latitude
-              event.geo_longitude = loc.longitude
-              event.geo_region_name = loc.regionName.orNull
-              event.geo_timezone = loc.timezone.orNull
-            }
-            lookup.isp.flatMap(_.toOption).foreach { i =>
-              event.ip_isp = i
-            }
-            lookup.organization.flatMap(_.toOption).foreach { org =>
-              event.ip_organization = org
-            }
-            lookup.domain.flatMap(_.toOption).foreach { d =>
-              event.ip_domain = d
-            }
-            lookup.connectionType.flatMap(_.toOption).foreach { ct =>
-              event.ip_netspeed = ct
-            }
-            Nil.asRight
-          case None =>
-            Nil.asRight
-        }
+      ipLookup.value.map {
+        case Some(lookup) =>
+          lookup.ipLocation.flatMap(_.toOption).foreach { loc =>
+            event.geo_country = loc.countryCode
+            event.geo_region = loc.region.orNull
+            event.geo_city = loc.city.orNull
+            event.geo_zipcode = loc.postalCode.orNull
+            event.geo_latitude = loc.latitude
+            event.geo_longitude = loc.longitude
+            event.geo_region_name = loc.regionName.orNull
+            event.geo_timezone = loc.timezone.orNull
+          }
+          lookup.isp.flatMap(_.toOption).foreach { i =>
+            event.ip_isp = i
+          }
+          lookup.organization.flatMap(_.toOption).foreach { org =>
+            event.ip_organization = org
+          }
+          lookup.domain.flatMap(_.toOption).foreach { d =>
+            event.ip_domain = d
+          }
+          lookup.connectionType.flatMap(_.toOption).foreach { ct =>
+            event.ip_netspeed = ct
+          }
+          Nil.asRight
+        case None =>
+          Nil.asRight
+      }
     }
 
   // Potentially update the page_url and set the page URL components
@@ -388,34 +383,32 @@ object EnrichmentManager {
 
   // Calculate the derived timestamp
   def getDerivedTstamp[F[_]: Applicative]: EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        EE.getDerivedTimestamp(
-          Option(event.dvce_sent_tstamp),
-          Option(event.dvce_created_tstamp),
-          Option(event.collector_tstamp),
-          Option(event.true_tstamp)
-        ).map { dt =>
-          dt.foreach(event.derived_tstamp = _)
-          Nil
-        }.leftMap(NonEmptyList.one(_))
+    EStateT.fromEither { case (event, _) =>
+      EE.getDerivedTimestamp(
+        Option(event.dvce_sent_tstamp),
+        Option(event.dvce_created_tstamp),
+        Option(event.collector_tstamp),
+        Option(event.true_tstamp)
+      ).map { dt =>
+        dt.foreach(event.derived_tstamp = _)
+        Nil
+      }.leftMap(NonEmptyList.one(_))
     }
 
   // Fetch IAB enrichment context (before anonymizing the IP address).
   // IAB enrichment is called only if the IP is v4 (and after removing the port if any)
   // and if the user agent is defined.
   def getIabContext[F[_]: Applicative](iabEnrichment: Option[IabEnrichment]): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        val result = for {
-          iab <- iabEnrichment
-          useragent <- Option(event.useragent).filter(_.trim.nonEmpty)
-          ipString <- Option(event.user_ipaddress)
-          ip <- CU.extractInetAddress(ipString)
-          tstamp <- Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)
-        } yield iab.getIabContext(useragent, ip, tstamp)
+    EStateT.fromEither { case (event, _) =>
+      val result = for {
+        iab <- iabEnrichment
+        useragent <- Option(event.useragent).filter(_.trim.nonEmpty)
+        ipString <- Option(event.user_ipaddress)
+        ip <- CU.extractInetAddress(ipString)
+        tstamp <- Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)
+      } yield iab.getIabContext(useragent, ip, tstamp)
 
-        result.sequence.bimap(NonEmptyList.one(_), _.toList)
+      result.sequence.bimap(NonEmptyList.one(_), _.toList)
     }
 
   def anonIp(event: EnrichedEvent, anonIp: Option[AnonIpEnrichment]): Option[String] =
@@ -427,145 +420,140 @@ object EnrichmentManager {
     }
 
   def getUaUtils[F[_]: Applicative](userAgentUtils: Option[UserAgentUtilsEnrichment]): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        userAgentUtils match {
-          case Some(uap) =>
-            Option(event.useragent) match {
-              case Some(ua) =>
-                val ca = uap.extractClientAttributes(ua)
-                ca.map { c =>
-                  event.br_name = c.browserName
-                  event.br_family = c.browserFamily
-                  c.browserVersion.foreach(bv => event.br_version = bv)
-                  event.br_type = c.browserType
-                  event.br_renderengine = c.browserRenderEngine
-                  event.os_name = c.osName
-                  event.os_family = c.osFamily
-                  event.os_manufacturer = c.osManufacturer
-                  event.dvce_type = c.deviceType
-                  event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
-                  Nil
-                }.leftMap(NonEmptyList.one(_))
-              case None => Nil.asRight // No fields updated
-            }
-          case None => Nil.asRight
-        }
+    EStateT.fromEither { case (event, _) =>
+      userAgentUtils match {
+        case Some(uap) =>
+          Option(event.useragent) match {
+            case Some(ua) =>
+              val ca = uap.extractClientAttributes(ua)
+              ca.map { c =>
+                event.br_name = c.browserName
+                event.br_family = c.browserFamily
+                c.browserVersion.foreach(bv => event.br_version = bv)
+                event.br_type = c.browserType
+                event.br_renderengine = c.browserRenderEngine
+                event.os_name = c.osName
+                event.os_family = c.osFamily
+                event.os_manufacturer = c.osManufacturer
+                event.dvce_type = c.deviceType
+                event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
+                Nil
+              }.leftMap(NonEmptyList.one(_))
+            case None => Nil.asRight // No fields updated
+          }
+        case None => Nil.asRight
+      }
     }
 
   def getUaParser[F[_]: Monad](uaParser: Option[UaParserEnrichment[F]]): EStateT[F, Unit] =
-    EStateT.fromEitherF {
-      case (event, _) =>
-        uaParser match {
-          case Some(uap) =>
-            Option(event.useragent) match {
-              case Some(ua) =>
-                uap.extractUserAgent(ua).map {
-                  case Left(failure) => Left(NonEmptyList.one(failure))
-                  case Right(context) => Right(List(context))
-                }
-              case None => Monad[F].pure(Nil.asRight) // No fields updated
-            }
-          case None => Monad[F].pure(Nil.asRight)
-        }
+    EStateT.fromEitherF { case (event, _) =>
+      uaParser match {
+        case Some(uap) =>
+          Option(event.useragent) match {
+            case Some(ua) =>
+              uap.extractUserAgent(ua).map {
+                case Left(failure) => Left(NonEmptyList.one(failure))
+                case Right(context) => Right(List(context))
+              }
+            case None => Monad[F].pure(Nil.asRight) // No fields updated
+          }
+        case None => Monad[F].pure(Nil.asRight)
+      }
     }
 
   def getCurrency[F[_]: Monad](
     timestamp: Option[DateTime],
     currencyConversion: Option[CurrencyConversionEnrichment[F]]
   ): EStateT[F, Unit] =
-    EStateT.fromEitherF {
-      case (event, _) =>
-        currencyConversion match {
-          case Some(currency) =>
-            event.base_currency = currency.baseCurrency.getCode
-            // Note that jBigDecimalToDouble is applied to either-valid-or-null event POJO
-            // properties, so we don't expect any of these four vals to be a Failure
-            val trTax = CU.jBigDecimalToDouble("tr_tx", event.tr_tax).toValidatedNel
-            val tiPrice = CU.jBigDecimalToDouble("ti_pr", event.ti_price).toValidatedNel
-            val trTotal = CU.jBigDecimalToDouble("tr_tt", event.tr_total).toValidatedNel
-            val trShipping = CU.jBigDecimalToDouble("tr_sh", event.tr_shipping).toValidatedNel
-            EitherT(
-              (trTotal, trTax, trShipping, tiPrice)
-                .mapN {
-                  currency.convertCurrencies(
-                    Option(event.tr_currency),
-                    _,
-                    _,
-                    _,
-                    Option(event.ti_currency),
-                    _,
-                    timestamp
-                  )
-                }
-                .toEither
-                .sequence
-                .map(_.flatMap(_.toEither))
-            ).map {
-              case (trTotalBase, trTaxBase, trShippingBase, tiPriceBase) =>
-                trTotalBase.foreach(v => event.tr_total_base = v)
-                trTaxBase.foreach(v => event.tr_tax_base = v)
-                trShippingBase.foreach(v => event.tr_shipping_base = v)
-                tiPriceBase.foreach(v => event.ti_price_base = v)
-                List.empty[SelfDescribingData[Json]]
-            }.value
-          case None => Monad[F].pure(Nil.asRight)
-        }
+    EStateT.fromEitherF { case (event, _) =>
+      currencyConversion match {
+        case Some(currency) =>
+          event.base_currency = currency.baseCurrency.getCode
+          // Note that jBigDecimalToDouble is applied to either-valid-or-null event POJO
+          // properties, so we don't expect any of these four vals to be a Failure
+          val trTax = CU.jBigDecimalToDouble("tr_tx", event.tr_tax).toValidatedNel
+          val tiPrice = CU.jBigDecimalToDouble("ti_pr", event.ti_price).toValidatedNel
+          val trTotal = CU.jBigDecimalToDouble("tr_tt", event.tr_total).toValidatedNel
+          val trShipping = CU.jBigDecimalToDouble("tr_sh", event.tr_shipping).toValidatedNel
+          EitherT(
+            (trTotal, trTax, trShipping, tiPrice)
+              .mapN {
+                currency.convertCurrencies(
+                  Option(event.tr_currency),
+                  _,
+                  _,
+                  _,
+                  Option(event.ti_currency),
+                  _,
+                  timestamp
+                )
+              }
+              .toEither
+              .sequence
+              .map(_.flatMap(_.toEither))
+          ).map { case (trTotalBase, trTaxBase, trShippingBase, tiPriceBase) =>
+            trTotalBase.foreach(v => event.tr_total_base = v)
+            trTaxBase.foreach(v => event.tr_tax_base = v)
+            trShippingBase.foreach(v => event.tr_shipping_base = v)
+            tiPriceBase.foreach(v => event.ti_price_base = v)
+            List.empty[SelfDescribingData[Json]]
+          }.value
+        case None => Monad[F].pure(Nil.asRight)
+      }
     }
 
   def getRefererUri[F[_]: Applicative](
     refererParser: Option[RefererParserEnrichment]
   ): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        CU.stringToUri(event.page_referrer)
-          .map { uri =>
-            for {
-              u <- uri
-            } {
-              // Set the URL components
-              val components = CU.explodeUri(u)
-              event.refr_urlscheme = components.scheme
-              event.refr_urlhost = components.host
-              event.refr_urlport = components.port
-              event.refr_urlpath = components.path.orNull
-              event.refr_urlquery = components.query.orNull
-              event.refr_urlfragment = components.fragment.orNull
+    EStateT.fromEither { case (event, _) =>
+      CU.stringToUri(event.page_referrer)
+        .map { uri =>
+          for {
+            u <- uri
+          } {
+            // Set the URL components
+            val components = CU.explodeUri(u)
+            event.refr_urlscheme = components.scheme
+            event.refr_urlhost = components.host
+            event.refr_urlport = components.port
+            event.refr_urlpath = components.path.orNull
+            event.refr_urlquery = components.query.orNull
+            event.refr_urlfragment = components.fragment.orNull
 
-              // Set the referrer details
-              refererParser match {
-                case Some(rp) =>
-                  for (refr <- rp.extractRefererDetails(u, event.page_urlhost))
-                    refr match {
-                      case UnknownReferer(medium) => event.refr_medium = CU.makeTsvSafe(medium.value)
-                      case SearchReferer(medium, source, term) =>
-                        event.refr_medium = CU.makeTsvSafe(medium.value)
-                        event.refr_source = CU.makeTsvSafe(source)
-                        event.refr_term = CU.makeTsvSafe(term.orNull)
-                      case InternalReferer(medium) => event.refr_medium = CU.makeTsvSafe(medium.value)
-                      case SocialReferer(medium, source) =>
-                        event.refr_medium = CU.makeTsvSafe(medium.value)
-                        event.refr_source = CU.makeTsvSafe(source)
-                      case EmailReferer(medium, source) =>
-                        event.refr_medium = CU.makeTsvSafe(medium.value)
-                        event.refr_source = CU.makeTsvSafe(source)
-                      case PaidReferer(medium, source) =>
-                        event.refr_medium = CU.makeTsvSafe(medium.value)
-                        event.refr_source = CU.makeTsvSafe(source)
-                    }
-                case None => ()
-              }
+            // Set the referrer details
+            refererParser match {
+              case Some(rp) =>
+                for (refr <- rp.extractRefererDetails(u, event.page_urlhost))
+                  refr match {
+                    case UnknownReferer(medium) => event.refr_medium = CU.makeTsvSafe(medium.value)
+                    case SearchReferer(medium, source, term) =>
+                      event.refr_medium = CU.makeTsvSafe(medium.value)
+                      event.refr_source = CU.makeTsvSafe(source)
+                      event.refr_term = CU.makeTsvSafe(term.orNull)
+                    case InternalReferer(medium) => event.refr_medium = CU.makeTsvSafe(medium.value)
+                    case SocialReferer(medium, source) =>
+                      event.refr_medium = CU.makeTsvSafe(medium.value)
+                      event.refr_source = CU.makeTsvSafe(source)
+                    case EmailReferer(medium, source) =>
+                      event.refr_medium = CU.makeTsvSafe(medium.value)
+                      event.refr_source = CU.makeTsvSafe(source)
+                    case PaidReferer(medium, source) =>
+                      event.refr_medium = CU.makeTsvSafe(medium.value)
+                      event.refr_source = CU.makeTsvSafe(source)
+                  }
+              case None => ()
             }
-            Nil
           }
-          .leftMap(f =>
-            NonEmptyList.one(
-              FailureDetails.EnrichmentFailure(
-                None,
-                FailureDetails.EnrichmentFailureMessage.Simple(f)
-              )
+          Nil
+        }
+        .leftMap(f =>
+          NonEmptyList.one(
+            FailureDetails.EnrichmentFailure(
+              None,
+              FailureDetails.EnrichmentFailureMessage.Simple(f)
             )
           )
+        )
     }
 
   // Parse the page URI's querystring
@@ -585,90 +573,85 @@ object EnrichmentManager {
     pageQsMap: Option[QueryStringParameters],
     campaignAttribution: Option[CampaignAttributionEnrichment]
   ): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        pageQsMap match {
-          case Some(qsList) =>
-            campaignAttribution match {
-              case Some(ce) =>
-                val cmp = ce.extractMarketingFields(qsList)
-                event.mkt_medium = CU.makeTsvSafe(cmp.medium.orNull)
-                event.mkt_source = CU.makeTsvSafe(cmp.source.orNull)
-                event.mkt_term = CU.makeTsvSafe(cmp.term.orNull)
-                event.mkt_content = CU.makeTsvSafe(cmp.content.orNull)
-                event.mkt_campaign = CU.makeTsvSafe(cmp.campaign.orNull)
-                event.mkt_clickid = CU.makeTsvSafe(cmp.clickId.orNull)
-                event.mkt_network = CU.makeTsvSafe(cmp.network.orNull)
-                Nil.asRight
-              case None => Nil.asRight
-            }
-          case None => Nil.asRight
-        }
+    EStateT.fromEither { case (event, _) =>
+      pageQsMap match {
+        case Some(qsList) =>
+          campaignAttribution match {
+            case Some(ce) =>
+              val cmp = ce.extractMarketingFields(qsList)
+              event.mkt_medium = CU.makeTsvSafe(cmp.medium.orNull)
+              event.mkt_source = CU.makeTsvSafe(cmp.source.orNull)
+              event.mkt_term = CU.makeTsvSafe(cmp.term.orNull)
+              event.mkt_content = CU.makeTsvSafe(cmp.content.orNull)
+              event.mkt_campaign = CU.makeTsvSafe(cmp.campaign.orNull)
+              event.mkt_clickid = CU.makeTsvSafe(cmp.clickId.orNull)
+              event.mkt_network = CU.makeTsvSafe(cmp.network.orNull)
+              Nil.asRight
+            case None => Nil.asRight
+          }
+        case None => Nil.asRight
+      }
     }
 
   def getCrossDomain[F[_]: Applicative](
     pageQsMap: Option[QueryStringParameters]
   ): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        pageQsMap match {
-          case Some(qsMap) =>
-            val crossDomainParseResult = WPE.parseCrossDomain(qsMap)
-            for ((maybeRefrDomainUserid, maybeRefrDvceTstamp) <- crossDomainParseResult.toOption) {
-              maybeRefrDomainUserid.foreach(event.refr_domain_userid = _)
-              maybeRefrDvceTstamp.foreach(event.refr_dvce_tstamp = _)
-            }
-            crossDomainParseResult.bimap(NonEmptyList.one(_), _ => Nil)
-          case None => Nil.asRight
-        }
+    EStateT.fromEither { case (event, _) =>
+      pageQsMap match {
+        case Some(qsMap) =>
+          val crossDomainParseResult = WPE.parseCrossDomain(qsMap)
+          for ((maybeRefrDomainUserid, maybeRefrDvceTstamp) <- crossDomainParseResult.toOption) {
+            maybeRefrDomainUserid.foreach(event.refr_domain_userid = _)
+            maybeRefrDvceTstamp.foreach(event.refr_dvce_tstamp = _)
+          }
+          crossDomainParseResult.bimap(NonEmptyList.one(_), _ => Nil)
+        case None => Nil.asRight
+      }
     }
 
   def setEventFingerprint[F[_]: Applicative](
     parameters: RawEventParameters,
     eventFingerprint: Option[EventFingerprintEnrichment]
   ): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        eventFingerprint match {
-          case Some(efe) =>
-            event.event_fingerprint = efe.getEventFingerprint(parameters)
-            Nil.asRight
-          case _ => Nil.asRight
-        }
+    EStateT.fromEither { case (event, _) =>
+      eventFingerprint match {
+        case Some(efe) =>
+          event.event_fingerprint = efe.getEventFingerprint(parameters)
+          Nil.asRight
+        case _ => Nil.asRight
+      }
     }
 
   // Extract the event vendor/name/format/version
   def extractSchemaFields[F[_]: Applicative](
     unstructEvent: Option[SelfDescribingData[Json]]
   ): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        SchemaEnrichment
-          .extractSchema(event, unstructEvent)
-          .map {
-            case Some(schemaKey) =>
-              event.event_vendor = schemaKey.vendor
-              event.event_name = schemaKey.name
-              event.event_format = schemaKey.format
-              event.event_version = schemaKey.version.asString
-              Nil
-            case None => Nil
-          }
-          .leftMap(NonEmptyList.one(_))
+    EStateT.fromEither { case (event, _) =>
+      SchemaEnrichment
+        .extractSchema(event, unstructEvent)
+        .map {
+          case Some(schemaKey) =>
+            event.event_vendor = schemaKey.vendor
+            event.event_name = schemaKey.name
+            event.event_format = schemaKey.format
+            event.event_version = schemaKey.version.asString
+            Nil
+          case None => Nil
+        }
+        .leftMap(NonEmptyList.one(_))
     }
 
   // Execute the JavaScript scripting enrichment
   def getJsScript[F[_]: Applicative](
     javascriptScript: Option[JavascriptScriptEnrichment]
   ): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, derivedContexts) =>
-        javascriptScript match {
-          case Some(jse) =>
-            ME.formatContexts(derivedContexts).foreach(c => event.derived_contexts = c)
-            jse.process(event).leftMap(NonEmptyList.one)
-          case None => Nil.asRight
-        }
+    EStateT.fromEither { case (event, derivedContexts) =>
+      javascriptScript match {
+        case Some(jse) =>
+          ME.formatContexts(derivedContexts).foreach(c => event.derived_contexts = c)
+          jse.process(event).leftMap(NonEmptyList.one)
+        case None => Nil.asRight
+      }
     }
 
   def headerContexts[F[_]: Applicative, A](
@@ -676,33 +659,30 @@ object EnrichmentManager {
     enrichment: Option[A],
     f: (A, List[String]) => List[SelfDescribingData[Json]]
   ): EStateT[F, Unit] =
-    EStateT.fromEither[F] {
-      case (_, _) =>
-        enrichment match {
-          case Some(e) => f(e, headers).asRight
-          case None => Nil.asRight
-        }
+    EStateT.fromEither[F] { case (_, _) =>
+      enrichment match {
+        case Some(e) => f(e, headers).asRight
+        case None => Nil.asRight
+      }
     }
 
   // Fetch weather context
   def getWeatherContext[F[_]: Monad](weather: Option[WeatherEnrichment[F]]): EStateT[F, Unit] =
-    EStateT.fromEitherF {
-      case (event, _) =>
-        weather match {
-          case Some(we) =>
-            we.getWeatherContext(
-              Option(event.geo_latitude),
-              Option(event.geo_longitude),
-              Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)
-            ).map(_.map(List(_)))
-          case None => Monad[F].pure(Nil.asRight)
-        }
+    EStateT.fromEitherF { case (event, _) =>
+      weather match {
+        case Some(we) =>
+          we.getWeatherContext(
+            Option(event.geo_latitude),
+            Option(event.geo_longitude),
+            Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)
+          ).map(_.map(List(_)))
+        case None => Monad[F].pure(Nil.asRight)
+      }
     }
 
   def getYauaaContext[F[_]: Applicative](yauaa: Option[YauaaEnrichment], headers: List[String]): EStateT[F, Unit] =
-    EStateT.fromEither {
-      case (event, _) =>
-        yauaa.map(_.getYauaaContext(event.useragent, headers)).toList.asRight
+    EStateT.fromEither { case (event, _) =>
+      yauaa.map(_.getYauaaContext(event.useragent, headers)).toList.asRight
     }
 
   // Derive some contexts with custom SQL Query enrichment
@@ -711,14 +691,13 @@ object EnrichmentManager {
     unstructEvent: Option[SelfDescribingData[Json]],
     sqlQuery: Option[SqlQueryEnrichment[F]]
   ): EStateT[F, Unit] =
-    EStateT.fromEitherF {
-      case (event, derivedContexts) =>
-        sqlQuery match {
-          case Some(enrichment) =>
-            enrichment.lookup(event, derivedContexts, inputContexts, unstructEvent).map(_.toEither)
-          case None =>
-            List.empty[SelfDescribingData[Json]].asRight.pure[F]
-        }
+    EStateT.fromEitherF { case (event, derivedContexts) =>
+      sqlQuery match {
+        case Some(enrichment) =>
+          enrichment.lookup(event, derivedContexts, inputContexts, unstructEvent).map(_.toEither)
+        case None =>
+          List.empty[SelfDescribingData[Json]].asRight.pure[F]
+      }
     }
 
   // Derive some contexts with custom API Request enrichment
@@ -727,14 +706,13 @@ object EnrichmentManager {
     unstructEvent: Option[SelfDescribingData[Json]],
     apiRequest: Option[ApiRequestEnrichment[F]]
   ): EStateT[F, Unit] =
-    EStateT.fromEitherF {
-      case (event, derivedContexts) =>
-        apiRequest match {
-          case Some(enrichment) =>
-            enrichment.lookup(event, derivedContexts, inputContexts, unstructEvent).map(_.toEither)
-          case None =>
-            List.empty[SelfDescribingData[Json]].asRight.pure[F]
-        }
+    EStateT.fromEitherF { case (event, derivedContexts) =>
+      apiRequest match {
+        case Some(enrichment) =>
+          enrichment.lookup(event, derivedContexts, inputContexts, unstructEvent).map(_.toEither)
+        case None =>
+          List.empty[SelfDescribingData[Json]].asRight.pure[F]
+      }
     }
 
   def piiTransform(event: EnrichedEvent, piiPseudonymizer: Option[PiiPseudonymizerEnrichment]): Option[SelfDescribingData[Json]] =

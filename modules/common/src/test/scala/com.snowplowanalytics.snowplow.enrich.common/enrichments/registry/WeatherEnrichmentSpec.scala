@@ -81,9 +81,8 @@ class WeatherEnrichmentSpec extends Specification with CatsIO {
                    Option(invalidEvent.time)
                  )
                ).leftMap(_.head.toString)
-    } yield stamp).value.map(_ must beLeft.like {
-      case e =>
-        e must contain("InputData(derived_tstamp,None,missing)")
+    } yield stamp).value.map(_ must beLeft.like { case e =>
+      e must contain("InputData(derived_tstamp,None,missing)")
     })
 
   def e2 =
@@ -123,10 +122,9 @@ class WeatherEnrichmentSpec extends Specification with CatsIO {
                    Option(validEvent.time)
                  )
                ).leftMap(_.head.toString)
-    } yield stamp).value.map(_ must beRight.like {
-      case weather =>
-        val temp = weather.data.hcursor.downField("main").get[Double]("humidity")
-        temp must beRight(69.0d)
+    } yield stamp).value.map(_ must beRight.like { case weather =>
+      val temp = weather.data.hcursor.downField("main").get[Double]("humidity")
+      temp must beRight(69.0d)
     })
 
   def e5 = {
@@ -174,9 +172,8 @@ class WeatherEnrichmentSpec extends Specification with CatsIO {
                ).leftMap(_.head.toString)
     } yield stamp).value.map(_ must beRight.like { // successful request
       case weather =>
-        weather.data.hcursor.as[TransformedWeather] must beRight.like {
-          case w =>
-            w.dt must equalTo("2020-04-28T12:00:00.000Z")
+        weather.data.hcursor.as[TransformedWeather] must beRight.like { case w =>
+          w.dt must equalTo("2020-04-28T12:00:00.000Z")
         }
     })
 }

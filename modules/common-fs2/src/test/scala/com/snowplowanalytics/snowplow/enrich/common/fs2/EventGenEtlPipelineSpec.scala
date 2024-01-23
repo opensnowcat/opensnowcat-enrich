@@ -253,40 +253,39 @@ class EventGenEtlPipelineSpec extends Specification with CatsIO {
   val GeneratorTest: Fragments = Stream
     .repeatEval(IO.delay(runGen(GenSdkEvent.genPair(1, 10, Instant.now), rng)))
     .take(50)
-    .flatMap {
-      case (payload, events) =>
-        Stream
-          .emit(ThriftLoader.toCollectorPayload(payload.toRaw, process))
-          .covary[IO]
-          .through(rethrowBadRows)
-          .unNone
-          .evalMap(processEvents)
-          .flatMap(Stream.emits)
-          .through(rethrowBadRow)
-          .map(toPartiallyEnrichedEvent)
-          .map(_.asJson.foldWith(folder).noSpaces)
-          .map(decode[IntermediateEvent])
-          .rethrow
-          .map(IntermediateEvent.pad)
-          .map(Option[IntermediateEvent])
-          .zipAll(
-            Stream
-              .emits(events)
-              .covary[IO]
-              .map(_.toJson(false))
-              .map(_.foldWith(folder))
-              .map(_.noSpaces)
-              .map(
-                _.replaceAll(
-                  "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
-                  "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1"
-                )
+    .flatMap { case (payload, events) =>
+      Stream
+        .emit(ThriftLoader.toCollectorPayload(payload.toRaw, process))
+        .covary[IO]
+        .through(rethrowBadRows)
+        .unNone
+        .evalMap(processEvents)
+        .flatMap(Stream.emits)
+        .through(rethrowBadRow)
+        .map(toPartiallyEnrichedEvent)
+        .map(_.asJson.foldWith(folder).noSpaces)
+        .map(decode[IntermediateEvent])
+        .rethrow
+        .map(IntermediateEvent.pad)
+        .map(Option[IntermediateEvent])
+        .zipAll(
+          Stream
+            .emits(events)
+            .covary[IO]
+            .map(_.toJson(false))
+            .map(_.foldWith(folder))
+            .map(_.noSpaces)
+            .map(
+              _.replaceAll(
+                "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
+                "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1"
               )
-              .map(decode[IntermediateEvent])
-              .rethrow
-              .map(IntermediateEvent.pad)
-              .map(Option[IntermediateEvent])
-          )(None, None)
+            )
+            .map(decode[IntermediateEvent])
+            .rethrow
+            .map(IntermediateEvent.pad)
+            .map(Option[IntermediateEvent])
+        )(None, None)
     }
     .zipWithIndex
     .fold(
@@ -296,11 +295,10 @@ class EventGenEtlPipelineSpec extends Specification with CatsIO {
     }
     .map(matches =>
       "All elements of origin stream should match" >>
-        Fragment.foreach(matches.reverse) {
-          case (els, i) =>
-            s"Element $i should match the reference" >> {
-              els._1 must matchTo(els._2)
-            }
+        Fragment.foreach(matches.reverse) { case (els, i) =>
+          s"Element $i should match the reference" >> {
+            els._1 must matchTo(els._2)
+          }
         }
     )
     .handleError { x =>

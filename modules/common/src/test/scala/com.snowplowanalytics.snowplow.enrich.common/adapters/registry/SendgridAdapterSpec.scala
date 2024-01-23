@@ -526,9 +526,8 @@ class SendgridAdapterSpec extends Specification with ValidatedMatchers with Cats
 
       adapterWithDefaultSchemas
         .toRawEvents(payload, SpecHelpers.client)
-        .map(_ must beValid.like {
-          case nel: NonEmptyList[RawEvent] =>
-            nel.toList must have size 1
+        .map(_ must beValid.like { case nel: NonEmptyList[RawEvent] =>
+          nel.toList must have size 1
         })
     }
 

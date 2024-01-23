@@ -80,14 +80,14 @@ class UaParserEnrichmentSpec extends Specification with DataTables with CatsIO {
     "report initialization error" in {
       "Custom Rules" | "Input UserAgent" | "Parsed UserAgent" |
         Some(badRulefile) !! mobileSafariUserAgent !! "Failed to initialize ua parser" |> { (rules, input, errorPrefix) =>
-        (for {
-          c <- EitherT.rightT[IO, String](UaParserConf(schemaKey, rules))
-          e <- c.enrichment[IO]
-          res = e.extractUserAgent(input)
-        } yield res).value.map(_ must beLeft.like {
-          case a => a must startWith(errorPrefix)
-        })
-      }
+          (for {
+            c <- EitherT.rightT[IO, String](UaParserConf(schemaKey, rules))
+            e <- c.enrichment[IO]
+            res = e.extractUserAgent(input)
+          } yield res).value.map(_ must beLeft.like { case a =>
+            a must startWith(errorPrefix)
+          })
+        }
     }
 
     "parse useragent according to configured rules" in {
@@ -95,12 +95,12 @@ class UaParserEnrichmentSpec extends Specification with DataTables with CatsIO {
         None !! mobileSafariUserAgent !! mobileSafariJson |
         None !! safariUserAgent !! safariJson |
         Some(customRules) !! mobileSafariUserAgent !! testAgentJson |> { (rules, input, expected) =>
-        (for {
-          c <- EitherT.rightT[IO, String](UaParserConf(schemaKey, rules))
-          e <- c.enrichment[IO]
-          res <- EitherT(e.extractUserAgent(input).map(_.leftMap(_.toString())))
-        } yield res).value.map(_ must beRight(expected))
-      }
+          (for {
+            c <- EitherT.rightT[IO, String](UaParserConf(schemaKey, rules))
+            e <- c.enrichment[IO]
+            res <- EitherT(e.extractUserAgent(input).map(_.leftMap(_.toString())))
+          } yield res).value.map(_ must beRight(expected))
+        }
     }
   }
 }

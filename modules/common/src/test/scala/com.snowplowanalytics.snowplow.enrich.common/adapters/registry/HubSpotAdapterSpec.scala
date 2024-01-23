@@ -73,8 +73,8 @@ class HubSpotAdapterSpec extends Specification with DataTables with ValidatedMat
           """{"something:"some"}""".some,
           """invalid json: expected : got 'some"}' (line 1, column 14)"""
         ) |> { (_, input, expected) =>
-      adapterWithDefaultSchemas.payloadBodyToEvents(input) must beLeft(expected)
-    }
+        adapterWithDefaultSchemas.payloadBodyToEvents(input) must beLeft(expected)
+      }
 
   def e3 = {
     val bodyStr =

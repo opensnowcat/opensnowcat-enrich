@@ -73,43 +73,43 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with CatsIO 
       "invalid IP address #1" !! "localhost" ! "AddressNotFoundException".asLeft.some |
       "invalid IP address #2" !! "hello" ! "UnknownHostException".asLeft.some |
       "valid IP address" !! "175.16.199.0" !
-        IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
-          countryCode = "CN",
-          countryName = "China",
-          region = Some("22"),
-          city = Some("Changchun"),
-          latitude = 43.88f,
-          longitude = 125.3228f,
-          timezone = Some("Asia/Harbin"),
-          postalCode = None,
-          metroCode = None,
-          regionName = Some("Jilin Sheng"),
-          isInEuropeanUnion = false,
-          continent = "Asia",
-          accuracyRadius = 100
-        ).asRight.some |
+      IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
+        countryCode = "CN",
+        countryName = "China",
+        region = Some("22"),
+        city = Some("Changchun"),
+        latitude = 43.88f,
+        longitude = 125.3228f,
+        timezone = Some("Asia/Harbin"),
+        postalCode = None,
+        metroCode = None,
+        regionName = Some("Jilin Sheng"),
+        isInEuropeanUnion = false,
+        continent = "Asia",
+        accuracyRadius = 100
+      ).asRight.some |
       "valid IP address with port" !! "175.16.199.0:8080" !
-        IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
-          countryCode = "CN",
-          countryName = "China",
-          region = Some("22"),
-          city = Some("Changchun"),
-          latitude = 43.88f,
-          longitude = 125.3228f,
-          timezone = Some("Asia/Harbin"),
-          postalCode = None,
-          metroCode = None,
-          regionName = Some("Jilin Sheng"),
-          isInEuropeanUnion = false,
-          continent = "Asia",
-          accuracyRadius = 100
-        ).asRight.some |> { (_, ipAddress, expected) =>
-      for {
-        ipLookup <- config.enrichment[IO](blocker)
-        result <- ipLookup.extractIpInformation(ipAddress)
-        ipLocation = result.ipLocation.map(_.leftMap(_.getClass.getSimpleName))
-      } yield ipLocation must beEqualTo(expected)
-    }
+      IpLocation( // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
+        countryCode = "CN",
+        countryName = "China",
+        region = Some("22"),
+        city = Some("Changchun"),
+        latitude = 43.88f,
+        longitude = 125.3228f,
+        timezone = Some("Asia/Harbin"),
+        postalCode = None,
+        metroCode = None,
+        regionName = Some("Jilin Sheng"),
+        isInEuropeanUnion = false,
+        continent = "Asia",
+        accuracyRadius = 100
+      ).asRight.some |> { (_, ipAddress, expected) =>
+        for {
+          ipLookup <- config.enrichment[IO](blocker)
+          result <- ipLookup.extractIpInformation(ipAddress)
+          ipLocation = result.ipLocation.map(_.leftMap(_.getClass.getSimpleName))
+        } yield ipLocation must beEqualTo(expected)
+      }
 
   def e2 =
     for {

@@ -178,10 +178,9 @@ class ConfigFileSpec extends Specification with CatsIO {
         }"""
 
       ConfigFile.parse[IO](Base64Hocon(ConfigFactory.parseString(input)).asLeft).value.map { result =>
-        result must beRight.like {
-          case configFile =>
-            configFile.telemetry.collectorUri must_== "test-substituted-collector-uri"
-            configFile.telemetry.collectorPort must_== 42
+        result must beRight.like { case configFile =>
+          configFile.telemetry.collectorUri must_== "test-substituted-collector-uri"
+          configFile.telemetry.collectorPort must_== 42
         }
       }
     }

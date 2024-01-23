@@ -169,14 +169,13 @@ object IgluUtils {
   ): EitherT[F, BadRow.EnrichmentFailures, Unit] =
     checkList(client, sdjs)
       .leftMap(
-        _.map {
-          case (schemaKey, clientError) =>
-            val enrichmentInfo =
-              FailureDetails.EnrichmentInformation(schemaKey, "enrichments-contexts-validation")
-            FailureDetails.EnrichmentFailure(
-              enrichmentInfo.some,
-              FailureDetails.EnrichmentFailureMessage.IgluError(schemaKey, clientError)
-            )
+        _.map { case (schemaKey, clientError) =>
+          val enrichmentInfo =
+            FailureDetails.EnrichmentInformation(schemaKey, "enrichments-contexts-validation")
+          FailureDetails.EnrichmentFailure(
+            enrichmentInfo.some,
+            FailureDetails.EnrichmentFailureMessage.IgluError(schemaKey, clientError)
+          )
         }
       )
       .leftMap { enrichmentFailures =>
@@ -216,9 +215,8 @@ object IgluUtils {
                )
       // Check that the SDJ holding the .data is valid
       _ <- check(client, sdj)
-             .leftMap {
-               case (schemaKey, clientError) =>
-                 FailureDetails.SchemaViolation.IgluError(schemaKey, clientError)
+             .leftMap { case (schemaKey, clientError) =>
+               FailureDetails.SchemaViolation.IgluError(schemaKey, clientError)
              }
       // Extract .data of SelfDescribingData[Json]
       data <- EitherT.rightT[F, FailureDetails.SchemaViolation](sdj.data)
@@ -260,10 +258,9 @@ object IgluUtils {
                .leftMap(FailureDetails.SchemaViolation.NotIglu(json, _))
                .toEitherT[F]
       supersedingSchema <- check(client, sdj)
-                             .leftMap {
-                               case (schemaKey, clientError) =>
-                                 FailureDetails.SchemaViolation
-                                   .IgluError(schemaKey, clientError): FailureDetails.SchemaViolation
+                             .leftMap { case (schemaKey, clientError) =>
+                               FailureDetails.SchemaViolation
+                                 .IgluError(schemaKey, clientError): FailureDetails.SchemaViolation
 
                              }
       validationInfo = supersedingSchema.map(s => ValidationInfo(sdj.schema, s))

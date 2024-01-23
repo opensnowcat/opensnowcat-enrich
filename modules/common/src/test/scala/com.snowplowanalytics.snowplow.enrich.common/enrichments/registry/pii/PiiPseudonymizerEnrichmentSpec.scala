@@ -320,30 +320,29 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
     actual.map { output =>
       val size = output.size must_== 1
-      val validOut = output.head must beValid.like {
-        case enrichedEvent =>
-          (enrichedEvent.app_id must_== expected.app_id) and
-            (enrichedEvent.geo_city must_== expected.geo_city) and
-            (enrichedEvent.etl_tstamp must_== expected.etl_tstamp) and
-            (enrichedEvent.collector_tstamp must_== expected.collector_tstamp) and
-            (enrichedEvent.user_id must_== expected.user_id) and
-            (enrichedEvent.user_ipaddress must_== expected.user_ipaddress) and
-            (enrichedEvent.user_fingerprint must_== expected.user_fingerprint) and
-            (enrichedEvent.domain_userid must_== expected.domain_userid) and
-            (enrichedEvent.network_userid must_== expected.network_userid) and
-            (enrichedEvent.ip_organization must_== expected.ip_organization) and
-            (enrichedEvent.ip_domain must_== expected.ip_domain) and
-            (enrichedEvent.tr_orderid must_== expected.tr_orderid) and
-            (enrichedEvent.ti_orderid must_== expected.ti_orderid) and
-            (enrichedEvent.mkt_term must_== expected.mkt_term) and
-            (enrichedEvent.mkt_clickid must_== expected.mkt_clickid) and
-            (enrichedEvent.mkt_content must_== expected.mkt_content) and
-            (enrichedEvent.se_category must_== expected.se_category) and
-            (enrichedEvent.se_action must_== expected.se_action) and
-            (enrichedEvent.se_label must_== expected.se_label) and
-            (enrichedEvent.se_property must_== expected.se_property) and
-            (enrichedEvent.refr_domain_userid must_== expected.refr_domain_userid) and
-            (enrichedEvent.domain_sessionid must_== expected.domain_sessionid)
+      val validOut = output.head must beValid.like { case enrichedEvent =>
+        (enrichedEvent.app_id must_== expected.app_id) and
+          (enrichedEvent.geo_city must_== expected.geo_city) and
+          (enrichedEvent.etl_tstamp must_== expected.etl_tstamp) and
+          (enrichedEvent.collector_tstamp must_== expected.collector_tstamp) and
+          (enrichedEvent.user_id must_== expected.user_id) and
+          (enrichedEvent.user_ipaddress must_== expected.user_ipaddress) and
+          (enrichedEvent.user_fingerprint must_== expected.user_fingerprint) and
+          (enrichedEvent.domain_userid must_== expected.domain_userid) and
+          (enrichedEvent.network_userid must_== expected.network_userid) and
+          (enrichedEvent.ip_organization must_== expected.ip_organization) and
+          (enrichedEvent.ip_domain must_== expected.ip_domain) and
+          (enrichedEvent.tr_orderid must_== expected.tr_orderid) and
+          (enrichedEvent.ti_orderid must_== expected.ti_orderid) and
+          (enrichedEvent.mkt_term must_== expected.mkt_term) and
+          (enrichedEvent.mkt_clickid must_== expected.mkt_clickid) and
+          (enrichedEvent.mkt_content must_== expected.mkt_content) and
+          (enrichedEvent.se_category must_== expected.se_category) and
+          (enrichedEvent.se_action must_== expected.se_action) and
+          (enrichedEvent.se_label must_== expected.se_label) and
+          (enrichedEvent.se_property must_== expected.se_property) and
+          (enrichedEvent.refr_domain_userid must_== expected.refr_domain_userid) and
+          (enrichedEvent.domain_sessionid must_== expected.domain_sessionid)
       }
       size and validOut
     }
@@ -415,74 +414,73 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
     actual.map { output =>
       val size = output.size must_== 1
-      val validOut = output.head must beValid.like {
-        case enrichedEvent =>
-          val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor
-          val contextJFirstElement = contextJ.downField("data").downArray
-          val contextJSecondElement = contextJFirstElement.right
-          val contextJThirdElement = contextJSecondElement.right
-          val unstructEventJ = parse(enrichedEvent.unstruct_event).toOption.get.hcursor
-            .downField("data")
-            .downField("data")
-          val first = (contextJFirstElement
-            .downField("data")
-            .get[String]("emailAddress") must beRight(
-            "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6"
+      val validOut = output.head must beValid.like { case enrichedEvent =>
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor
+        val contextJFirstElement = contextJ.downField("data").downArray
+        val contextJSecondElement = contextJFirstElement.right
+        val contextJThirdElement = contextJSecondElement.right
+        val unstructEventJ = parse(enrichedEvent.unstruct_event).toOption.get.hcursor
+          .downField("data")
+          .downField("data")
+        val first = (contextJFirstElement
+          .downField("data")
+          .get[String]("emailAddress") must beRight(
+          "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6"
+        )) and
+          (contextJFirstElement.downField("data").get[String]("emailAddress2") must beRight(
+            "bob@acme.com"
           )) and
-            (contextJFirstElement.downField("data").get[String]("emailAddress2") must beRight(
-              "bob@acme.com"
-            )) and
-            (contextJSecondElement.downField("data").get[String]("emailAddress") must beRight(
-              "tim@acme.com"
-            )) and
-            (contextJSecondElement.downField("data").get[String]("emailAddress2") must beRight(
-              "tom@acme.com"
-            ))
+          (contextJSecondElement.downField("data").get[String]("emailAddress") must beRight(
+            "tim@acme.com"
+          )) and
+          (contextJSecondElement.downField("data").get[String]("emailAddress2") must beRight(
+            "tom@acme.com"
+          ))
 
-          // The following three tests are for the case that the context schema allows the fields
-          // data and schema and in addition the schema field matches the configured schema. There
-          // should be no replacement there (unless that is specified in jsonpath)
-          val second = (contextJSecondElement
+        // The following three tests are for the case that the context schema allows the fields
+        // data and schema and in addition the schema field matches the configured schema. There
+        // should be no replacement there (unless that is specified in jsonpath)
+        val second = (contextJSecondElement
+          .downField("data")
+          .downField("data")
+          .get[String]("emailAddress") must beRight("jim@acme.com")) and
+          (contextJSecondElement
             .downField("data")
             .downField("data")
-            .get[String]("emailAddress") must beRight("jim@acme.com")) and
-            (contextJSecondElement
-              .downField("data")
-              .downField("data")
-              .get[String]("emailAddress2") must beRight(
-              "1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5"
-            )) and
-            (contextJSecondElement.downField("data").get[String]("schema") must beRight(
-              "iglu:com.acme/email_sent/jsonschema/1-0-0"
-            )) and
-            (unstructEventJ.get[String]("ip") must beRight(
-              "269c433d0cc00395e3bc5fe7f06c5ad822096a38bec2d8a005367b52c0dfb428"
-            )) and
-            (unstructEventJ.get[String]("myVar2") must beRight("awesome"))
+            .get[String]("emailAddress2") must beRight(
+            "1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5"
+          )) and
+          (contextJSecondElement.downField("data").get[String]("schema") must beRight(
+            "iglu:com.acme/email_sent/jsonschema/1-0-0"
+          )) and
+          (unstructEventJ.get[String]("ip") must beRight(
+            "269c433d0cc00395e3bc5fe7f06c5ad822096a38bec2d8a005367b52c0dfb428"
+          )) and
+          (unstructEventJ.get[String]("myVar2") must beRight("awesome"))
 
-          val third = (contextJThirdElement
+        val third = (contextJThirdElement
+          .downField("data")
+          .get[List[String]]("field") must
+          beRight(
+            List[String]("b62f3a2475ac957009088f9b8ab77ceb7b4ed7c5a6fd920daa204a1953334acb",
+                         "8ad32723b7435cbf535025e519cc94dbf1568e17ced2aeb4b9e7941f6346d7d0"
+            )
+          )) and
+          (contextJThirdElement
             .downField("data")
-            .get[List[String]]("field") must
-            beRight(
-              List[String]("b62f3a2475ac957009088f9b8ab77ceb7b4ed7c5a6fd920daa204a1953334acb",
-                           "8ad32723b7435cbf535025e519cc94dbf1568e17ced2aeb4b9e7941f6346d7d0"
-              )
-            )) and
-            (contextJThirdElement
-              .downField("data")
-              .downField("field2")
-              .focus must beSome.like { case json => json.isNull }) and
-            (contextJThirdElement
-              .downField("data")
-              .downField("field3")
-              .focus must beSome.like { case json => json.isNull })
-
-          // Test that empty string in Pii field gets hashed
-          val fourth = contextJThirdElement
+            .downField("field2")
+            .focus must beSome.like { case json => json.isNull }) and
+          (contextJThirdElement
             .downField("data")
-            .get[String]("field4") must beRight("7a3477dad66e666bd203b834c54b6dfe8b546bdbc5283462ad14052abfb06600")
+            .downField("field3")
+            .focus must beSome.like { case json => json.isNull })
 
-          first and second and third and fourth
+        // Test that empty string in Pii field gets hashed
+        val fourth = contextJThirdElement
+          .downField("data")
+          .get[String]("field4") must beRight("7a3477dad66e666bd203b834c54b6dfe8b546bdbc5283462ad14052abfb06600")
+
+        first and second and third and fourth
       }
       size and validOut
     }
@@ -524,15 +522,14 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
     actual.map { output =>
       val size = output.size must_== 1
-      val validOut = output.head must beValid.like {
-        case enrichedEvent =>
-          val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
-          val firstElem = contextJ.downArray.downField("data")
-          val secondElem = contextJ.downArray.right.downField("data")
-          (firstElem.get[String]("emailAddress") must beRight("jim@acme.com")) and
-            (firstElem.get[String]("emailAddress2") must beRight("bob@acme.com")) and
-            (secondElem.get[String]("emailAddress") must beRight("tim@acme.com")) and
-            (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com"))
+      val validOut = output.head must beValid.like { case enrichedEvent =>
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        (firstElem.get[String]("emailAddress") must beRight("jim@acme.com")) and
+          (firstElem.get[String]("emailAddress2") must beRight("bob@acme.com")) and
+          (secondElem.get[String]("emailAddress") must beRight("tim@acme.com")) and
+          (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com"))
       }
       size and validOut
     }
@@ -575,19 +572,18 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
     actual.map { output =>
       val size = output.size must_== 1
-      val validOut = output.head must beValid.like {
-        case enrichedEvent =>
-          val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
-          val firstElem = contextJ.downArray.downField("data")
-          val secondElem = contextJ.downArray.right.downField("data")
-          (firstElem.get[String]("emailAddress") must beRight(
-            "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6"
+      val validOut = output.head must beValid.like { case enrichedEvent =>
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        (firstElem.get[String]("emailAddress") must beRight(
+          "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6"
+        )) and
+          (firstElem.get[String]("emailAddress2") must beRight(
+            "1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5"
           )) and
-            (firstElem.get[String]("emailAddress2") must beRight(
-              "1c6660411341411d5431669699149283d10e070224be4339d52bbc4b007e78c5"
-            )) and
-            (secondElem.get[String]("emailAddress") must beRight("tim@acme.com")) and
-            (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com"))
+          (secondElem.get[String]("emailAddress") must beRight("tim@acme.com")) and
+          (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com"))
       }
       size and validOut
     }
@@ -629,19 +625,18 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
     actual.map { output =>
       val size = output.size must_== 1
-      val validOut = output.head must beValid.like {
-        case enrichedEvent =>
-          val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
-          val firstElem = contextJ.downArray.downField("data")
-          val secondElem = contextJ.downArray.right.downField("data")
-          (firstElem.get[String]("emailAddress") must beRight(
-            "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6"
+      val validOut = output.head must beValid.like { case enrichedEvent =>
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        (firstElem.get[String]("emailAddress") must beRight(
+          "72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6"
+        )) and
+          (firstElem.get[String]("emailAddress2") must beRight("bob@acme.com")) and
+          (secondElem.get[String]("emailAddress") must beRight(
+            "09e4160b10703767dcb28d834c1905a182af0f828d6d3512dd07d466c283c840"
           )) and
-            (firstElem.get[String]("emailAddress2") must beRight("bob@acme.com")) and
-            (secondElem.get[String]("emailAddress") must beRight(
-              "09e4160b10703767dcb28d834c1905a182af0f828d6d3512dd07d466c283c840"
-            )) and
-            (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com"))
+          (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com"))
       }
       size and validOut
     }
@@ -683,16 +678,15 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
     actual.map { output =>
       val size = output.size must_== 1
-      val validOut = output.head must beValid.like {
-        case enrichedEvent =>
-          val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
-          val firstElem = contextJ.downArray.downField("data")
-          val secondElem = contextJ.downArray.right.downField("data")
-          (firstElem.get[String]("emailAddress") must beRight("jim@acme.com")) and
-            (firstElem.get[String]("emailAddress2") must beRight("bob@acme.com")) and
-            (secondElem.get[String]("emailAddress") must beRight("tim@acme.com")) and
-            (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com")) and
-            (secondElem.get[Int]("someInt") must beRight(1))
+      val validOut = output.head must beValid.like { case enrichedEvent =>
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        (firstElem.get[String]("emailAddress") must beRight("jim@acme.com")) and
+          (firstElem.get[String]("emailAddress2") must beRight("bob@acme.com")) and
+          (secondElem.get[String]("emailAddress") must beRight("tim@acme.com")) and
+          (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com")) and
+          (secondElem.get[Int]("someInt") must beRight(1))
       }
       size and validOut
     }
@@ -747,30 +741,29 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
     actual.map { output =>
       val size = output.size must_== 1
-      val validOut = output.head must beValid.like {
-        case enrichedEvent =>
-          val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
-          val firstElem = contextJ.downArray.downField("data")
-          val secondElem = contextJ.downArray.right.downField("data")
-          val unstructEventJ =
-            parse(enrichedEvent.unstruct_event).toOption.get.hcursor.downField("data")
+      val validOut = output.head must beValid.like { case enrichedEvent =>
+        val contextJ = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data")
+        val firstElem = contextJ.downArray.downField("data")
+        val secondElem = contextJ.downArray.right.downField("data")
+        val unstructEventJ =
+          parse(enrichedEvent.unstruct_event).toOption.get.hcursor.downField("data")
 
-          (enrichedEvent.pii must_== expected.pii) and // This is the important test, the rest just verify that nothing has changed.
-            (enrichedEvent.app_id must_== expected.app_id) and
-            (enrichedEvent.ip_domain must_== expected.ip_domain) and
-            (enrichedEvent.geo_city must_== expected.geo_city) and
-            (enrichedEvent.etl_tstamp must_== expected.etl_tstamp) and
-            (enrichedEvent.collector_tstamp must_== expected.collector_tstamp) and
-            (firstElem.get[String]("emailAddress2") must beRight("bob@acme.com")) and
-            (secondElem.get[String]("emailAddress") must beRight("tim@acme.com")) and
-            (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com")) and
-            (secondElem
-              .downField("data")
-              .get[String]("emailAddress") must beRight("jim@acme.com")) and
-            (secondElem.get[String]("schema") must beRight(
-              "iglu:com.acme/email_sent/jsonschema/1-0-0"
-            )) and
-            (unstructEventJ.downField("data").get[String]("myVar2") must beRight("awesome"))
+        (enrichedEvent.pii must_== expected.pii) and // This is the important test, the rest just verify that nothing has changed.
+          (enrichedEvent.app_id must_== expected.app_id) and
+          (enrichedEvent.ip_domain must_== expected.ip_domain) and
+          (enrichedEvent.geo_city must_== expected.geo_city) and
+          (enrichedEvent.etl_tstamp must_== expected.etl_tstamp) and
+          (enrichedEvent.collector_tstamp must_== expected.collector_tstamp) and
+          (firstElem.get[String]("emailAddress2") must beRight("bob@acme.com")) and
+          (secondElem.get[String]("emailAddress") must beRight("tim@acme.com")) and
+          (secondElem.get[String]("emailAddress2") must beRight("tom@acme.com")) and
+          (secondElem
+            .downField("data")
+            .get[String]("emailAddress") must beRight("jim@acme.com")) and
+          (secondElem.get[String]("schema") must beRight(
+            "iglu:com.acme/email_sent/jsonschema/1-0-0"
+          )) and
+          (unstructEventJ.downField("data").get[String]("myVar2") must beRight("awesome"))
       }
       size and validOut
     }
@@ -802,17 +795,16 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
 
     actual.map { output =>
       val size = output.size must_== 1
-      val validOut = output.head must beValid.like {
-        case enrichedEvent =>
-          val context = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data").downArray
-          val data = context.downField("data")
+      val validOut = output.head must beValid.like { case enrichedEvent =>
+        val context = parse(enrichedEvent.contexts).toOption.get.hcursor.downField("data").downArray
+        val data = context.downField("data")
 
-          val one =
-            data.get[String]("emailAddress") must beRight("72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6")
-          val two = data.get[String]("emailAddress2") must beRight("bob@acme.com")
-          val three = data.downField("nonExistentEmailAddress").focus must beNone
+        val one =
+          data.get[String]("emailAddress") must beRight("72f323d5359eabefc69836369e4cabc6257c43ab6419b05dfb2211d0e44284c6")
+        val two = data.get[String]("emailAddress2") must beRight("bob@acme.com")
+        val three = data.downField("nonExistentEmailAddress").focus must beNone
 
-          one and two and three
+        one and two and three
       }
       size and validOut
     }

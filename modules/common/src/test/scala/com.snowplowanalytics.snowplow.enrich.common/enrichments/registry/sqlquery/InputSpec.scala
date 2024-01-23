@@ -267,8 +267,8 @@ class InputSpec extends Specification with ValidatedMatchers {
       customContexts = Nil,
       unstructEvent = None
     )
-    templateContext must beLeft.like {
-      case errors => errors.toList must have length 3
+    templateContext must beLeft.like { case errors =>
+      errors.toList must have length 3
     }
   }
 
