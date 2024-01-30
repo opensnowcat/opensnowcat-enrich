@@ -69,9 +69,9 @@ object Dependencies {
     val collectorPayload = "0.0.0"
     val schemaSniffer = "0.0.0"
 
-    val awsSdk = "1.12.641"
+    val awsSdk = "1.12.646"
     val gcpSdk = "2.32.1"
-    val awsSdk2 = "2.23.7"
+    val awsSdk2 = "2.23.12"
     val kinesisClient2 = "2.4.3"
     val kafka = "7.5.3-ce"
     val mskAuth = "2.0.3"
@@ -95,7 +95,7 @@ object Dependencies {
 
     val snowplowTracker = "1.0.0"
 
-    val specs2 = "4.20.4"
+    val specs2 = "4.20.5"
     val specs2Cats = "4.11.0"
     val specs2CE = "0.5.4"
     val scalacheck = "1.17.0"
