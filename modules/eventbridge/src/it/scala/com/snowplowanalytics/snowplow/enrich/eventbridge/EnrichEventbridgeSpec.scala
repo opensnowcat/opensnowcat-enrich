@@ -44,7 +44,6 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
         }
     }
 
-    // TODO: Enable these tests, we need to find a way to parse the flattened events
     "emit the correct number of enriched events and bad rows" in {
       import utils._
 
