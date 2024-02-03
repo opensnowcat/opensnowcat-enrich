@@ -12,19 +12,13 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
-
 import cats.effect.{Blocker, ContextShift, IO, Resource, Timer}
-
-import fs2.{Pipe, Stream}
-
-import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
-
-import com.snowplowanalytics.snowplow.badrows.BadRow
-
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input
-import com.snowplowanalytics.snowplow.enrich.common.fs2.test.Utils
+import fs2.{Pipe, Stream}
+import io.circe.Json
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 object utils {
 
@@ -34,8 +28,10 @@ object utils {
 
   sealed trait OutputRow
   object OutputRow {
-    final case class Good(event: Event) extends OutputRow
-    final case class Bad(badRow: BadRow) extends OutputRow
+    // TODO: we should use Event, we need to find a way to parse the flattened events
+    final case class Good(event: Json) extends OutputRow
+    // TODO: we should use BadRow, we need to find a way to parse it
+    final case class Bad(badRow: Json) extends OutputRow
   }
 
   def mkEnrichPipe(
@@ -75,7 +71,7 @@ object utils {
         case Right(json) =>
           json.hcursor
             .downField("detail")
-            .as[Event] match {
+            .as[Json] match {
             case Right(r) => r
             case Left(e) => throw new RuntimeException(s"Can't parse enriched events from eventbridge: $e, json: $json")
           }
@@ -97,18 +93,14 @@ object utils {
 
         case Left(e) => throw new RuntimeException(s"Can't parse bad row [$s]. Error: $e")
       }
-      Utils.parseBadRow(parsed.noSpaces) match {
-        case Right(br) => OutputRow.Bad(br)
-        case Left(e) =>
-          throw new RuntimeException(s"Can't decode bad row $s. Error: $e")
-      }
+      OutputRow.Bad(parsed)
     }
 
-  def parseOutput(output: List[OutputRow], testName: String): (List[Event], List[BadRow]) = {
+  def parseOutput(output: List[OutputRow], testName: String): (List[Json], List[Json]) = {
     val good = output.collect { case OutputRow.Good(e) => e }
     println(s"[$testName] Bad rows:")
     val bad = output.collect { case OutputRow.Bad(b) =>
-      println(s"[$testName] ${b.compact}")
+      println(s"[$testName] ${b.toString()}")
       b
     }
     (good, bad)
