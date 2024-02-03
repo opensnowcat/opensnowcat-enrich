@@ -12,19 +12,15 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-//import java.util.UUID
-
-import scala.concurrent.duration._
-
 import cats.effect.IO
-
 import cats.effect.testing.specs2.CatsIO
-
+import com.snowplowanalytics.snowplow.enrich.common.fs2.test.CollectorPayloadGen
+import com.snowplowanalytics.snowplow.enrich.eventbridge.enrichments._
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 
-//import com.snowplowanalytics.snowplow.enrich.eventbridge.enrichments._
-//import com.snowplowanalytics.snowplow.enrich.common.fs2.test.CollectorPayloadGen
+import java.util.UUID
+import scala.concurrent.duration._
 
 class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
 
@@ -49,87 +45,91 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
     }
 
     // TODO: Enable these tests, we need to find a way to parse the flattened events
-//    "emit the correct number of enriched events and bad rows" in {
-//      import utils._
-//
-//      val testName = "count"
-//      val nbGood = 100l
-//      val nbBad = 100l
-//      val uuid = UUID.randomUUID().toString
-//
-//      val resources = for {
-//        _ <- Containers.enrich(
-//          configPath = "modules/eventbridge/src/it/resources/enrich/enrich-localstack.hocon",
-//          testName = "count",
-//          needsLocalstack = true,
-//          enrichments = Nil,
-//          uuid = uuid
-//        )
-//        enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
-//      } yield enrichPipe
-//
-//      val input = CollectorPayloadGen.generate(nbGood, nbBad)
-//
-//      resources.use { enrich =>
-//        for {
-//          // for some weird reason, the records don't get consumed until the second time calling enrich pipeline
-//          _ <- enrich(CollectorPayloadGen.generate(0)).compile.toList
-//          output <- enrich(input).compile.toList
-//          (good, bad) = parseOutput(output, testName)
-//        } yield {
-//          println(s"${good.size} and ${bad.size}")
-//          good.size.toLong must beEqualTo(nbGood)
-//          bad.size.toLong must beEqualTo(nbBad)
-//        }
-//      }
-//    }
-//
-//    "run the enrichments and attach their context" in {
-//      import utils._
-//
-//      val testName = "enrichments"
-//      val nbGood = 100l
-//      val uuid = UUID.randomUUID().toString
-//
-//      val enrichments = List(
-//        ApiRequest,
-//        Javascript,
-//        SqlQuery,
-//        Yauaa
-//      )
-//
-//      val enrichmentsContexts = enrichments.map(_.outputSchema)
-//
-//      val resources = for {
-//        _ <- Containers.mysqlServer
-//        _ <- Containers.httpServer
-//        _ <- Containers.enrich(
-//          configPath = "modules/eventbridge/src/it/resources/enrich/enrich-localstack.hocon",
-//          testName = "enrichments",
-//          needsLocalstack = true,
-//          enrichments = enrichments,
-//          uuid = uuid
-//        )
-//        enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
-//      } yield enrichPipe
-//
-//      val input = CollectorPayloadGen.generate(nbGood)
-//
-//      resources.use { enrich =>
-//        for {
-//          // for some weird reason, the records don't get consumed until the second time calling enrich pipeline
-//          _ <- enrich(CollectorPayloadGen.generate(0)).compile.toList
-//          output <- enrich(input).compile.toList
-//          (good, bad) = parseOutput(output, testName)
-//        } yield {
-//          good.size.toLong must beEqualTo(nbGood)
-//          good.map { enriched =>
-//            enriched.derived_contexts.data.map(_.schema) must containTheSameElementsAs(enrichmentsContexts)
-//          }
-//          bad.size.toLong must beEqualTo(0l)
-//        }
-//      }
-//    }
+    "emit the correct number of enriched events and bad rows" in {
+      import utils._
+
+      val testName = "count"
+      val nbGood = 100L
+      val nbBad = 100L
+      val uuid = UUID.randomUUID().toString
+
+      val resources = for {
+        _ <- Containers.enrich(
+               configPath = "modules/eventbridge/src/it/resources/enrich/enrich-localstack.hocon",
+               testName = "count",
+               needsLocalstack = true,
+               enrichments = Nil,
+               uuid = uuid
+             )
+        enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
+      } yield enrichPipe
+
+      val input = CollectorPayloadGen.generate(nbGood, nbBad)
+
+      resources.use { enrich =>
+        for {
+          // for some weird reason, the records don't get consumed until the second time calling enrich pipeline
+          _ <- enrich(CollectorPayloadGen.generate(0)).compile.toList
+          output <- enrich(input).compile.toList
+          (good, bad) = parseOutput(output, testName)
+        } yield {
+          println(s"${good.size} and ${bad.size}")
+          good.size.toLong must beEqualTo(nbGood)
+          bad.size.toLong must beEqualTo(nbBad)
+        }
+      }
+    }
+
+    "run the enrichments and attach their context" in {
+      import utils._
+
+      val testName = "enrichments"
+      val nbGood = 100L
+      val uuid = UUID.randomUUID().toString
+
+      val enrichments = List(
+        ApiRequest,
+        Javascript,
+        SqlQuery,
+        Yauaa
+      )
+
+      val enrichmentsContexts = enrichments.map(_.outputSchema).map { schemaKey =>
+        s"contexts_${schemaKey.name}_${schemaKey.vendor}_${schemaKey.version.model}".replace('.', '_')
+      }
+
+      val resources = for {
+        _ <- Containers.mysqlServer
+        _ <- Containers.httpServer
+        _ <- Containers.enrich(
+               configPath = "modules/eventbridge/src/it/resources/enrich/enrich-localstack.hocon",
+               testName = "enrichments",
+               needsLocalstack = true,
+               enrichments = enrichments,
+               uuid = uuid
+             )
+        enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
+      } yield enrichPipe
+
+      val input = CollectorPayloadGen.generate(nbGood)
+
+      resources.use { enrich =>
+        for {
+          // for some weird reason, the records don't get consumed until the second time calling enrich pipeline
+          _ <- enrich(CollectorPayloadGen.generate(0)).compile.toList
+          output <- enrich(input).compile.toList
+          (good, bad) = parseOutput(output, testName)
+        } yield {
+          good.size.toLong must beEqualTo(nbGood)
+          good.map { enriched =>
+            enrichmentsContexts.map { context =>
+              enriched.hcursor.downField(context).toOption must beSome
+            }
+          }
+          bad.size.toLong must beEqualTo(0L)
+        }
+      }
+    }
 
     "shutdown when it receives a SIGTERM" in {
       Containers
