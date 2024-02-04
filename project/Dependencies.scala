@@ -101,7 +101,7 @@ object Dependencies {
     val scalacheck = "1.17.0"
     val testcontainers = "0.40.10"
     val parserCombinators = "2.3.0"
-    val sentry = "1.7.30"
+    val sentry = "7.3.0"
 
     val betterMonadicFor = "0.3.1"
   }
