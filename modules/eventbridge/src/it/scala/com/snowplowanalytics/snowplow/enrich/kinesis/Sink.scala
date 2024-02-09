@@ -191,7 +191,7 @@ object Sink {
   ): F[Vector[PutRecordsRequestEntry]] =
     Logger[F].debug(s"Writing ${records.size} records to ${config.streamName}") *>
       blocker
-        .blockOn(Sync[F].delay(putRecords(kinesis, config.streamName, records, maxRecordSize)))
+        .blockOn(putRecords(kinesis, config.streamName, records, maxRecordSize))
         .map(TryBatchResult.build(records, _))
         .retryingOnFailuresAndAllErrors(
           policy = retryPolicy,
@@ -289,24 +289,26 @@ object Sink {
         TryBatchResult(Vector.empty, true, false, None)
   }
 
-  private def putRecords(
+  private def putRecords[F[_]: ContextShift: Sync: Timer](
     kinesis: AmazonKinesis,
     streamName: String,
     records: List[PutRecordsRequestEntry],
     maxRecordSize: Int
-  ): PutRecordsResult = {
+  ): F[PutRecordsResult] = {
     val putRecordsRequest = {
       val prr = new PutRecordsRequest()
       val filteredRecords = records.filter(_.getData.array.length <= maxRecordSize)
       val failedRecords = records.size - filteredRecords.size
-      if (failedRecords > 0) {
-        println(s"Filtered ${records.size - filteredRecords.size} records because they were too large")
+      val loggerWarn = if (failedRecords > 0) {
+        Logger[F].warn(s"Filtered ${records.size - filteredRecords.size} records because they were too large")
+      } else {
+        Sync[F].unit
       }
       prr.setStreamName(streamName)
       prr.setRecords(filteredRecords.asJava)
-      prr
+      loggerWarn *> Sync[F].pure(prr)
     }
-    kinesis.putRecords(putRecordsRequest)
+    putRecordsRequest.map(kinesis.putRecords)
   }
 
   private def failureMessageForInternalErrors(
