@@ -49,15 +49,17 @@ object Sink {
 
   def init[F[_]: Concurrent: ContextShift: Parallel: Timer](
     blocker: Blocker,
-    output: Output
+    output: Output,
+    maxRecordSize: Int
   ): Resource[F, ByteSink[F]] =
     for {
-      sink <- initAttributed(blocker, output)
+      sink <- initAttributed(blocker, output, maxRecordSize)
     } yield (records: List[Array[Byte]]) => sink(records.map(AttributedData(_, UUID.randomUUID().toString, Map.empty)))
 
   def initAttributed[F[_]: Concurrent: ContextShift: Parallel: Timer](
     blocker: Blocker,
-    output: Output
+    output: Output,
+    maxRecordSize: Int
   ): Resource[F, AttributedByteSink[F]] =
     output match {
       case o: Output.Kinesis =>
@@ -65,7 +67,7 @@ object Sink {
           case Some(region) =>
             for {
               producer <- Resource.eval[F, AmazonKinesis](mkProducer(o, region))
-            } yield records => writeToKinesis(blocker, o, producer, toKinesisRecords(records, o))
+            } yield records => writeToKinesis(blocker, o, producer, toKinesisRecords(records, o), maxRecordSize)
           case None =>
             Resource.eval(Sync[F].raiseError(new RuntimeException(s"Region not found in the config and in the runtime")))
         }
@@ -105,7 +107,8 @@ object Sink {
     blocker: Blocker,
     config: Output.Kinesis,
     kinesis: AmazonKinesis,
-    records: List[PutRecordsRequestEntry]
+    records: List[PutRecordsRequestEntry],
+    maxRecordSize: Int
   ): F[Unit] = {
     val policyForErrors = Retries.fullJitter[F](config.backoffPolicy)
     val policyForThrottling = Retries.fibonacci[F](config.throttledBackoffPolicy)
@@ -114,7 +117,7 @@ object Sink {
       for {
         records <- ref.get
         failures <- group(records, config.recordLimit, config.byteLimit, getRecordSize)
-                      .parTraverse(g => tryWriteToKinesis(blocker, config, kinesis, g, policyForErrors))
+                      .parTraverse(g => tryWriteToKinesis(blocker, config, kinesis, g, policyForErrors, maxRecordSize))
         flattened = failures.flatten
         _ <- ref.set(flattened)
       } yield flattened
@@ -183,11 +186,12 @@ object Sink {
     config: Output.Kinesis,
     kinesis: AmazonKinesis,
     records: List[PutRecordsRequestEntry],
-    retryPolicy: RetryPolicy[F]
+    retryPolicy: RetryPolicy[F],
+    maxRecordSize: Int
   ): F[Vector[PutRecordsRequestEntry]] =
     Logger[F].debug(s"Writing ${records.size} records to ${config.streamName}") *>
       blocker
-        .blockOn(Sync[F].delay(putRecords(kinesis, config.streamName, records)))
+        .blockOn(Sync[F].delay(putRecords(kinesis, config.streamName, records, maxRecordSize)))
         .map(TryBatchResult.build(records, _))
         .retryingOnFailuresAndAllErrors(
           policy = retryPolicy,
@@ -288,12 +292,18 @@ object Sink {
   private def putRecords(
     kinesis: AmazonKinesis,
     streamName: String,
-    records: List[PutRecordsRequestEntry]
+    records: List[PutRecordsRequestEntry],
+    maxRecordSize: Int
   ): PutRecordsResult = {
     val putRecordsRequest = {
       val prr = new PutRecordsRequest()
+      val filteredRecords = records.filter(_.getData.array.length <= maxRecordSize)
+      val failedRecords = records.size - filteredRecords.size
+      if (failedRecords > 0) {
+        println(s"Filtered ${records.size - filteredRecords.size} records because they were too large")
+      }
       prr.setStreamName(streamName)
-      prr.setRecords(records.asJava)
+      prr.setRecords(filteredRecords.asJava)
       prr
     }
     kinesis.putRecords(putRecordsRequest)

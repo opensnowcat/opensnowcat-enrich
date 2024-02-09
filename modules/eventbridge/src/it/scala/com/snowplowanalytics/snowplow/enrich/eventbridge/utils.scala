@@ -25,6 +25,7 @@ object utils {
   private val executionContext: ExecutionContext = ExecutionContext.global
   implicit val ioContextShift: ContextShift[IO] = IO.contextShift(executionContext)
   implicit val ioTimer: Timer[IO] = IO.timer(executionContext)
+  val maxRecordSize = 1024 * 1024
 
   sealed trait OutputRow
   object OutputRow {
@@ -41,8 +42,9 @@ object utils {
     for {
       blocker <- Blocker[IO]
       streams = IntegrationTestConfig.getStreams(uuid)
-      kinesisRawSink <- com.snowplowanalytics.snowplow.enrich.kinesis.Sink
-                          .init[IO](blocker, IntegrationTestConfig.kinesisOutputStreamConfig(localstackPort, streams.kinesisInput))
+      kinesisRawSink <-
+        com.snowplowanalytics.snowplow.enrich.kinesis.Sink
+          .init[IO](blocker, IntegrationTestConfig.kinesisOutputStreamConfig(localstackPort, streams.kinesisInput), maxRecordSize)
     } yield {
       val kinesisGoodOutput = asGood(
         outputStream(blocker, IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputGood))

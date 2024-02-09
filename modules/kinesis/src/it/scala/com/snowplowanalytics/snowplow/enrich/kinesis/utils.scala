@@ -30,6 +30,7 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input
 import com.snowplowanalytics.snowplow.enrich.common.fs2.test.Utils
 
 object utils extends CatsIO {
+  val maxRecordSize = 1024 * 1024
 
   sealed trait OutputRow
   object OutputRow {
@@ -44,7 +45,7 @@ object utils extends CatsIO {
     for {
       blocker <- Blocker[IO]
       streams = KinesisConfig.getStreams(uuid)
-      rawSink <- Sink.init[IO](blocker, KinesisConfig.rawStreamConfig(localstackPort, streams.raw))
+      rawSink <- Sink.init[IO](blocker, KinesisConfig.rawStreamConfig(localstackPort, streams.raw), maxRecordSize)
     } yield {
       val enriched = asGood(outputStream(blocker, KinesisConfig.enrichedStreamConfig(localstackPort, streams.enriched)))
       val bad = asBad(outputStream(blocker, KinesisConfig.badStreamConfig(localstackPort, streams.bad)))

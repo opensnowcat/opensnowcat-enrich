@@ -150,5 +150,37 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
           }
         }
     }
+
+    "filter input that exceeds the max bytes size" in {
+      import utils._
+
+      val testName = "max-byte-size"
+      val uuid = UUID.randomUUID().toString
+
+      val resources = for {
+        _ <- Containers.enrich(
+               configPath = "modules/eventbridge/src/it/resources/enrich/enrich-localstack.hocon",
+               testName = "max-byte-size",
+               needsLocalstack = true,
+               enrichments = Nil,
+               uuid = uuid
+             )
+        enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
+      } yield enrichPipe
+
+      val input: fs2.Stream[IO, Array[Byte]] = fs2.Stream(Array.fill(1024 * 1025)(1))
+
+      resources.use { enrich =>
+        for {
+          // for some weird reason, the records don't get consumed until the second time calling enrich pipeline
+          _ <- enrich(CollectorPayloadGen.generate(0)).compile.toList
+          output <- enrich(input).compile.toList
+          (good, bad) = parseOutput(output, testName)
+        } yield {
+          good.size must beEqualTo(0)
+          bad.size must beEqualTo(0)
+        }
+      }
+    }
   }
 }
