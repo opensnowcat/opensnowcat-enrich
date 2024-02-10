@@ -173,7 +173,7 @@ class EnrichKinesisSpec extends Specification with AfterAll with CatsIO {
           (good, bad) = parseOutput(output, testName)
         } yield {
           good.size must beEqualTo(0)
-          bad.size must beEqualTo(0)
+          bad.size must beEqualTo(1)
         }
       }
     }

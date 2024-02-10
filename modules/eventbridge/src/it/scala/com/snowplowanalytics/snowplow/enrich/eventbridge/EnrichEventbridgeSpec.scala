@@ -151,7 +151,7 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
         }
     }
 
-    "filter input that exceeds the max bytes size" in {
+    "filter input that exceeds the max bytes size to BadRow" in {
       import utils._
 
       val testName = "max-byte-size"
@@ -178,7 +178,7 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
           (good, bad) = parseOutput(output, testName)
         } yield {
           good.size must beEqualTo(0)
-          bad.size must beEqualTo(0)
+          bad.size must beEqualTo(1)
         }
       }
     }
