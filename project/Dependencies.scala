@@ -30,7 +30,7 @@ object Dependencies {
 
   object V {
     // Java
-    val commonsCodec = "1.16.0"
+    val commonsCodec = "1.16.1"
     val commonsText = "1.11.0"
     val jodaTime = "2.12.6"
     val useragent = "1.21"
