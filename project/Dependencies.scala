@@ -49,7 +49,7 @@ object Dependencies {
     val log4j = "2.22.1"
     val thrift = "0.19.0"
     val sprayJson = "1.3.6"
-    val netty = "4.1.106.Final"
+    val netty = "4.1.107.Final"
     val protobuf = "3.25.3"
 
     val refererParser = "1.1.0"
@@ -71,7 +71,7 @@ object Dependencies {
 
     val awsSdk = "1.12.656"
     val gcpSdk = "2.33.0"
-    val awsSdk2 = "2.23.21"
+    val awsSdk2 = "2.24.5"
     val kinesisClient2 = "2.4.3"
     val kafka = "7.6.0-ce"
     val mskAuth = "2.0.3"
