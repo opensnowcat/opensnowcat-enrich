@@ -118,7 +118,8 @@ class ConfigSpec extends Specification with CatsIO {
                 UUID.fromString("c5f3a09f-75f8-4309-bec5-fea560f78455"),
                 UUID.fromString("75a13583-5c99-40e3-81fc-541084dfc784")
               )
-            )
+            ),
+            None
           )
         ),
         adaptersSchemas,

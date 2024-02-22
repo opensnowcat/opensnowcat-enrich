@@ -362,5 +362,18 @@
       "organizationId": "c5f3a09f-75f8-4309-bec5-fea560f78455"
       "pipelineId": "75a13583-5c99-40e3-81fc-541084dfc784"
     }
+
+    # Whether to use an alternative output format  (either "FlattenedJson" or "EventbridgeJson")
+    # - FlattenedJson: encodes the output as JSON, where unstruct_event, contexts and derived_contexts are flattened
+    # - EventbridgeJson: encodes the output as JSON with extra details, intended exclusively to use with eventbridge module.
+    "customOutputFormat": {
+      "type": "EventbridgeJson"
+
+      # Add a "payload" parameter with the original base64 encoded TSV. Defaults to false (Useful for EventbridgeJson only).
+      "payload": true
+
+      # Add a "collector" parameter from contexts_org_ietf_http_header_1 Host Value. Defaults to false (Useful for EventbridgeJson only).
+      "collector": true
+    }
   }
 }

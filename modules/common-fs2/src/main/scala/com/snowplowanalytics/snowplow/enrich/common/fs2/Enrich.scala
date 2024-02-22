@@ -30,7 +30,7 @@ import cats.effect.implicits._
 
 import fs2.concurrent.{NoneTerminatedQueue, Queue}
 import fs2.{Pipe, Stream}
-
+import _root_.io.circe.Json
 import _root_.io.sentry.SentryClient
 
 import _root_.io.circe.syntax._
@@ -47,7 +47,9 @@ import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.loaders.{CollectorPayload, ThriftLoader}
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.FeatureFlags
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{CustomOutputFormat, FeatureFlags}
+
+import java.nio.charset.StandardCharsets
 
 object Enrich {
 
@@ -194,7 +196,7 @@ object Enrich {
         .separate
 
     val (moreBad, good) = enriched.map { e =>
-      serializeEnriched(e, env.processor, env.streamsSettings.maxRecordSize)
+      serializeEnriched(e, env.processor, env.streamsSettings.maxRecordSize, env.customOutputFormat)
         .map(bytes => (e, AttributedData(bytes, env.goodPartitionKey(e), env.goodAttributes(e))))
     }.separate
 
@@ -210,7 +212,8 @@ object Enrich {
         env.piiPartitionKey,
         env.piiAttributes,
         env.processor,
-        env.streamsSettings.maxRecordSize
+        env.streamsSettings.maxRecordSize,
+        env.customOutputFormat
       ) *> env.metrics.enrichLatency(chunk.headOption.flatMap(_._2)),
       sinkBad(allBad, env.sinkBad, env.metrics.badCount)
     ).parSequence_
@@ -225,7 +228,8 @@ object Enrich {
     piiPartitionKey: EnrichedEvent => String,
     piiAttributes: EnrichedEvent => Map[String, String],
     processor: Processor,
-    maxRecordSize: Int
+    maxRecordSize: Int,
+    customOutputFormat: Option[CustomOutputFormat]
   ): F[Unit] = {
     val enriched = good.map(_._1)
     val serialized = good.map(_._2)
@@ -234,7 +238,8 @@ object Enrich {
                                                                                piiPartitionKey,
                                                                                piiAttributes,
                                                                                processor,
-                                                                               maxRecordSize
+                                                                               maxRecordSize,
+                                                                               customOutputFormat
     )
   }
 
@@ -251,14 +256,17 @@ object Enrich {
     partitionKey: EnrichedEvent => String,
     attributes: EnrichedEvent => Map[String, String],
     processor: Processor,
-    maxRecordSize: Int
+    maxRecordSize: Int,
+    customOutputFormat: Option[CustomOutputFormat]
   ): F[Unit] =
     maybeSink match {
       case Some(sink) =>
         val (bad, serialized) =
           enriched
             .flatMap(ConversionUtils.getPiiEvent(processor, _))
-            .map(e => serializeEnriched(e, processor, maxRecordSize).map(AttributedData(_, partitionKey(e), attributes(e))))
+            .map(e =>
+              serializeEnriched(e, processor, maxRecordSize, customOutputFormat).map(AttributedData(_, partitionKey(e), attributes(e)))
+            )
             .separate
         val logging =
           if (bad.nonEmpty)
@@ -273,21 +281,93 @@ object Enrich {
   def serializeEnriched(
     enriched: EnrichedEvent,
     processor: Processor,
-    maxRecordSize: Int
+    maxRecordSize: Int,
+    customOutputFormat: Option[CustomOutputFormat]
   ): Either[BadRow, Array[Byte]] = {
-    val asStr = ConversionUtils.tabSeparatedEnrichedEvent(enriched)
-    val asBytes = asStr.getBytes(UTF_8)
-    val size = asBytes.length
-    if (size > maxRecordSize) {
-      val msg = s"event passed enrichment but then exceeded the maximum allowed size $maxRecordSize bytes"
-      val br = BadRow
-        .SizeViolation(
+    val tsv = ConversionUtils.tabSeparatedEnrichedEvent(enriched)
+    lazy val base64TSV = Base64.getEncoder.encodeToString(tsv.getBytes(StandardCharsets.UTF_8))
+
+    val asStrE = customOutputFormat match {
+      case None => Right(tsv)
+      case Some(outputFormat) =>
+        val jsonE = com.snowplowanalytics.snowplow.analytics.scalasdk.Event
+          .parse(tsv)
+          .map(_.toJson(lossy = true))
+          .toEither
+
+        (outputFormat, jsonE) match {
+          case (_, Left(error)) =>
+            val badRow = BadRow.GenericError(
+              processor = processor,
+              failure = Failure.GenericFailure(Instant.now(), NonEmptyList(error.toString, List.empty)),
+              // TODO: should we trim the payload like we do for normal output?
+              payload = BadRowPayload.RawPayload(
+                base64TSV // .take(maxRecordSize * 8 / 10)
+              )
+            )
+            Left(badRow)
+
+          case (CustomOutputFormat.FlattenedJson, Right(json)) => Right(json.noSpaces)
+          case (CustomOutputFormat.EventbridgeJson(payload, collector), Right(json)) =>
+            val output = serializeEventbridgeEvent(tsv, json, payload = payload, collector = collector)
+            Right(output.noSpaces)
+        }
+    }
+
+    asStrE.flatMap { asStr =>
+      val asBytes = asStr.getBytes(UTF_8)
+      val size = asBytes.length
+      if (size > maxRecordSize) {
+        val msg = s"event passed enrichment but then exceeded the maximum allowed size $maxRecordSize bytes"
+        val payload = customOutputFormat match {
+          case None => BadRowPayload.RawPayload(asStr.take(maxRecordSize * 8 / 10))
+          // TODO: on json outputs, we return the TSV, should we trim this?
+          case Some(_) => BadRowPayload.RawPayload(base64TSV)
+        }
+
+        val br = BadRow.SizeViolation(
           processor,
           Failure.SizeViolation(Instant.now(), maxRecordSize, size, msg),
-          BadRowPayload.RawPayload(asStr.take(maxRecordSize * 8 / 10))
+          payload
         )
-      Left(br)
-    } else Right(asBytes)
+        Left(br)
+      } else Right(asBytes)
+    }
+  }
+
+  private def serializeEventbridgeEvent(
+    tsv: String,
+    event: Json,
+    payload: Boolean,
+    collector: Boolean
+  ): Json = {
+    lazy val base64TSV = Base64.getEncoder.encodeToString(tsv.getBytes(StandardCharsets.UTF_8))
+    lazy val host = for {
+      headers <- event.hcursor
+                   .downField("contexts_org_ietf_http_header_1")
+                   .as[List[Json]]
+                   .toOption
+
+      hostHeader <- headers.find { header =>
+                      header.hcursor
+                        .downField("name")
+                        .as[String]
+                        .toOption
+                        .contains("Host")
+                    }
+
+      host <- hostHeader.hcursor
+                .downField("value")
+                .as[String]
+                .toOption
+    } yield host
+
+    val attachments = List((payload, "payload", () => base64TSV.asJson), (collector, "collector", () => host.asJson))
+
+    attachments.foldLeft(event) { case (current, (include, key, getValue)) =>
+      if (include) current.deepMerge(Map(key -> getValue()).asJson)
+      else current
+    }
   }
 
   /**

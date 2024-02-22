@@ -38,8 +38,7 @@ import com.snowplowanalytics.snowplow.enrich.common.enrichments.MiscEnrichments
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.FeatureFlags
-
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{CustomOutputFormat, FeatureFlags}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.EnrichSpec.{Expected, minimalEvent, normalizeResult}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.test._
 
@@ -368,6 +367,116 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
       }
     }
 
+    "serialize a good event to the good output (json format)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.FlattenedJson),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+        for {
+          _ <- sinkGood(env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          (good.size must_== 1)
+          (bad should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
+    "serialize a good event to the good output (eventbridge format)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(payload = false, collector = false)),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+        for {
+          _ <- sinkGood(env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          (good.size must_== 1)
+          (bad should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
+    "serialize a good event to the good output (eventbridge format with payload)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(payload = true, collector = false)),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+        for {
+          _ <- sinkGood(env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          (good.size must_== 1)
+          (bad should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
+    "serialize a good event to the good output (eventbridge format with collector)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(payload = false, collector = true)),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+        for {
+          _ <- sinkGood(env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          (good.size must_== 1)
+          (bad should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
+    "serialize a good event to the good output (eventbridge format with payload and collector)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(payload = true, collector = true)),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+        for {
+          _ <- sinkGood(env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          (good.size must_== 1)
+          (bad should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
     "serialize an over-sized good event to the bad output" in {
       val ee = new EnrichedEvent()
       ee.app_id = "x" * 10000000
@@ -375,6 +484,60 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
       TestEnvironment.make(Stream.empty).use { test =>
         for {
           _ <- sinkGood(test.env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          bad should beLike { case Vector(bytes) =>
+            bytes must not be empty
+            bytes must have size (be_<=(6900000))
+          }
+          (good should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
+    "serialize an over-sized good event to the bad output (json format)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+      ee.app_id = "x" * 10000000
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.FlattenedJson),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+
+        for {
+          _ <- sinkGood(env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          bad should beLike { case Vector(bytes) =>
+            bytes must not be empty
+            bytes must have size (be_<=(6900000))
+          }
+          (good should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
+    "serialize an over-sized good event to the bad output (eventbridge format)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+      ee.app_id = "x" * 10000000
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(false, false)),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+
+        for {
+          _ <- sinkGood(env, ee)
           good <- test.good
           pii <- test.pii
           bad <- test.bad
@@ -416,6 +579,56 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
       TestEnvironment.make(Stream.empty).use { test =>
         for {
           _ <- sinkGood(test.env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          (good.size must_== 1)
+          (bad should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
+    "not generate a bad row for an over-sized pii event (json format)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+      ee.pii = "x" * 10000000
+      ee.event_id = "some_id"
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.FlattenedJson),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+
+        for {
+          _ <- sinkGood(env, ee)
+          good <- test.good
+          pii <- test.pii
+          bad <- test.bad
+        } yield {
+          (good.size must_== 1)
+          (bad should be empty)
+          (pii should be empty)
+        }
+      }
+    }
+
+    "not generate a bad row for an over-sized pii event (eventbridge format)" in {
+      // TODO: Fixme
+      val ee = new EnrichedEvent()
+      ee.pii = "x" * 10000000
+      ee.event_id = "some_id"
+
+      TestEnvironment.make(Stream.empty).use { test =>
+        val env = test.env.copy(
+          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(false, false)),
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+        )
+
+        for {
+          _ <- sinkGood(env, ee)
           good <- test.good
           pii <- test.pii
           bad <- test.bad

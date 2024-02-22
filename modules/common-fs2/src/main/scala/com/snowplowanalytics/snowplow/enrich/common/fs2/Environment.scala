@@ -40,11 +40,11 @@ import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegist
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.utils.{HttpClient, ShiftExecution}
-
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.{ConfigFile, ParsedConfigs}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{
   Cloud,
   Concurrency,
+  CustomOutputFormat,
   FeatureFlags,
   RemoteAdapterConfigs,
   Telemetry => TelemetryConfig
@@ -125,7 +125,8 @@ final case class Environment[F[_], A](
   streamsSettings: Environment.StreamsSettings,
   region: Option[String],
   cloud: Option[Cloud],
-  featureFlags: FeatureFlags
+  featureFlags: FeatureFlags,
+  customOutputFormat: Option[CustomOutputFormat]
 )
 
 object Environment {
@@ -239,7 +240,8 @@ object Environment {
       StreamsSettings(file.concurrency, maxRecordSize),
       getRegionFromConfig(file).orElse(getRegion),
       cloud,
-      featureFlags
+      featureFlags,
+      file.experimental.flatMap(_.customOutputFormat)
     )
   }
 

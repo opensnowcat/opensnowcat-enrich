@@ -28,4 +28,12 @@
       "byteLimit": 250000
     }
   }
+
+  "experimental": {
+    "customOutputFormat": {
+      "type": "EventbridgeJson"
+      "payload": true
+      "collector": true
+    }
+  }
 }

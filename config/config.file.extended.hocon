@@ -151,4 +151,14 @@
     # Try to base64 decode event if initial Thrift serialization fail
     "tryBase64Decoding": false
   }
+
+  # Optional. Configuration for experimental/preview features
+  # "experimental": {
+    # Whether to use an alternative output format  (either "FlattenedJson" or "EventbridgeJson")
+    # - FlattenedJson: encodes the output as JSON, where unstruct_event, contexts and derived_contexts are flattened
+    # - EventbridgeJson: encodes the output as JSON with extra details, intended exclusively to use with eventbridge module.
+    # "customOutputFormat": {
+    #   "type": "FlattenedJson"
+    # }
+  # }
 }
