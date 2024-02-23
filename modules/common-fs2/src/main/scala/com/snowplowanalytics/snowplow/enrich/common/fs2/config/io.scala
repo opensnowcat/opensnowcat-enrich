@@ -482,12 +482,12 @@ object io {
     implicit val customOutputFormatDecoder: Decoder[CustomOutputFormat] =
       Decoder.instance { cur =>
         for {
-          rawParsed <- cur.as[CustomOutputFormatRaw].map(raw => raw.copy(`type` = raw.`type`.toUpperCase))
+          rawParsed <- cur.as[CustomOutputFormatRaw].map(raw => raw.copy(`type` = raw.`type`))
           customOutputFormat <- rawParsed match {
-                                  case CustomOutputFormatRaw("FLATTENED_JSON", _, _) =>
+                                  case CustomOutputFormatRaw(tpe, _, _) if tpe equalsIgnoreCase "FlattenedJson" =>
                                     FlattenedJson.asRight
 
-                                  case CustomOutputFormatRaw("EVENTBRIDGE_JSON", payloadOpt, collectorOtp) =>
+                                  case CustomOutputFormatRaw(tpe, payloadOpt, collectorOtp) if tpe equalsIgnoreCase "EventbridgeJson" =>
                                     EventbridgeJson(
                                       payload = payloadOpt.getOrElse(false),
                                       collector = collectorOtp.getOrElse(false)
@@ -495,7 +495,7 @@ object io {
 
                                   case other =>
                                     DecodingFailure(
-                                      s"Custom output format $other is not supported. Possible types are FLATTENED_JSON and EVENTBRIDGE_JSON",
+                                      s"Custom output format $other is not supported. Possible types are FlattenedJson and EventbridgeJson",
                                       cur.history
                                     ).asLeft
                                 }
