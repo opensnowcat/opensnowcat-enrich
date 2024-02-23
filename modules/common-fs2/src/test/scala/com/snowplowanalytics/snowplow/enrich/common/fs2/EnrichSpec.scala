@@ -607,14 +607,12 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
     }
 
     "serialize an invalid-json event to the bad output (json format)" in {
-      // TODO: Fixme
-      val ee = new EnrichedEvent()
-      ee.app_id = "x" * 10000000
+      // This can't be parsed as a valid Event because attributes are missing
+      val ee = new EnrichedEvent
 
       TestEnvironment.make(Stream.empty).use { test =>
         val env = test.env.copy(
-          customOutputFormat = Some(CustomOutputFormat.FlattenedJson),
-          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+          customOutputFormat = Some(CustomOutputFormat.FlattenedJson)
         )
 
         for {
@@ -623,29 +621,40 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
           pii <- test.pii
           bad <- test.bad
         } yield {
-          //          println(s"good: ${new String(good.head.data)}")
-          //          println(s"pii: ${new String(pii.head.data)}")
-          //          println(s"bad: ${new String(bad.head)}")
-
           bad should beLike { case Vector(bytes) =>
             bytes must not be empty
-            bytes must have size (be_<=(6900000))
+            bytes must have size (be_<=(2597))
           }
           (good should be empty)
           (pii should be empty)
+
+          val jsonE = _root_.io.circe.parser.parse(new String(bad.head))
+          (jsonE.isRight should beTrue)
+
+          val payloadE = jsonE.right.get.hcursor.downField("data").get[String]("payload")
+          (payloadE.isRight should beTrue)
+
+          // payload is the original TSV encoded in base64
+          val tsv = ConversionUtils.tabSeparatedEnrichedEvent(ee)
+          val data = java.util.Base64.getDecoder.decode(payloadE.right.get)
+          (new String(data) must_== tsv)
         }
       }
     }
 
     "serialize an over-sized good event to the bad output (json format)" in {
-      // TODO: Fixme
-      val ee = new EnrichedEvent()
-      ee.app_id = "x" * 10000000
+      val ee = new EnrichedEvent {
+        collector_tstamp = "2011-12-03T10:15:30"
+        event_id = "236392af-ffec-4def-a0de-86929e9615be"
+        v_collector = "test"
+        v_etl = "test"
+      }
 
       TestEnvironment.make(Stream.empty).use { test =>
         val env = test.env.copy(
           customOutputFormat = Some(CustomOutputFormat.FlattenedJson),
-          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+          // the event requires 2598 bytes when encoded as json
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 2597)
         )
 
         for {
@@ -654,29 +663,34 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
           pii <- test.pii
           bad <- test.bad
         } yield {
-          //          println(s"good: ${new String(good.head.data)}")
-          //          println(s"pii: ${new String(pii.head.data)}")
-          //          println(s"bad: ${new String(bad.head)}")
-
           bad should beLike { case Vector(bytes) =>
             bytes must not be empty
-            bytes must have size (be_<=(6900000))
+            bytes must have size (be_<=(2597))
           }
           (good should be empty)
           (pii should be empty)
+
+          val jsonE = _root_.io.circe.parser.parse(new String(bad.head))
+          (jsonE.isRight should beTrue)
+
+          val payloadE = jsonE.right.get.hcursor.downField("data").get[String]("payload")
+          (payloadE.isRight should beTrue)
+
+          // payload is the original TSV encoded in base64
+          val tsv = ConversionUtils.tabSeparatedEnrichedEvent(ee)
+          val data = java.util.Base64.getDecoder.decode(payloadE.right.get)
+          (new String(data) must_== tsv)
         }
       }
     }
 
     "serialize an invalid-json event to the bad output (eventbridge format)" in {
-      // TODO: Fixme
-      val ee = new EnrichedEvent()
-      ee.app_id = "x" * 10000000
+      // This can't be parsed as a valid Event because attributes are missing
+      val ee = new EnrichedEvent
 
       TestEnvironment.make(Stream.empty).use { test =>
         val env = test.env.copy(
-          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(false, false)),
-          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(false, false))
         )
 
         for {
@@ -691,19 +705,34 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
           }
           (good should be empty)
           (pii should be empty)
+
+          val jsonE = _root_.io.circe.parser.parse(new String(bad.head))
+          (jsonE.isRight should beTrue)
+
+          val payloadE = jsonE.right.get.hcursor.downField("data").get[String]("payload")
+          (payloadE.isRight should beTrue)
+
+          // payload is the original TSV encoded in base64
+          val tsv = ConversionUtils.tabSeparatedEnrichedEvent(ee)
+          val data = java.util.Base64.getDecoder.decode(payloadE.right.get)
+          (new String(data) must_== tsv)
         }
       }
     }
 
     "serialize an over-sized good event to the bad output (eventbridge format)" in {
-      // TODO: Fixme
-      val ee = new EnrichedEvent()
-      ee.app_id = "x" * 10000000
+      val ee = new EnrichedEvent {
+        collector_tstamp = "2011-12-03T10:15:30"
+        event_id = "236392af-ffec-4def-a0de-86929e9615be"
+        v_collector = "test"
+        v_etl = "test"
+      }
 
       TestEnvironment.make(Stream.empty).use { test =>
         val env = test.env.copy(
           customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(false, false)),
-          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
+          // the event requires 2598 bytes when encoded as json
+          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 2597)
         )
 
         for {
@@ -714,10 +743,21 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
         } yield {
           bad should beLike { case Vector(bytes) =>
             bytes must not be empty
-            bytes must have size (be_<=(6900000))
+            bytes must have size (be_<=(2597))
           }
           (good should be empty)
           (pii should be empty)
+
+          val jsonE = _root_.io.circe.parser.parse(new String(bad.head))
+          (jsonE.isRight should beTrue)
+
+          val payloadE = jsonE.right.get.hcursor.downField("data").get[String]("payload")
+          (payloadE.isRight should beTrue)
+
+          // payload is the original TSV encoded in base64
+          val tsv = ConversionUtils.tabSeparatedEnrichedEvent(ee)
+          val data = java.util.Base64.getDecoder.decode(payloadE.right.get)
+          (new String(data) must_== tsv)
         }
       }
     }
@@ -749,56 +789,6 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
       TestEnvironment.make(Stream.empty).use { test =>
         for {
           _ <- sinkGood(test.env, ee)
-          good <- test.good
-          pii <- test.pii
-          bad <- test.bad
-        } yield {
-          (good.size must_== 1)
-          (bad should be empty)
-          (pii should be empty)
-        }
-      }
-    }
-
-    "not generate a bad row for an over-sized pii event (json format)" in {
-      // TODO: Fixme
-      val ee = new EnrichedEvent()
-      ee.pii = "x" * 10000000
-      ee.event_id = "some_id"
-
-      TestEnvironment.make(Stream.empty).use { test =>
-        val env = test.env.copy(
-          customOutputFormat = Some(CustomOutputFormat.FlattenedJson),
-          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
-        )
-
-        for {
-          _ <- sinkGood(env, ee)
-          good <- test.good
-          pii <- test.pii
-          bad <- test.bad
-        } yield {
-          (good.size must_== 1)
-          (bad should be empty)
-          (pii should be empty)
-        }
-      }
-    }
-
-    "not generate a bad row for an over-sized pii event (eventbridge format)" in {
-      // TODO: Fixme
-      val ee = new EnrichedEvent()
-      ee.pii = "x" * 10000000
-      ee.event_id = "some_id"
-
-      TestEnvironment.make(Stream.empty).use { test =>
-        val env = test.env.copy(
-          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(false, false)),
-          streamsSettings = test.env.streamsSettings.copy(maxRecordSize = 10)
-        )
-
-        for {
-          _ <- sinkGood(env, ee)
           good <- test.good
           pii <- test.pii
           bad <- test.bad
