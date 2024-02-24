@@ -62,7 +62,6 @@ object KinesisConfig {
       500,
       5242880,
       Some(URI.create(getEndpoint(localstackPort))),
-      jsonOutput = false
     )
 
   val monitoring = Monitoring(
