@@ -300,10 +300,7 @@ object Enrich {
             val badRow = BadRow.GenericError(
               processor = processor,
               failure = Failure.GenericFailure(Instant.now(), NonEmptyList(error.toString, List.empty)),
-              // TODO: should we trim the payload like we do for normal output?
-              payload = BadRowPayload.RawPayload(
-                base64TSV // .take(maxRecordSize * 8 / 10)
-              )
+              payload = BadRowPayload.RawPayload(base64TSV)
             )
             Left(badRow)
 
@@ -321,7 +318,6 @@ object Enrich {
         val msg = s"event passed enrichment but then exceeded the maximum allowed size $maxRecordSize bytes"
         val payload = customOutputFormat match {
           case None => BadRowPayload.RawPayload(asStr.take(maxRecordSize * 8 / 10))
-          // TODO: on json outputs, we return the TSV, should we trim this?
           case Some(_) => BadRowPayload.RawPayload(base64TSV)
         }
 

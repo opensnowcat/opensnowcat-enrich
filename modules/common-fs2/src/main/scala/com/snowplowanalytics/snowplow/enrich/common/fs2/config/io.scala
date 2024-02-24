@@ -275,8 +275,7 @@ object io {
       throttledBackoffPolicy: BackoffPolicy,
       recordLimit: Int,
       byteLimit: Int,
-      customEndpoint: Option[URI],
-      jsonOutput: Boolean
+      customEndpoint: Option[URI]
     ) extends Output
 
     case class Eventbridge(
@@ -287,9 +286,7 @@ object io {
       throttledBackoffPolicy: BackoffPolicy,
       recordLimit: Int,
       byteLimit: Int,
-      customEndpoint: Option[URI],
-      collector: Option[Boolean],
-      payload: Option[Boolean]
+      customEndpoint: Option[URI]
     ) extends Output
 
     implicit val outputDecoder: Decoder[Output] =

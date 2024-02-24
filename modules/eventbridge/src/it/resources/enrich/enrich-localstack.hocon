@@ -47,4 +47,12 @@
   "telemetry": {
     "disable": true
   }
+
+  "experimental": {
+    "customOutputFormat": {
+      "type": "EventbridgeJson"
+      "payload": true
+      "collector": true
+    }
+  }
 }

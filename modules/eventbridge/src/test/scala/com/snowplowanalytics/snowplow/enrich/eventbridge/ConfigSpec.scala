@@ -58,8 +58,6 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             10,
             250000,
-            None,
-            None,
             None
           ),
           None,
@@ -71,8 +69,6 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             10,
             250000,
-            None,
-            None,
             None
           )
         ),
@@ -144,9 +140,7 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             10,
             250000,
-            None,
-            Some(true),
-            Some(true)
+            None
           ),
           Some(
             io.Output.Eventbridge(
@@ -157,9 +151,7 @@ class ConfigSpec extends Specification with CatsIO {
               io.BackoffPolicy(100.millis, 1.second, None),
               10,
               250000,
-              None,
-              Some(true),
-              Some(true)
+              None
             )
           ),
           io.Output.Eventbridge(
@@ -170,8 +162,6 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             10,
             250000,
-            None,
-            None,
             None
           )
         ),
