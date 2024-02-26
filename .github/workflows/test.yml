@@ -42,14 +42,21 @@ jobs:
       run: psql -h localhost -p 5432 -U enricher -d sql_enrichment_test < integration-tests/common-fs2/sql-enrichment-test.sql
       env:
         PGPASSWORD: supersecret1
-    - name: Run tests
-      run: SBT_OPTS="-Xms1G -Xmx8G -Xss4M -XX:MaxMetaspaceSize=1024M" sbt coverage +test
-      env:
-        OER_KEY: ${{ secrets.OER_KEY }}
     - name: Check Scala formatting
       run: sbt scalafmtCheckAll
     - name: Check assets can be published
       run: sbt publishLocal
+    - name: Check fatJars can be published
+      run: |
+        sbt "project pubsub; set assembly / test := {}; assembly" \
+            "project kinesis; set assembly / test := {}; assembly" \
+            "project eventbridge; set assembly / test := {}; assembly" \
+            "project kafka; set assembly / test := {}; assembly" \
+            "project nsq; set assembly / test := {}; assembly"
+    - name: Run tests
+      run: SBT_OPTS="-Xms1G -Xmx8G -Xss4M -XX:MaxMetaspaceSize=1024M" sbt coverage +test
+      env:
+        OER_KEY: ${{ secrets.OER_KEY }}
     - name: Run integration tests for enrich-kinesis
       run: sbt "project kinesisDistroless" IntegrationTest/test
       env:
