@@ -25,6 +25,7 @@ import cats.effect.testing.specs2.CatsIO
 import org.http4s.Uri
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.CustomOutputFormat
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.ConfigFile
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers.adaptersSchemas
 
@@ -33,7 +34,89 @@ import org.specs2.mutable.Specification
 class ConfigSpec extends Specification with CatsIO {
 
   "parse" should {
-    "parse reference example for Eventbridge" in {
+    "parse reference example (minimal) for Eventbridge" in {
+      val configPath = Paths.get(getClass.getResource("/config.eventbridge.minimal.hocon").toURI)
+      val expected = ConfigFile(
+        io.Input.Kinesis(
+          "opensnowcat-enrich-eventbridge",
+          "input-stream-name",
+          Some("us-west-2"),
+          io.Input.Kinesis.InitPosition.Latest,
+          io.Input.Kinesis.Retrieval.Polling(10000),
+          3,
+          io.BackoffPolicy(100.milli, 10.second, Some(10)),
+          None,
+          None,
+          None
+        ),
+        io.Outputs(
+          io.Output.Eventbridge(
+            "output-good-eventbus-name",
+            "output-good-eventbus-source",
+            Some("us-west-2"),
+            io.BackoffPolicy(100.millis, 10.seconds, Some(10)),
+            io.BackoffPolicy(100.millis, 1.second, None),
+            10,
+            250000,
+            None
+          ),
+          None,
+          io.Output.Eventbridge(
+            "output-bad-eventbus-name",
+            "output-bad-eventbus-source",
+            Some("us-west-2"),
+            io.BackoffPolicy(100.millis, 10.seconds, Some(10)),
+            io.BackoffPolicy(100.millis, 1.second, None),
+            10,
+            250000,
+            None
+          )
+        ),
+        io.Concurrency(256, 1),
+        None,
+        io.RemoteAdapterConfigs(
+          10.seconds,
+          45.seconds,
+          10,
+          List()
+        ),
+        io.Monitoring(
+          None,
+          io.MetricsReporters(None, None, true)
+        ),
+        io.Telemetry(
+          false,
+          15.minutes,
+          "POST",
+          "sp.snowcatcloud.com",
+          443,
+          true,
+          None,
+          None,
+          None,
+          None,
+          None
+        ),
+        io.FeatureFlags(
+          false,
+          false,
+          tryBase64Decoding = true
+        ),
+        Some(
+          io.Experimental(
+            None,
+            Some(
+              CustomOutputFormat.EventbridgeJson(true, true)
+            )
+          )
+        ),
+        adaptersSchemas,
+        io.BlobStorageClients(gcs = false, s3 = true, azureStorage = None)
+      )
+      ConfigFile.parse[IO](configPath.asRight).value.map(result => result must beRight(expected))
+    }
+
+    "parse reference example (extended) for Eventbridge" in {
       val configPath = Paths.get(getClass.getResource("/config.eventbridge.extended.hocon").toURI)
       val expected = ConfigFile(
         io.Input.Kinesis(
@@ -57,9 +140,7 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             10,
             250000,
-            None,
-            Some(true),
-            Some(true)
+            None
           ),
           Some(
             io.Output.Eventbridge(
@@ -70,9 +151,7 @@ class ConfigSpec extends Specification with CatsIO {
               io.BackoffPolicy(100.millis, 1.second, None),
               10,
               250000,
-              None,
-              Some(true),
-              Some(true)
+              None
             )
           ),
           io.Output.Eventbridge(
@@ -83,8 +162,6 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             10,
             250000,
-            None,
-            None,
             None
           )
         ),
@@ -133,92 +210,12 @@ class ConfigSpec extends Specification with CatsIO {
                 UUID.fromString("c5f3a09f-75f8-4309-bec5-fea560f78455"),
                 UUID.fromString("75a13583-5c99-40e3-81fc-541084dfc784")
               )
+            ),
+            Some(
+              CustomOutputFormat.EventbridgeJson(true, true)
             )
           )
         ),
-        adaptersSchemas,
-        io.BlobStorageClients(gcs = false, s3 = true, azureStorage = None)
-      )
-      ConfigFile.parse[IO](configPath.asRight).value.map(result => result must beRight(expected))
-    }
-
-    "parse minimal example for Kinesis" in {
-      val configPath = Paths.get(getClass.getResource("/config.eventbridge.minimal.hocon").toURI)
-      val expected = ConfigFile(
-        io.Input.Kinesis(
-          "opensnowcat-enrich-eventbridge",
-          "input-stream-name",
-          Some("us-west-2"),
-          io.Input.Kinesis.InitPosition.Latest,
-          io.Input.Kinesis.Retrieval.Polling(10000),
-          3,
-          io.BackoffPolicy(100.milli, 10.second, Some(10)),
-          None,
-          None,
-          None
-        ),
-        io.Outputs(
-          io.Output.Eventbridge(
-            "output-good-eventbus-name",
-            "output-good-eventbus-source",
-            Some("us-west-2"),
-            io.BackoffPolicy(100.millis, 10.seconds, Some(10)),
-            io.BackoffPolicy(100.millis, 1.second, None),
-            10,
-            250000,
-            None,
-            None,
-            None
-          ),
-          None,
-          io.Output.Eventbridge(
-            "output-bad-eventbus-name",
-            "output-bad-eventbus-source",
-            Some("us-west-2"),
-            io.BackoffPolicy(100.millis, 10.seconds, Some(10)),
-            io.BackoffPolicy(100.millis, 1.second, None),
-            10,
-            250000,
-            None,
-            None,
-            None
-          )
-        ),
-        io.Concurrency(256, 1),
-        None,
-        io.RemoteAdapterConfigs(
-          10.seconds,
-          45.seconds,
-          10,
-          List()
-        ),
-        io.Monitoring(
-          None,
-          io.MetricsReporters(
-            None,
-            None,
-            true
-          )
-        ),
-        io.Telemetry(
-          false,
-          15.minutes,
-          "POST",
-          "sp.snowcatcloud.com",
-          443,
-          true,
-          None,
-          None,
-          None,
-          None,
-          None
-        ),
-        io.FeatureFlags(
-          false,
-          false,
-          tryBase64Decoding = true
-        ),
-        None,
         adaptersSchemas,
         io.BlobStorageClients(gcs = false, s3 = true, azureStorage = None)
       )

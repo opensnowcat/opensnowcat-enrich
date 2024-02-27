@@ -13,13 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 import scala.collection.JavaConverters._
-import scala.util.control.NonFatal
 
-import cats.data.Validated
 import cats.implicits._
 import cats.{Monoid, Parallel}
 
@@ -37,7 +34,6 @@ import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.model._
 import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
 
-import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Retries
@@ -65,7 +61,7 @@ object Sink {
           case Some(region) =>
             for {
               producer <- Resource.eval[F, AmazonKinesis](mkProducer(o, region))
-            } yield records => writeToKinesis(blocker, o, producer, toKinesisRecords(records, o))
+            } yield records => writeToKinesis(blocker, o, producer, toKinesisRecords(records))
           case None =>
             Resource.eval(Sync[F].raiseError(new RuntimeException(s"Region not found in the config and in the runtime")))
         }
@@ -209,24 +205,9 @@ object Sink {
             result.nextBatchAttempt.pure[F]
         }
 
-  private def toKinesisRecords(records: List[AttributedData[Array[Byte]]], config: Output.Kinesis): List[PutRecordsRequestEntry] =
+  private def toKinesisRecords(records: List[AttributedData[Array[Byte]]]): List[PutRecordsRequestEntry] =
     records.map { r =>
-      val sourceData = r.data
-      val binaryData =
-        try if (config.jsonOutput) {
-          val tsv = new String(sourceData)
-          // TODO: Its likely better to handle this in the layer that validates the output size is not exceeded
-          Event.parse(tsv) match {
-            case Validated.Valid(event) => event.toJson(lossy = true).noSpaces.getBytes(StandardCharsets.UTF_8)
-            case Validated.Invalid(_) => sourceData
-          }
-        } else
-          sourceData
-        catch {
-          // TODO: Re-consider what to do when parsing the data fails
-          case NonFatal(_) => sourceData
-        }
-
+      val binaryData = r.data
       val data = ByteBuffer.wrap(binaryData)
       val prre = new PutRecordsRequestEntry()
       prre.setPartitionKey(r.partitionKey)

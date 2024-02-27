@@ -58,8 +58,7 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             500,
             5242880,
-            None,
-            jsonOutput = false
+            None
           ),
           Some(
             io.Output.Kinesis(
@@ -70,8 +69,7 @@ class ConfigSpec extends Specification with CatsIO {
               io.BackoffPolicy(100.millis, 1.second, None),
               500,
               5242880,
-              None,
-              jsonOutput = false
+              None
             )
           ),
           io.Output.Kinesis(
@@ -82,8 +80,7 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             500,
             5242880,
-            None,
-            jsonOutput = false
+            None
           )
         ),
         io.Concurrency(256, 1),
@@ -131,7 +128,8 @@ class ConfigSpec extends Specification with CatsIO {
                 UUID.fromString("c5f3a09f-75f8-4309-bec5-fea560f78455"),
                 UUID.fromString("75a13583-5c99-40e3-81fc-541084dfc784")
               )
-            )
+            ),
+            None
           )
         ),
         adaptersSchemas,
@@ -164,8 +162,7 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             500,
             5242880,
-            None,
-            jsonOutput = false
+            None
           ),
           None,
           io.Output.Kinesis(
@@ -176,8 +173,7 @@ class ConfigSpec extends Specification with CatsIO {
             io.BackoffPolicy(100.millis, 1.second, None),
             500,
             5242880,
-            None,
-            jsonOutput = false
+            None
           )
         ),
         io.Concurrency(256, 1),

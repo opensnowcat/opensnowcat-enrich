@@ -130,7 +130,7 @@ object ParsedConfigs {
             if (invalidAttributes.nonEmpty) NonEmptyList(invalidAttributes.head, invalidAttributes.tail.toList).invalid
             else output.valid
           }
-      case OutputConfig.Kinesis(_, _, Some(key), _, _, _, _, _, _) if !enrichedFieldsMap.contains(key) =>
+      case OutputConfig.Kinesis(_, _, Some(key), _, _, _, _, _) if !enrichedFieldsMap.contains(key) =>
         NonEmptyList.one(s"Partition key $key not valid").invalid
       case ka: OutputConfig.Kafka if !ka.headers.forall(enrichedFieldsMap.contains) =>
         NonEmptyList
@@ -162,7 +162,7 @@ object ParsedConfigs {
   private[config] def outputPartitionKey(output: OutputConfig): EnrichedEvent => String =
     output match {
       case OutputConfig.Kafka(_, _, partitionKey, _, _) => partitionKeyFromFields(partitionKey)
-      case OutputConfig.Kinesis(_, _, Some(partitionKey), _, _, _, _, _, _) => partitionKeyFromFields(partitionKey)
+      case OutputConfig.Kinesis(_, _, Some(partitionKey), _, _, _, _, _) => partitionKeyFromFields(partitionKey)
       case _ => _ => UUID.randomUUID().toString
     }
 

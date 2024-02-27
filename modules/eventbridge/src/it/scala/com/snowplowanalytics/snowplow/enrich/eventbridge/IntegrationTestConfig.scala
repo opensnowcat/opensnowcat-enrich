@@ -34,8 +34,6 @@ object IntegrationTestConfig {
       recordLimit = 10,
       byteLimit = 100000,
       customEndpoint = Some(URI.create(getEndpoint(localstackPort))),
-      collector = None,
-      payload = None
     )
 
   def kinesisOutputStreamConfig(localstackPort: Int, streamName: String) =
@@ -48,7 +46,6 @@ object IntegrationTestConfig {
       500,
       5242880,
       Some(URI.create(getEndpoint(localstackPort))),
-      jsonOutput = false
     )
 
   def kinesisInputStreamConfig(localstackPort: Int, streamName: String) =

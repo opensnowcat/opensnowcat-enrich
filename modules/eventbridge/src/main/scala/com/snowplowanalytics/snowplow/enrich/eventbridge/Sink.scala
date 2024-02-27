@@ -12,17 +12,13 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-import cats.data.Validated
 import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.implicits._
 import cats.{Monoid, Parallel}
-import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Retries
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
-import io.circe.Json
-import io.circe.syntax._
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import retry.RetryPolicy
@@ -32,7 +28,7 @@ import software.amazon.awssdk.services.eventbridge.EventBridgeClient
 import software.amazon.awssdk.services.eventbridge.model.{PutEventsRequest, PutEventsRequestEntry, PutEventsResponse}
 
 import java.nio.charset.StandardCharsets
-import java.util.{Base64, UUID}
+import java.util.UUID
 import scala.jdk.CollectionConverters.{collectionAsScalaIterableConverter, seqAsJavaListConverter}
 
 object Sink {
@@ -89,49 +85,12 @@ object Sink {
   ): List[PutEventsRequestEntry] =
     events
       .map { event =>
-        val tsv = new String(event.data)
-        lazy val base64TSV = Base64.getEncoder.encodeToString(tsv.getBytes(StandardCharsets.UTF_8))
-
-        val json = Event.parse(tsv) match {
-          case Validated.Valid(event) =>
-            val eventJson = event.toJson(true)
-
-            lazy val host = for {
-              headers <- eventJson.hcursor
-                           .downField("contexts_org_ietf_http_header_1")
-                           .as[List[Json]]
-                           .toOption
-
-              hostHeader <- headers.find { header =>
-                              header.hcursor
-                                .downField("name")
-                                .as[String]
-                                .toOption
-                                .contains("Host")
-                            }
-
-              host <- hostHeader.hcursor
-                        .downField("value")
-                        .as[String]
-                        .toOption
-            } yield host
-            val attachments = List((output.payload.contains(true), "payload", () => base64TSV.asJson),
-                                   (output.collector.contains(true), "collector", () => host.asJson)
-            )
-
-            attachments.foldLeft(eventJson) { case (current, (include, key, getValue)) =>
-              if (include) current.deepMerge(Map(key -> getValue()).asJson)
-              else current
-            }
-          case Validated.Invalid(error) =>
-            Map("error" -> error.toString, "tsv" -> base64TSV).asJson
-        }
-
+        val data = new String(event.data)
         PutEventsRequestEntry
           .builder()
           .eventBusName(output.eventBusName)
           .source(output.eventBusSource)
-          .detail(json.noSpaces)
+          .detail(data)
           .detailType("enrich-event")
           .build()
       }

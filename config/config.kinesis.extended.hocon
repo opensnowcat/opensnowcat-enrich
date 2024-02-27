@@ -116,9 +116,6 @@
       # Optional. Use a custom Kinesis endpoint.
       # Can be used for instance to work locally with localstack
       # "customEndpoint": "https://localhost:4566"
-
-      # Encode the output as json, by default, output is encoded as TSV.
-      "jsonOutput": false
     }
 
     # Pii events output
@@ -169,9 +166,6 @@
       # Optional. Use a custom Kinesis endpoint.
       # Can be used for instance to work locally with localstack
       # "customEndpoint": "https://localhost:4566"
-
-      # Encode the output as json, by default, output is encoded as TSV.
-      "jsonOutput": false
     }
 
     # Bad rows output
@@ -214,9 +208,6 @@
       # Optional. Use a custom Kinesis endpoint.
       # Can be used for instance to work locally with localstack
       # "customEndpoint": "https://localhost:4566"
-
-      # Encode the output as json, by default, output is encoded as TSV.
-      "jsonOutput": false
     }
   }
 
@@ -369,5 +360,12 @@
       "organizationId": "c5f3a09f-75f8-4309-bec5-fea560f78455"
       "pipelineId": "75a13583-5c99-40e3-81fc-541084dfc784"
     }
+
+    # Whether to use an alternative output format  (either "FlattenedJson" or "EventbridgeJson")
+    # - FlattenedJson: encodes the output as JSON, where unstruct_event, contexts and derived_contexts are flattened
+    # - EventbridgeJson: encodes the output as JSON with extra details, intended exclusively to use with eventbridge module.
+    # "customOutputFormat": {
+    #   "type": "FlattenedJson"
+    # }
   }
 }

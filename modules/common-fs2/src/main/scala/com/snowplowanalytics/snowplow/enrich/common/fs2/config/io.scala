@@ -275,8 +275,7 @@ object io {
       throttledBackoffPolicy: BackoffPolicy,
       recordLimit: Int,
       byteLimit: Int,
-      customEndpoint: Option[URI],
-      jsonOutput: Boolean
+      customEndpoint: Option[URI]
     ) extends Output
 
     case class Eventbridge(
@@ -287,9 +286,7 @@ object io {
       throttledBackoffPolicy: BackoffPolicy,
       recordLimit: Int,
       byteLimit: Int,
-      customEndpoint: Option[URI],
-      collector: Option[Boolean],
-      payload: Option[Boolean]
+      customEndpoint: Option[URI]
     ) extends Output
 
     implicit val outputDecoder: Decoder[Output] =
@@ -464,7 +461,51 @@ object io {
       deriveConfiguredEncoder[Metadata]
   }
 
-  case class Experimental(metadata: Option[Metadata])
+  sealed trait CustomOutputFormat
+
+  object CustomOutputFormat {
+    final case object FlattenedJson extends CustomOutputFormat
+
+    final case class EventbridgeJson(payload: Boolean, collector: Boolean) extends CustomOutputFormat
+
+    case class CustomOutputFormatRaw(
+      `type`: String,
+      payload: Option[Boolean],
+      collector: Option[Boolean]
+    )
+
+    implicit val customOutputFormatRawDecoder: Decoder[CustomOutputFormatRaw] = deriveConfiguredDecoder[CustomOutputFormatRaw]
+
+    implicit val customOutputFormatDecoder: Decoder[CustomOutputFormat] =
+      Decoder.instance { cur =>
+        for {
+          rawParsed <- cur.as[CustomOutputFormatRaw].map(raw => raw.copy(`type` = raw.`type`))
+          customOutputFormat <- rawParsed match {
+                                  case CustomOutputFormatRaw(tpe, _, _) if tpe equalsIgnoreCase "FlattenedJson" =>
+                                    FlattenedJson.asRight
+
+                                  case CustomOutputFormatRaw(tpe, payloadOpt, collectorOtp) if tpe equalsIgnoreCase "EventbridgeJson" =>
+                                    EventbridgeJson(
+                                      payload = payloadOpt.getOrElse(false),
+                                      collector = collectorOtp.getOrElse(false)
+                                    ).asRight
+
+                                  case other =>
+                                    DecodingFailure(
+                                      s"Custom output format $other is not supported. Possible types are FlattenedJson and EventbridgeJson",
+                                      cur.history
+                                    ).asLeft
+                                }
+        } yield customOutputFormat
+      }
+
+    implicit val customOutputFormatEncoder: Encoder[CustomOutputFormat] = deriveConfiguredEncoder[CustomOutputFormat]
+  }
+
+  case class Experimental(
+    metadata: Option[Metadata],
+    customOutputFormat: Option[CustomOutputFormat]
+  )
   object Experimental {
     implicit val experimentalDecoder: Decoder[Experimental] =
       deriveConfiguredDecoder[Experimental]
