@@ -76,7 +76,7 @@ object Dependencies {
     val kafka = "7.6.0-ce"
     val mskAuth = "2.0.3"
     val nsqClient = "1.3.0"
-    val jackson = "2.15.3"
+    val jackson = "2.15.4"
     val config = "1.3.4"
 
     val decline = "2.4.1"
