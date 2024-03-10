@@ -18,7 +18,6 @@ import java.time.Instant
 import scala.concurrent.duration._
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import cats.effect.testing.specs2.CatsIO
 import org.http4s.Uri
 
@@ -28,6 +27,7 @@ import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Metadata => MetadataConfig}
 import Metadata.{EntitiesAndCount, MetadataEvent, MetadataReporter}
+import cats.effect.Ref
 
 class MetadataSpec extends Specification with CatsIO {
   case class Report(

@@ -19,7 +19,7 @@ import fs2.Stream
 
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{Blocker, Clock, Concurrent, ConcurrentEffect, ContextShift, ExitCode, Resource, Sync, Timer}
+import cats.effect.{Clock, Concurrent, ConcurrentEffect, ExitCode, Resource, Sync}
 
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -40,12 +40,13 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.{CliConfig, ParsedConfigs}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.{FileSink, Retries, Source}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.Client
+import cats.effect.Temporal
 
 object Run {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def run[F[_]: Clock: ConcurrentEffect: ContextShift: Parallel: Timer, A](
+  def run[F[_]: Clock: ConcurrentEffect: ContextShift: Parallel: Temporal, A](
     args: List[String],
     name: String,
     version: String,
@@ -65,7 +66,7 @@ object Run {
   ): F[ExitCode] =
     CliConfig.command(name, version, description).parse(args) match {
       case Right(cli) =>
-        Blocker[F].use { blocker =>
+        Resource.unit[F].use { blocker =>
           updateCliConfig(blocker, cli).flatMap { cfg =>
             ParsedConfigs
               .parse[F](cfg)
@@ -149,9 +150,7 @@ object Run {
         Logger[F].error(s"CLI arguments are invalid. Error: $error") >> Sync[F].pure(ExitCode.Error)
     }
 
-  private def initAttributedSink[F[_]: Concurrent: ContextShift: Timer](
-    blocker: Blocker,
-    output: Output,
+  private def initAttributedSink[F[_]: Concurrent: ContextShift: Temporal](output: Output,
     mkSinkGood: (Blocker, Output) => Resource[F, AttributedByteSink[F]]
   ): Resource[F, AttributedByteSink[F]] =
     output match {
@@ -161,7 +160,7 @@ object Run {
         mkSinkGood(blocker, output)
     }
 
-  private def runEnvironment[F[_]: ConcurrentEffect: ContextShift: Parallel: Timer, A](
+  private def runEnvironment[F[_]: ConcurrentEffect: ContextShift: Parallel: Temporal, A](
     environment: Resource[F, Environment[F, A]]
   ): F[ExitCode] =
     environment.use { env =>
@@ -177,7 +176,7 @@ object Run {
       }
     }
 
-  private def withRetries[F[_]: Sync: Timer, A, B](
+  private def withRetries[F[_]: Sync: Temporal, A, B](
     config: BackoffPolicy,
     errorMessage: String,
     f: A => F[B]

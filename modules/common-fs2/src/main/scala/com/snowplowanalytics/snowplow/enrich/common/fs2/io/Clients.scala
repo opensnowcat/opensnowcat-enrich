@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common.fs2.io
 
 import java.net.URI
-import cats.effect.{ConcurrentEffect, Resource, Timer}
+import cats.effect.{ConcurrentEffect, Resource}
 import fs2.Stream
 import org.http4s.{Headers, Request, Uri}
 import org.http4s.client.defaults
@@ -28,6 +28,7 @@ import org.http4s.blaze.pipeline.Command
 import org.http4s.client.middleware.{Retry, RetryPolicy}
 import org.http4s.syntax.string._
 import org.http4s.util.CaseInsensitiveString
+import cats.effect.Temporal
 
 case class Clients[F[_]: ConcurrentEffect](clients: List[Client[F]]) {
 
@@ -62,7 +63,7 @@ object Clients {
       }
     }
 
-  def mkHttp[F[_]: ConcurrentEffect: Timer](
+  def mkHttp[F[_]: ConcurrentEffect: Temporal](
     connectionTimeout: FiniteDuration = defaults.ConnectTimeout,
     readTimeout: FiniteDuration = defaults.RequestTimeout,
     maxConnections: Int = 10, // http4s uses 10 by default

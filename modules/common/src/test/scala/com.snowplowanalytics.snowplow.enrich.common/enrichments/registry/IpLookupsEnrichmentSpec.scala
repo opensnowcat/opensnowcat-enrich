@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import cats.implicits._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 
 import cats.effect.testing.specs2.CatsIO
 

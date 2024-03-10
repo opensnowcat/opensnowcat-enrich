@@ -13,16 +13,17 @@
 
 package com.snowplowanalytics.snowplow.enrich.kafka
 
-import cats.effect.{ConcurrentEffect, ContextShift, Timer}
+import cats.effect.ConcurrentEffect
 
 import fs2.kafka.{CommittableConsumerRecord, ConsumerSettings, KafkaConsumer}
 import fs2.Stream
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input
+import cats.effect.Temporal
 
 object Source {
 
-  def init[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def init[F[_]: ConcurrentEffect: ContextShift: Temporal](
     input: Input
   ): Stream[F, CommittableConsumerRecord[F, String, Array[Byte]]] =
     input match {
@@ -30,7 +31,7 @@ object Source {
       case i => Stream.raiseError[F](new IllegalArgumentException(s"Input $i is not Kafka"))
     }
 
-  def kafka[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def kafka[F[_]: ConcurrentEffect: ContextShift: Temporal](
     input: Input.Kafka
   ): Stream[F, CommittableConsumerRecord[F, String, Array[Byte]]] = {
     val consumerSettings =

@@ -18,7 +18,7 @@ import java.util.concurrent.Executors
 import scala.concurrent.duration.TimeUnit
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{Blocker, Clock, IO, Resource}
+import cats.effect.{Clock, IO, Resource}
 
 import cats.implicits._
 
@@ -31,7 +31,7 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.test._
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients
 
 import cats.effect.testing.specs2.CatsIO
-import cats.effect.concurrent.Semaphore
+import cats.effect.std.Semaphore
 
 object SpecHelpers extends CatsIO {
   implicit val ioClock: Clock[IO] =
@@ -55,7 +55,7 @@ object SpecHelpers extends CatsIO {
     } yield state
 
   /** Clean-up predefined list of files */
-  def filesCleanup(blocker: Blocker, files: List[Path]): IO[Unit] =
+  def filesCleanup(files: List[Path]): IO[Unit] =
     files.traverse_ { path =>
       deleteIfExists[IO](blocker, path).recover { case _: NoSuchFileException =>
         false
@@ -63,7 +63,7 @@ object SpecHelpers extends CatsIO {
     }
 
   /** Make sure files don't exist before and after test starts */
-  def filesResource(blocker: Blocker, files: List[Path]): Resource[IO, Unit] =
+  def filesResource(files: List[Path]): Resource[IO, Unit] =
     Resource.make(filesCleanup(blocker, files))(_ => filesCleanup(blocker, files))
 
   def createIgluClient(registries: List[Registry]): IO[IgluCirceClient[IO]] =

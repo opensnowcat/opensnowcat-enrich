@@ -18,7 +18,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import cats.Parallel
 import cats.implicits._
 
-import cats.effect.{Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Concurrent, Resource, Sync}
 
 import com.permutive.pubsub.producer.PubsubProducer
 import com.permutive.pubsub.producer.Model.{ProjectId, Topic}
@@ -29,6 +29,7 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, Att
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
 
 import java.nio.charset.StandardCharsets
+import cats.effect.Temporal
 
 object Sink {
 
@@ -37,14 +38,14 @@ object Sink {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def init[F[_]: Concurrent: ContextShift: Parallel: Timer](
+  def init[F[_]: Concurrent: ContextShift: Parallel: Temporal](
     output: Output
   ): Resource[F, ByteSink[F]] =
     for {
       sink <- initAttributed(output)
     } yield (records: List[Array[Byte]]) => sink(records.map(AttributedData(_, "", Map.empty)))
 
-  def initAttributed[F[_]: Concurrent: ContextShift: Parallel: Timer](
+  def initAttributed[F[_]: Concurrent: ContextShift: Parallel: Temporal](
     output: Output
   ): Resource[F, AttributedByteSink[F]] =
     output match {

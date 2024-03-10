@@ -18,8 +18,7 @@ import cats.Show
 import cats.data.EitherT
 import cats.implicits._
 
-import cats.effect.{Async, Blocker, Clock, ConcurrentEffect, ContextShift, ExitCase, Resource, Sync, Timer}
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.{Async, Clock, ConcurrentEffect, ExitCase, Resource, Sync}
 
 import fs2.Stream
 
@@ -57,6 +56,8 @@ import scala.concurrent.ExecutionContext
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input.Kinesis
 
 import java.util.concurrent.TimeoutException
+import cats.effect.{ Ref, Temporal }
+import cats.effect.std.Semaphore
 
 /**
  * All allocated resources, configs and mutable variables necessary for running Enrich process
@@ -142,14 +143,13 @@ object Environment {
   ) {
 
     /** Initialize same enrichments, specified by configs (in case DB files updated) */
-    def reinitialize(blocker: Blocker, shifter: ShiftExecution[F]): F[Enrichments[F]] =
+    def reinitialize(shifter: ShiftExecution[F]): F[Enrichments[F]] =
       Enrichments.buildRegistry(configs, blocker, shifter, httpClient).map(registry => Enrichments(registry, configs, httpClient))
   }
 
   object Enrichments {
     def make[F[_]: Async: Clock: ContextShift](
       configs: List[EnrichmentConf],
-      blocker: Blocker,
       shifter: ShiftExecution[F],
       httpClient: HttpClient[F]
     ): Resource[F, Ref[F, Enrichments[F]]] =
@@ -162,7 +162,6 @@ object Environment {
 
     def buildRegistry[F[_]: Async: Clock: ContextShift](
       configs: List[EnrichmentConf],
-      blocker: Blocker,
       shifter: ShiftExecution[F],
       httpClient: HttpClient[F]
     ) =
@@ -173,9 +172,7 @@ object Environment {
   }
 
   /** Initialize and allocate all necessary resources */
-  def make[F[_]: ConcurrentEffect: ContextShift: Clock: Timer, A](
-    blocker: Blocker,
-    ec: ExecutionContext,
+  def make[F[_]: ConcurrentEffect: ContextShift: Clock: Temporal, A](ec: ExecutionContext,
     parsedConfigs: ParsedConfigs,
     source: Stream[F, A],
     sinkGood: Resource[F, AttributedByteSink[F]],
@@ -260,7 +257,7 @@ object Environment {
         Resource.pure[F, Option[SentryClient]](none[SentryClient])
     }
 
-  private def metadataReporter[F[_]: ConcurrentEffect: ContextShift: Timer](
+  private def metadataReporter[F[_]: ConcurrentEffect: ContextShift: Temporal](
     config: ConfigFile,
     appName: String,
     httpClient: Http4sClient[F]
@@ -290,7 +287,7 @@ object Environment {
         None
     }
 
-  def prepareRemoteAdapters[F[_]: ConcurrentEffect: Timer](
+  def prepareRemoteAdapters[F[_]: ConcurrentEffect: Temporal](
     remoteAdapters: RemoteAdapterConfigs,
     ec: ExecutionContext,
     metrics: Metrics[F]

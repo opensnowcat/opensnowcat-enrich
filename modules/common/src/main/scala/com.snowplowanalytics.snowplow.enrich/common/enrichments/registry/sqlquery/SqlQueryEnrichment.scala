@@ -25,7 +25,7 @@ import io.circe.generic.semiauto._
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.implicits._
 
-import cats.effect.{Async, Blocker, Clock, ContextShift}
+import cats.effect.{Async, Clock}
 
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
 
@@ -109,7 +109,6 @@ object SqlQueryEnrichment extends ParseableEnrichment {
     output: Output,
     cache: Cache,
     ignoreOnError: Boolean,
-    blocker: Blocker,
     shifter: ShiftExecution[F]
   ): F[SqlQueryEnrichment[F]] = {
     val cacheConfig = CachingEvaluator.Config(

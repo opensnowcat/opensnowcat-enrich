@@ -16,7 +16,7 @@ import cats.Parallel
 
 import cats.implicits._
 
-import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource, Sync, SyncIO}
+import cats.effect.{ExitCode, IO, IOApp, Resource, Sync, SyncIO}
 
 import java.util.concurrent.{Executors, TimeUnit}
 

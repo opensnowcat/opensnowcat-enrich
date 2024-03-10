@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
-import cats.effect.{Clock, ConcurrentEffect, ContextShift, ExitCode, Sync, Timer}
+import cats.effect.{Clock, ConcurrentEffect, ExitCode, Sync}
 
 import cats.Parallel
 import cats.implicits._
@@ -33,6 +33,7 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.Run
 import com.snowplowanalytics.snowplow.enrich.aws.S3Client
 
 import com.snowplowanalytics.snowplow.enrich.kinesis.generated.BuildInfo
+import cats.effect.Temporal
 
 object KinesisRun {
 
@@ -42,7 +43,7 @@ object KinesisRun {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def run[F[_]: Clock: ConcurrentEffect: ContextShift: Parallel: Timer](args: List[String], ec: ExecutionContext): F[ExitCode] =
+  def run[F[_]: Clock: ConcurrentEffect: ContextShift: Parallel: Temporal](args: List[String], ec: ExecutionContext): F[ExitCode] =
     Run.run[F, CommittableRecord](
       args,
       BuildInfo.name,
@@ -71,7 +72,7 @@ object KinesisRun {
   }
 
   /** For each shard, the record with the biggest sequence number is found, and checkpointed. */
-  private def checkpoint[F[_]: Parallel: Sync: Timer](records: List[CommittableRecord]): F[Unit] =
+  private def checkpoint[F[_]: Parallel: Sync: Temporal](records: List[CommittableRecord]): F[Unit] =
     records
       .groupBy(_.shardId)
       .foldLeft(List.empty[CommittableRecord]) { (acc, shardRecords) =>

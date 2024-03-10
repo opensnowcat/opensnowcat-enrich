@@ -12,8 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2.test
 
-import cats.effect.{Blocker, IO, Resource}
-import cats.effect.concurrent.Ref
+import cats.effect.{IO, Resource}
 
 import io.circe.literal._
 
@@ -31,6 +30,7 @@ import org.http4s.syntax.all._
 import cats.effect.testing.specs2.CatsIO
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.SpecHelpers
+import cats.effect.Ref
 
 /**
  * Embedded HTTP Server for testing, mostly for assets refresh,
@@ -68,7 +68,7 @@ object HttpServer extends CatsIO {
         case GET -> Root / "maxmind" / "GeoIP2-City.mmdb" =>
           counter.updateAndGet(_ + 1).flatMap { i =>
             val is = readMaxMindDb(i)
-            Ok(Blocker[IO].use(b => readInputStream[IO](is, 256, b).compile.to(Array)))
+            Ok(Resource.unit[IO].use(b => readInputStream[IO](is, 256, b).compile.to(Array)))
           }
         case GET -> Root / "iab" / file =>
           counter.updateAndGet(_ + 1).flatMap { i =>

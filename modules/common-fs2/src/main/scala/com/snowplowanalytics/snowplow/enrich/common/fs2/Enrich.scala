@@ -25,7 +25,7 @@ import cats.data.{NonEmptyList, ValidatedNel}
 import cats.{Monad, Parallel}
 import cats.implicits._
 
-import cats.effect.{Clock, Concurrent, ContextShift, ExitCase, Fiber, Sync, Timer}
+import cats.effect.{Clock, Concurrent, ExitCase, Fiber, Sync}
 import cats.effect.implicits._
 
 import fs2.concurrent.{NoneTerminatedQueue, Queue}
@@ -50,6 +50,7 @@ import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{CustomOutputFormat, FeatureFlags}
 
 import java.nio.charset.StandardCharsets
+import cats.effect.Temporal
 
 object Enrich {
 
@@ -65,7 +66,7 @@ object Enrich {
    * [[Environment]] initialisation, then if `assetsUpdatePeriod` has been specified -
    * they'll be refreshed periodically by [[Assets.updateStream]]
    */
-  def run[F[_]: Concurrent: ContextShift: Clock: Parallel: Timer, A](env: Environment[F, A]): Stream[F, Unit] = {
+  def run[F[_]: Concurrent: ContextShift: Clock: Parallel: Temporal, A](env: Environment[F, A]): Stream[F, Unit] = {
     val enrichmentsRegistry: F[EnrichmentRegistry[F]] = env.enrichments.get.map(_.registry)
     val enrich: Enrich[F] = {
       implicit val rl: RegistryLookup[F] = env.registryLookup
@@ -401,7 +402,7 @@ object Enrich {
    * We must not terminate the source any earlier, because this would shutdown the kinesis scheduler too early,
    * and then we would not be able to checkpoint the outstanding records.
    */
-  private def runWithShutdown[F[_]: Concurrent: Sync: Timer, A](
+  private def runWithShutdown[F[_]: Concurrent: Sync: Temporal, A](
     enriched: Stream[F, List[(A, Result)]],
     sinkAndCheckpoint: Pipe[F, List[(A, Result)], Unit]
   ): F[Unit] =
@@ -430,7 +431,7 @@ object Enrich {
         }
     }
 
-  private def terminateStream[F[_]: Concurrent: Sync: Timer, A](queue: NoneTerminatedQueue[F, A], fiber: Fiber[F, Unit]): F[Unit] =
+  private def terminateStream[F[_]: Concurrent: Sync: Temporal, A](queue: NoneTerminatedQueue[F, A], fiber: Fiber[F, Unit]): F[Unit] =
     for {
       timeout <- Sync[F].pure(5.minutes)
       _ <- Logger[F].warn(s"Terminating enrich stream. Waiting $timeout for it to complete")

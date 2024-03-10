@@ -22,8 +22,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import cats.Monad
 
-import cats.effect.{Blocker, Concurrent, ContextShift, IO, Resource, Timer}
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.{Concurrent, IO, Resource}
 import cats.effect.testing.specs2.CatsIO
 
 import fs2.Stream
@@ -48,6 +47,8 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.Environment.{Enrichments
 import com.snowplowanalytics.snowplow.enrich.common.fs2.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Concurrency, Telemetry}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients
+import cats.effect.{ Ref, Temporal }
+import cats.effect.std.Semaphore
 
 case class TestEnvironment[A](
   env: Environment[IO, A],
@@ -69,9 +70,8 @@ case class TestEnvironment[A](
   def run(
     updateEnv: Environment[IO, A] => Environment[IO, A] = identity
   )(
-    implicit C: Concurrent[IO],
-    CS: ContextShift[IO],
-    T: Timer[IO]
+    implicit
+    T: Temporal[IO]
   ): IO[(Vector[BadRow], Vector[Event], Vector[Event])] = {
     val updatedEnv = updateEnv(env)
     val stream = Enrich
@@ -104,7 +104,7 @@ object TestEnvironment extends CatsIO {
 
   val enrichmentReg: EnrichmentRegistry[IO] = EnrichmentRegistry[IO]()
 
-  val ioBlocker: Resource[IO, Blocker] = Blocker[IO]
+  val ioBlocker: Resource[IO, Blocker] = Resource.unit[IO]
 
   val embeddedRegistry = Registry.EmbeddedRegistry
 

@@ -17,7 +17,7 @@ import java.util.concurrent.{Executors, TimeUnit}
 import scala.concurrent.ExecutionContext
 import cats.{Applicative, Parallel}
 import cats.implicits._
-import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource, SyncIO}
+import cats.effect.{ExitCode, IO, IOApp, Resource, SyncIO}
 import fs2.kafka.CommittableConsumerRecord
 import com.snowplowanalytics.snowplow.enrich.common.fs2.Run
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{BlobStorageClients => BlobStorageClientsConfig}

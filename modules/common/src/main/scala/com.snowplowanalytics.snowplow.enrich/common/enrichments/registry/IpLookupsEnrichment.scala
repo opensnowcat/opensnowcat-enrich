@@ -17,7 +17,7 @@ import java.net.URI
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
 
-import cats.effect.{Async, Blocker, ContextShift}
+import cats.effect.Async
 
 import io.circe._
 
@@ -95,9 +95,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       } yield IpLookupsDatabase(name, uri, uriAndDb._2)).toValidated.some
     } else None
 
-  def create[F[_]: Async: ContextShift](
-    blocker: Blocker,
-    geoFilePath: Option[String],
+  def create[F[_]: Async: ContextShift](geoFilePath: Option[String],
     ispFilePath: Option[String],
     domainFilePath: Option[String],
     connectionFilePath: Option[String]

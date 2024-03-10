@@ -23,8 +23,7 @@ import scala.concurrent.duration._
 import fs2.Stream
 import fs2.io.file.exists
 
-import cats.effect.{Blocker, IO, Resource}
-import cats.effect.concurrent.Semaphore
+import cats.effect.{IO, Resource}
 
 import cats.effect.testing.specs2.CatsIO
 
@@ -33,6 +32,7 @@ import com.snowplowanalytics.snowplow.enrich.common.utils.{HttpClient, ShiftExec
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.test._
+import cats.effect.std.Semaphore
 
 class AssetsSpec extends Specification with CatsIO with ScalaCheck {
 
@@ -69,7 +69,7 @@ class AssetsSpec extends Specification with CatsIO with ScalaCheck {
 
       val resources =
         for {
-          blocker <- Blocker[IO]
+          blocker <- Resource.unit[IO]
           files <- SpecHelpers.filesResource(blocker, TestFiles)
         } yield (blocker, files)
 
@@ -93,7 +93,7 @@ class AssetsSpec extends Specification with CatsIO with ScalaCheck {
       val path = Paths.get(flakyFile)
 
       val resources = for {
-        blocker <- Blocker[IO]
+        blocker <- Resource.unit[IO]
         state <- SpecHelpers.refreshState(Nil)
         _ <- SpecHelpers.filesResource(blocker, TestFiles)
       } yield (blocker, state)
@@ -120,7 +120,7 @@ class AssetsSpec extends Specification with CatsIO with ScalaCheck {
         .flatMap { state =>
           val resources =
             for {
-              blocker <- Blocker[IO]
+              blocker <- Resource.unit[IO]
               shiftExecution <- ShiftExecution.ofSingleThread
               sem <- Resource.eval(Semaphore[IO](1L))
               http4s <- Clients.mkHttp[IO](ec = SpecHelpers.blockingEC)

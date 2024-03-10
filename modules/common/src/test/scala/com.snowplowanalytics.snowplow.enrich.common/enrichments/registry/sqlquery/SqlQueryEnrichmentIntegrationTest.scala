@@ -18,7 +18,7 @@ import io.circe.parser._
 
 import cats.data.NonEmptyList
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import cats.effect.testing.specs2.CatsIO
 
 import org.specs2.Specification

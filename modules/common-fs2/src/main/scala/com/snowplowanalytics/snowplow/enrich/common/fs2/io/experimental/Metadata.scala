@@ -22,8 +22,7 @@ import cats.implicits._
 import cats.Applicative
 import cats.data.NonEmptyList
 import cats.kernel.Semigroup
-import cats.effect.{Async, Clock, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
-import cats.effect.concurrent.Ref
+import cats.effect.{Async, Clock, ConcurrentEffect, Resource, Sync}
 import fs2.Stream
 import io.circe.Json
 import io.circe.parser._
@@ -37,6 +36,7 @@ import com.snowplowanalytics.snowplow.scalatracker.{Emitter, Tracker}
 import com.snowplowanalytics.snowplow.scalatracker.emitters.http4s.Http4sEmitter
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Metadata => MetadataConfig}
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import cats.effect.{ Ref, Temporal }
 
 /**
  * EXPERIMENTAL: This code is subject to change or being removed
@@ -65,7 +65,7 @@ object Metadata {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def build[F[_]: ContextShift: ConcurrentEffect: Timer](
+  def build[F[_]: ContextShift: ConcurrentEffect: Temporal](
     config: MetadataConfig,
     reporter: MetadataReporter[F]
   ): F[Metadata[F]] =
@@ -107,7 +107,7 @@ object Metadata {
     ): F[Unit]
   }
 
-  case class HttpMetadataReporter[F[_]: ConcurrentEffect: Timer](
+  case class HttpMetadataReporter[F[_]: ConcurrentEffect: Temporal](
     config: MetadataConfig,
     appName: String,
     client: Client[F]
