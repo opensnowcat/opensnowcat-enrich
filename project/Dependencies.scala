@@ -89,7 +89,7 @@ object Dependencies {
     val azureIdentity = "1.11.0"
     val http4s = "0.21.34"
     val log4cats = "1.7.0"
-    val catsRetry = "2.1.1"
+    val catsRetry = "3.1.3"
     val specsDiff = "0.9.0"
     val eventGen = "0.2.2"
 
