@@ -36,7 +36,7 @@ object Dependencies {
     val useragent = "1.21"
     val uaParser = "1.6.1"
     val snakeYaml = "2.2"
-    val postgresDriver = "42.7.2"
+    val postgresDriver = "42.7.3"
     val mysqlConnector = "8.3.0"
     val hikariCP = "5.1.0"
     val jaywayJsonpath = "2.7.0"
