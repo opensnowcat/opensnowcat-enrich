@@ -54,7 +54,9 @@ class YauaaEnrichmentSpec extends Specification with CatsIO {
             "schema":"iglu:nl.basjes/yauaa_context/jsonschema/1-0-4",
             "data": {
               "deviceBrand":"Unknown",
+              "deviceFirmwareVersion": "??",
               "deviceName":"Linux Desktop",
+              "deviceVersion": "??",
               "operatingSystemVersionMajor":"6",
               "layoutEngineNameVersion":"Blink 106.0",
               "operatingSystemNameVersion":"Linux 6.0.1",
