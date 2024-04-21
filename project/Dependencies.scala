@@ -42,7 +42,7 @@ object Dependencies {
     val jaywayJsonpath = "2.7.0"
     val jsonsmart = "2.5.1"
     val iabClient = "0.2.0"
-    val yauaa = "7.24.0"
+    val yauaa = "7.26.1"
     val log4jToSlf4j = "2.23.1"
     val guava = "33.1.0-jre"
     val slf4j = "2.0.13"
