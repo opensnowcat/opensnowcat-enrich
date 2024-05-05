@@ -18,6 +18,7 @@ import fs2.Stream
 import org.http4s.client.{Client => Http4sClient}
 import org.http4s.headers.Authorization
 import org.http4s.{BasicCredentials, EmptyBody, EntityBody, Header, Headers, Method, Request, Status, Uri}
+import org.typelevel.ci._
 
 trait HttpClient[F[_]] {
   def getResponse(
@@ -32,7 +33,7 @@ trait HttpClient[F[_]] {
 object HttpClient {
 
   private[utils] def getHeaders(authUser: Option[String], authPassword: Option[String]): Headers = {
-    val alwaysIncludedHeaders = List(Header("content-type", "application/json"), Header("accept", "*/*"))
+    val alwaysIncludedHeaders = List(Header.Raw(ci"content-type", "application/json"), Header.Raw(ci"accept", "*/*"))
     if (authUser.isDefined || authPassword.isDefined)
       Headers(Authorization(BasicCredentials(authUser.getOrElse(""), authPassword.getOrElse(""))) :: alwaysIncludedHeaders)
     else Headers(alwaysIncludedHeaders)
