@@ -100,7 +100,7 @@ object Dependencies {
     val specs2CE = "0.5.4"
     val scalacheck = "1.17.0"
     val testcontainers = "0.40.10"
-    val parserCombinators = "2.3.0"
+    val parserCombinators = "2.4.0"
     val sentry = "1.7.30"
 
     val betterMonadicFor = "0.3.1"
