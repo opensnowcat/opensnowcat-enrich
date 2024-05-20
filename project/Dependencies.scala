@@ -31,7 +31,7 @@ object Dependencies {
   object V {
     // Java
     val commonsCodec = "1.16.0"
-    val commonsText = "1.11.0"
+    val commonsText = "1.12.0"
     val jodaTime = "2.12.7"
     val useragent = "1.21"
     val uaParser = "1.6.1"
@@ -98,9 +98,9 @@ object Dependencies {
     val specs2 = "4.20.5"
     val specs2Cats = "4.11.0"
     val specs2CE = "0.5.4"
-    val scalacheck = "1.17.0"
+    val scalacheck = "1.17.1"
     val testcontainers = "0.40.10"
-    val parserCombinators = "2.3.0"
+    val parserCombinators = "2.4.0"
     val sentry = "1.7.30"
 
     val betterMonadicFor = "0.3.1"
