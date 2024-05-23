@@ -466,6 +466,8 @@ object io {
   object CustomOutputFormat {
     final case object FlattenedJson extends CustomOutputFormat
 
+    final case object BigQueryJson extends CustomOutputFormat
+
     final case class EventbridgeJson(payload: Boolean, collector: Boolean) extends CustomOutputFormat
 
     case class CustomOutputFormatRaw(

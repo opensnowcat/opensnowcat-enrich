@@ -290,7 +290,10 @@ object Enrich {
     val asStrE = customOutputFormat match {
       case None => Right(tsv)
       case Some(outputFormat) =>
-        val jsonE = EnrichUtils.transformTsvToJson(tsv)
+        val jsonE = outputFormat match {
+          case CustomOutputFormat.BigQueryJson => EnrichUtils.transformTsvToBigQueryJson(tsv)
+          case _ => EnrichUtils.transformTsvToFlattenedJson(tsv)
+        }
 
         (outputFormat, jsonE) match {
           case (_, Left(error)) =>
@@ -301,10 +304,11 @@ object Enrich {
             )
             Left(badRow)
 
-          case (CustomOutputFormat.FlattenedJson, Right(json)) => Right(json.noSpaces)
           case (CustomOutputFormat.EventbridgeJson(payload, collector), Right(json)) =>
             val output = serializeEventbridgeEvent(tsv, json, payload = payload, collector = collector)
             Right(output.noSpaces)
+
+          case (_, Right(json)) => Right(json.noSpaces)
         }
     }
 
