@@ -290,10 +290,7 @@ object Enrich {
     val asStrE = customOutputFormat match {
       case None => Right(tsv)
       case Some(outputFormat) =>
-        val jsonE = com.snowplowanalytics.snowplow.analytics.scalasdk.Event
-          .parse(tsv)
-          .map(_.toJson(lossy = true))
-          .toEither
+        val jsonE = EnrichUtils.transformTsvToJson(tsv)
 
         (outputFormat, jsonE) match {
           case (_, Left(error)) =>
