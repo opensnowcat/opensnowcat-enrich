@@ -32,20 +32,6 @@ class BigQueryEncodingUtilsSpec extends Specification {
       }
     }
 
-    "isIsoDate" should {
-      "return true for iso dates" in {
-        val isoDate = "2024-05-26T00:05:44.041728Z"
-        BigQueryEncodingUtils.isIsoDate(isoDate) must beTrue
-      }
-
-      "return false for non iso dates" in {
-        val isoDate = "2024-05-26T00:05:44.041728Z"
-        val nonIsoDate = isoDate.replaceAll("T", " ")
-
-        BigQueryEncodingUtils.isIsoDate(nonIsoDate) must beFalse
-      }
-    }
-
     "microSecondsSinceEpoch" should {
       "return 0 for epoch" in {
         val epoch = Instant.EPOCH

@@ -299,8 +299,8 @@ object Enrich {
           case (CustomOutputFormat.EventbridgeJson(payload, collector), Right(json)) =>
             val output = serializeEventbridgeEvent(tsv, json, payload = payload, collector = collector)
             Right(output.noSpaces)
-
-          case (_, Right(json)) => Right(json.noSpaces)
+          case (CustomOutputFormat.FlattenedJson, Right(json)) => Right(json.noSpaces)
+          case (CustomOutputFormat.BigQueryJson, Right(json)) => Right(json.noSpaces)
         }
     }
 

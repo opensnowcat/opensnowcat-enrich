@@ -5,7 +5,6 @@ import _root_.io.circe.{Json, JsonObject}
 import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 
 import java.time.Instant
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import scala.util.Try
 
@@ -32,21 +31,22 @@ object BigQueryEncodingUtils {
   private[utils] def mapIsoDatesToMicros(fields: Map[String, Json]): Map[String, Json] =
     fields.mapValues(BigQueryEncodingUtils.isoDateToMicrosSinceEpochOrSelf)
 
-  private[utils] def isoDateToMicrosSinceEpochOrSelf(json: Json): Json =
-    json.asString match {
-      case Some(mightBeIso) if isIsoDate(mightBeIso) =>
-        val time = isoDateToInstant(mightBeIso)
-        val micros = microSecondsSinceEpoch(time)
+  private[utils] def isoDateToMicrosSinceEpochOrSelf(json: Json): Json = {
+    val maybeTimestamp = for {
+      stringJson <- json.asString
+      timestamp <- isoDateToInstant(stringJson)
+    } yield timestamp
+
+    maybeTimestamp match {
+      case Some(timestamp) =>
+        val micros = microSecondsSinceEpoch(timestamp)
         Json.fromLong(micros)
       case _ => json
     }
-
-  private[utils] def isIsoDate(maybeIsoDate: String): Boolean = {
-    Try(DateTimeFormatter.ISO_DATE_TIME.parse(maybeIsoDate)).isSuccess
   }
 
-  private[utils] def isoDateToInstant(isoDate: String): Instant = {
-    Instant.parse(isoDate)
+  private[utils] def isoDateToInstant(isoDate: String): Option[Instant] = {
+    Try(Instant.parse(isoDate)).toOption
   }
 
   def microSecondsSinceEpoch(timestamp: Instant): Long =
