@@ -44,13 +44,14 @@ object Dependencies {
     val iabClient = "0.2.0"
     val yauaa = "7.24.0"
     val log4jToSlf4j = "2.23.1"
-    val guava = "33.1.0-jre"
+    val guava = "33.2.1-jre"
     val slf4j = "2.0.13"
     val log4j = "2.23.1"
     val thrift = "0.20.0"
     val sprayJson = "1.3.6"
     val netty = "4.1.111.Final"
-    val protobuf = "3.25.3"
+    val protobuf = "4.27.2"
+
 
     val refererParser = "1.1.0"
     val maxmindIplookups = "0.7.2"
@@ -69,12 +70,12 @@ object Dependencies {
     val collectorPayload = "0.0.0"
     val schemaSniffer = "0.0.0"
 
-    val awsSdk = "1.12.730"
+    val awsSdk = "1.12.761"
     val gcpSdk = "2.31.0"
-    val awsSdk2 = "2.25.60"
+    val awsSdk2 = "2.25.69"
     val kinesisClient2 = "2.4.3"
     val kafka = "7.6.1-ce"
-    val mskAuth = "2.1.0"
+    val mskAuth = "2.1.1"
     val nsqClient = "1.3.0"
     val jackson = "2.15.3"
     val config = "1.3.4"
@@ -95,7 +96,7 @@ object Dependencies {
 
     val snowplowTracker = "1.0.0"
 
-    val specs2 = "4.20.5"
+    val specs2 = "4.20.8"
     val specs2Cats = "4.11.0"
     val specs2CE = "0.5.4"
     val scalacheck = "1.18.0"
