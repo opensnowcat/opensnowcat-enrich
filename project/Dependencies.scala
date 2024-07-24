@@ -49,7 +49,7 @@ object Dependencies {
     val log4j = "2.23.1"
     val thrift = "0.20.0"
     val sprayJson = "1.3.6"
-    val netty = "4.1.110.Final"
+    val netty = "4.1.112.Final"
     val protobuf = "4.27.2"
 
     val refererParser = "1.1.0"
