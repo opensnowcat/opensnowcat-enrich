@@ -50,7 +50,7 @@ object Dependencies {
     val thrift = "0.20.0"
     val sprayJson = "1.3.6"
     val netty = "4.1.112.Final"
-    val protobuf = "4.27.2"
+    val protobuf = "4.27.3"
 
     val refererParser = "1.1.0"
     val maxmindIplookups = "0.7.2"
