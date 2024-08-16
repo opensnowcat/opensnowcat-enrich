@@ -25,7 +25,7 @@ import retry.RetryPolicy
 import retry.implicits.{retrySyntaxBase, retrySyntaxError}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.eventbridge.EventBridgeClient
-import software.amazon.awssdk.services.eventbridge.model.{PutEventsRequest, PutEventsRequestEntry, PutEventsResponse}
+import software.amazon.awssdk.services.eventbridge.model.{EventBridgeException, PutEventsRequest, PutEventsRequestEntry, PutEventsResponse}
 
 import java.nio.charset.StandardCharsets
 import java.util.UUID
@@ -180,7 +180,7 @@ object Sink {
       blocker
         .blockOn(Sync[F].delay(putEvents(eventbridge, events)))
         .map(TryBatchResult.build(events, _))
-        .retryingOnFailuresAndAllErrors(
+        .retryingOnFailuresAndSomeErrors(
           policy = retryPolicy,
           wasSuccessful = r => !r.shouldRetrySameBatch,
           onFailure = { case (result, retryDetails) =>
@@ -191,7 +191,14 @@ object Sink {
             Logger[F]
               .error(exception)(
                 s"Writing ${events.size} records to ${config.eventBusName} errored (${retryDetails.retriesSoFar} retries from cats-retry)"
-              )
+              ),
+          isWorthRetrying = {
+            // Do not retry when getting error 4xx, these occur due to a request problem and retrying won't help
+            // For example:
+            // - Total size of the entries in the request is over the limit
+            case ex: EventBridgeException if ex.statusCode() % 100 == 4 => false
+            case _ => true
+          }
         )
         .flatMap { result =>
           if (result.shouldRetrySameBatch)
