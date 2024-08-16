@@ -120,11 +120,11 @@ object Sink {
     for {
       ref <- Ref.of(events)
       _ <- Sync[F].whenA(invalidEvents.nonEmpty) {
-        invalidEvents.map { e =>
-          val dataSize = getRecordSize(e)
-          Logger[F].warn(s"Event data size ($dataSize bytes) exceeds 256 KB limit. Skipping event")
-        }.sequence_
-      }
+             invalidEvents.map { e =>
+               val dataSize = getRecordSize(e)
+               Logger[F].warn(s"Event data size ($dataSize bytes) exceeds 256 KB limit. Skipping event")
+             }.sequence_
+           }
       failures <- runAndCaptureFailures(ref)
                     .retryingOnFailures(
                       policy = policyForThrottling,
