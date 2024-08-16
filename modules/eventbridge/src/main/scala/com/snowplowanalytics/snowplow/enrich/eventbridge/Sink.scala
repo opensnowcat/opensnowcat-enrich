@@ -79,7 +79,7 @@ object Sink {
         .build
     }
 
-  def toEventBridgeEvents(
+  private def toEventBridgeEvents(
     events: List[AttributedData[Array[Byte]]],
     output: Output.Eventbridge
   ): List[PutEventsRequestEntry] =
@@ -99,8 +99,12 @@ object Sink {
     blocker: Blocker,
     config: Output.Eventbridge,
     eventbridge: EventBridgeClient,
-    events: List[PutEventsRequestEntry]
+    allEvents: List[PutEventsRequestEntry]
   ): F[Unit] = {
+    // The maximum size for a PutEvents event entry is 256 KB. Entry size is calculated including the event and any necessary characters and keys of the JSON representation of the event
+    // See: https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html
+    val recordByteLimit = 256 * 1024
+    val (events, invalidEvents) = allEvents.partition(r => getRecordSize(r) <= recordByteLimit)
     val policyForErrors = Retries.fullJitter[F](config.backoffPolicy)
     val policyForThrottling = Retries.fibonacci[F](config.throttledBackoffPolicy)
 
@@ -115,6 +119,12 @@ object Sink {
 
     for {
       ref <- Ref.of(events)
+      _ <- Sync[F].whenA(invalidEvents.nonEmpty) {
+        invalidEvents.map { e =>
+          val dataSize = getRecordSize(e)
+          Logger[F].warn(s"Event data size ($dataSize bytes) exceeds 256 KB limit. Skipping event")
+        }.sequence_
+      }
       failures <- runAndCaptureFailures(ref)
                     .retryingOnFailures(
                       policy = policyForThrottling,
