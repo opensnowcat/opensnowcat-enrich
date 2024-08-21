@@ -423,7 +423,6 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
       }
     }
 
-
     "serialize a good event to the good output (eventbridge format)" in {
       val ee = new EnrichedEvent {
         collector_tstamp = "2011-12-03T10:15:30"

@@ -45,9 +45,8 @@ object BigQueryEncodingUtils {
     }
   }
 
-  private[utils] def isoDateToInstant(isoDate: String): Option[Instant] = {
+  private[utils] def isoDateToInstant(isoDate: String): Option[Instant] =
     Try(Instant.parse(isoDate)).toOption
-  }
 
   def microSecondsSinceEpoch(timestamp: Instant): Long =
     ChronoUnit.MICROS.between(Instant.EPOCH, timestamp)

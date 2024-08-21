@@ -6,12 +6,11 @@ import io.circe.Json
 
 object JsonOutputUtils {
 
-  def transformEventToJson(event: Event, outputFormat: CustomOutputFormat): Json = {
+  def transformEventToJson(event: Event, outputFormat: CustomOutputFormat): Json =
     outputFormat match {
       case CustomOutputFormat.BigQueryJson => BigQueryEncodingUtils.transformEventToBigQueryJson(event)
       case CustomOutputFormat.FlattenedJson => event.toJson(lossy = true)
       case CustomOutputFormat.EventbridgeJson(_, _) => event.toJson(lossy = true)
     }
-  }
 
 }
