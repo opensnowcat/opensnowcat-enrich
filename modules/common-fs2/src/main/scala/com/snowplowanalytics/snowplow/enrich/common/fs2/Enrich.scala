@@ -16,28 +16,20 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Instant
 import java.util.Base64
 import java.util.concurrent.TimeUnit
-
 import scala.concurrent.duration._
-
 import org.joda.time.DateTime
-
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.{Monad, Parallel}
 import cats.implicits._
-
 import cats.effect.{Clock, Concurrent, ContextShift, ExitCase, Fiber, Sync, Timer}
 import cats.effect.implicits._
-
 import fs2.concurrent.{NoneTerminatedQueue, Queue}
 import fs2.{Pipe, Stream}
 import _root_.io.circe.Json
 import _root_.io.sentry.SentryClient
-
 import _root_.io.circe.syntax._
-
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-
 import com.snowplowanalytics.iglu.client.IgluCirceClient
 import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup
 import com.snowplowanalytics.snowplow.badrows.{BadRow, Failure, Processor, Payload => BadRowPayload}
@@ -48,6 +40,7 @@ import com.snowplowanalytics.snowplow.enrich.common.loaders.{CollectorPayload, T
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{CustomOutputFormat, FeatureFlags}
+import com.snowplowanalytics.snowplow.enrich.common.fs2.utils.JsonOutputUtils
 
 import java.nio.charset.StandardCharsets
 
@@ -292,7 +285,7 @@ object Enrich {
       case Some(outputFormat) =>
         val jsonE = com.snowplowanalytics.snowplow.analytics.scalasdk.Event
           .parse(tsv)
-          .map(_.toJson(lossy = true))
+          .map(JsonOutputUtils.transformEventToJson(_, outputFormat))
           .toEither
 
         (outputFormat, jsonE) match {
@@ -304,10 +297,11 @@ object Enrich {
             )
             Left(badRow)
 
-          case (CustomOutputFormat.FlattenedJson, Right(json)) => Right(json.noSpaces)
           case (CustomOutputFormat.EventbridgeJson(payload, collector), Right(json)) =>
             val output = serializeEventbridgeEvent(tsv, json, payload = payload, collector = collector)
             Right(output.noSpaces)
+          case (CustomOutputFormat.FlattenedJson, Right(json)) => Right(json.noSpaces)
+          case (CustomOutputFormat.BigQueryJson, Right(json)) => Right(json.noSpaces)
         }
     }
 
