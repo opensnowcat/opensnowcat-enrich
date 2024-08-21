@@ -1,3 +1,16 @@
+1.2.0 (2024-08-21)
+------------------
+A hotfix for the Eventbridge module, we were sending large payloads that were rejected by Eventbridge (more than 256kb), it makes no sense to send these nor retry because AWS rejects the requests (see https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html).
+A new JSON format (`BigQueryJson `) to support BigQuery (by @Fattouh92).
+Dependency updates.
+
+------------------
+1.2.0 (2024-03-02)
+------------------
+JSON Output for all modules.
+Dependency updates.
+
+------------------
 1.0.0 (2024-01-11)
 ------------------
 enrich-kinesis: Add support for flattened JSON as good output (#2)
