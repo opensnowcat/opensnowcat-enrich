@@ -212,3 +212,27 @@ lazy val eventbridgeDistroless = project
   .configs(IntegrationTest)
   .settings((IntegrationTest / test) := (IntegrationTest / test).dependsOn(Docker / publishLocal).value)
   .settings((IntegrationTest / testOnly) := (IntegrationTest / testOnly).dependsOn(Docker / publishLocal).evaluated)
+
+import java.nio.file.{Files, Paths}
+import sbt.Keys._
+
+lazy val generatePomForAllModules = taskKey[Unit]("Generate POM files for all modules")
+
+generatePomForAllModules := {
+  val allProjects = thisProject.value.aggregate
+  val currentState = state.value
+
+  allProjects.foreach { projectRef =>
+    Project.runTask(makePom in (projectRef, Compile), currentState).collect {
+      case (_, Value(file: java.io.File)) =>
+        val outputFile = baseDirectory.value / s"${projectRef.project}-pom.xml"
+        val pomContent = new String(Files.readAllBytes(file.toPath), "UTF-8")
+        IO.write(outputFile, pomContent)
+        streams.value.log.info(s"POM file generated/overwritten for ${projectRef.project} at: $outputFile")
+    }
+  }
+}
+
+// Optionally link the task to the compile phase in the Compile scope
+Compile / compile := (Compile / compile).dependsOn(generatePomForAllModules).value
+
