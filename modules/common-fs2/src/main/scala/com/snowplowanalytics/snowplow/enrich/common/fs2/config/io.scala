@@ -491,6 +491,9 @@ object io {
                                   case CustomOutputFormatRaw(tpe, _, _) if tpe equalsIgnoreCase "BigQueryJson" =>
                                     BigQueryJson.asRight
 
+                                  case CustomOutputFormatRaw(tpe, _, _) if tpe equalsIgnoreCase "SkinnyJson" =>
+                                    SkinnyJson.asRight
+
                                   case CustomOutputFormatRaw(tpe, payloadOpt, collectorOtp) if tpe equalsIgnoreCase "EventbridgeJson" =>
                                     EventbridgeJson(
                                       payload = payloadOpt.getOrElse(false),
@@ -499,7 +502,7 @@ object io {
 
                                   case other =>
                                     DecodingFailure(
-                                      s"Custom output format $other is not supported. Possible types are FlattenedJson, BigQueryJson and EventbridgeJson",
+                                      s"Custom output format $other is not supported. Possible types are FlattenedJson, BigQueryJson, EventbridgeJson, or, SkinnyJson",
                                       cur.history
                                     ).asLeft
                                 }
