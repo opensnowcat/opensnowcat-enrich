@@ -470,6 +470,8 @@ object io {
 
     final case class EventbridgeJson(payload: Boolean, collector: Boolean) extends CustomOutputFormat
 
+    final case object SkinnyJson extends CustomOutputFormat
+
     case class CustomOutputFormatRaw(
       `type`: String,
       payload: Option[Boolean],

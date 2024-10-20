@@ -265,6 +265,7 @@
     # - FlattenedJson: encodes the output as JSON, where unstruct_event, contexts and derived_contexts are flattened
     # - EventbridgeJson: encodes the output as JSON with extra details, intended exclusively to use with eventbridge module.
     # - BigQueryJson: encodes the output as JSON with the expected time format supported by BigQuery.
+    # - SkinnyJson: encodes just the payload and collector inside a JSON object
     # "customOutputFormat": {
     #   "type": "FlattenedJson"
     # }
