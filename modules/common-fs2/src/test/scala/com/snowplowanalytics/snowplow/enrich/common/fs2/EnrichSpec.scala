@@ -368,87 +368,23 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
     }
 
     "serialize a good event to the good output (json format)" in {
-      val ee = new EnrichedEvent {
-        collector_tstamp = "2011-12-03T10:15:30"
-        event_id = "236392af-ffec-4def-a0de-86929e9615be"
-        v_collector = "test"
-        v_etl = "test"
-      }
-
-      TestEnvironment.make(Stream.empty).use { test =>
-        val env = test.env.copy(
-          customOutputFormat = Some(CustomOutputFormat.FlattenedJson)
-        )
-        for {
-          _ <- sinkGood(env, ee)
-          good <- test.good
-          pii <- test.pii
-          bad <- test.bad
-        } yield {
-          (good.size must_== 1)
-          (bad should be empty)
-          (pii should be empty)
-
-          val jsonE = _root_.io.circe.parser.parse(new String(good.head.data))
-          (jsonE.isRight should beTrue)
-        }
-      }
+      val format = CustomOutputFormat.FlattenedJson
+      simpleCustomFormatTest(format)
     }
 
     "serialize a good event to the good output (bigquery json format)" in {
-      val ee = new EnrichedEvent {
-        collector_tstamp = "2011-12-03T10:15:30"
-        event_id = "236392af-ffec-4def-a0de-86929e9615be"
-        v_collector = "test"
-        v_etl = "test"
-      }
+      val format = CustomOutputFormat.BigQueryJson
+      simpleCustomFormatTest(format)
+    }
 
-      TestEnvironment.make(Stream.empty).use { test =>
-        val env = test.env.copy(
-          customOutputFormat = Some(CustomOutputFormat.BigQueryJson)
-        )
-        for {
-          _ <- sinkGood(env, ee)
-          good <- test.good
-          pii <- test.pii
-          bad <- test.bad
-        } yield {
-          (good.size must_== 1)
-          (bad should be empty)
-          (pii should be empty)
-
-          val jsonE = _root_.io.circe.parser.parse(new String(good.head.data))
-          (jsonE.isRight should beTrue)
-        }
-      }
+    "serialize a good event to the good output (skinny json format)" in {
+      val format = CustomOutputFormat.SkinnyJson
+      simpleCustomFormatTest(format)
     }
 
     "serialize a good event to the good output (eventbridge format)" in {
-      val ee = new EnrichedEvent {
-        collector_tstamp = "2011-12-03T10:15:30"
-        event_id = "236392af-ffec-4def-a0de-86929e9615be"
-        v_collector = "test"
-        v_etl = "test"
-      }
-
-      TestEnvironment.make(Stream.empty).use { test =>
-        val env = test.env.copy(
-          customOutputFormat = Some(CustomOutputFormat.EventbridgeJson(payload = false, collector = false))
-        )
-        for {
-          _ <- sinkGood(env, ee)
-          good <- test.good
-          pii <- test.pii
-          bad <- test.bad
-        } yield {
-          (good.size must_== 1)
-          (bad should be empty)
-          (pii should be empty)
-
-          val jsonE = _root_.io.circe.parser.parse(new String(good.head.data))
-          (jsonE.isRight should beTrue)
-        }
-      }
+      val format = CustomOutputFormat.EventbridgeJson(payload = false, collector = false)
+      simpleCustomFormatTest(format)
     }
 
     "serialize a good event to the good output (eventbridge format with payload)" in {
@@ -825,6 +761,32 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
           (bad should be empty)
           (pii should be empty)
         }
+      }
+    }
+  }
+
+  private def simpleCustomFormatTest(format: CustomOutputFormat) = {
+    val ee = new EnrichedEvent {
+      collector_tstamp = "2011-12-03T10:15:30"
+      event_id = "236392af-ffec-4def-a0de-86929e9615be"
+      v_collector = "test"
+      v_etl = "test"
+    }
+
+    TestEnvironment.make(Stream.empty).use { test =>
+      val env = test.env.copy(customOutputFormat = Some(format))
+      for {
+        _ <- sinkGood(env, ee)
+        good <- test.good
+        pii <- test.pii
+        bad <- test.bad
+      } yield {
+        (good.size must_== 1)
+        (bad should be empty)
+        (pii should be empty)
+
+        val jsonE = _root_.io.circe.parser.parse(new String(good.head.data))
+        (jsonE.isRight should beTrue)
       }
     }
   }

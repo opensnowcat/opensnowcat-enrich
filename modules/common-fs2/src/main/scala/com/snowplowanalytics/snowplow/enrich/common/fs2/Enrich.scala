@@ -25,7 +25,6 @@ import cats.effect.{Clock, Concurrent, ContextShift, ExitCase, Fiber, Sync, Time
 import cats.effect.implicits._
 import fs2.concurrent.{NoneTerminatedQueue, Queue}
 import fs2.{Pipe, Stream}
-import _root_.io.circe.Json
 import _root_.io.sentry.SentryClient
 import _root_.io.circe.syntax._
 import org.typelevel.log4cats.Logger
@@ -298,10 +297,15 @@ object Enrich {
             Left(badRow)
 
           case (CustomOutputFormat.EventbridgeJson(payload, collector), Right(json)) =>
-            val output = serializeEventbridgeEvent(tsv, json, payload = payload, collector = collector)
+            val output = JsonOutputUtils.serializeEventbridgeEvent(tsv, json, payload = payload, collector = collector)
             Right(output.noSpaces)
+
           case (CustomOutputFormat.FlattenedJson, Right(json)) => Right(json.noSpaces)
           case (CustomOutputFormat.BigQueryJson, Right(json)) => Right(json.noSpaces)
+
+          case (CustomOutputFormat.SkinnyJson, Right(json)) =>
+            val output = JsonOutputUtils.serializeSkinnyJsonEvent(tsv, json)
+            Right(output.noSpaces)
         }
     }
 
@@ -322,41 +326,6 @@ object Enrich {
         )
         Left(br)
       } else Right(asBytes)
-    }
-  }
-
-  private def serializeEventbridgeEvent(
-    tsv: String,
-    event: Json,
-    payload: Boolean,
-    collector: Boolean
-  ): Json = {
-    lazy val base64TSV = Base64.getEncoder.encodeToString(tsv.getBytes(StandardCharsets.UTF_8))
-    lazy val host = for {
-      headers <- event.hcursor
-                   .downField("contexts_org_ietf_http_header_1")
-                   .as[List[Json]]
-                   .toOption
-
-      hostHeader <- headers.find { header =>
-                      header.hcursor
-                        .downField("name")
-                        .as[String]
-                        .toOption
-                        .contains("Host")
-                    }
-
-      host <- hostHeader.hcursor
-                .downField("value")
-                .as[String]
-                .toOption
-    } yield host
-
-    val attachments = List((payload, "payload", () => base64TSV.asJson), (collector, "collector", () => host.asJson))
-
-    attachments.foldLeft(event) { case (current, (include, key, getValue)) =>
-      if (include) current.deepMerge(Map(key -> getValue()).asJson)
-      else current
     }
   }
 
