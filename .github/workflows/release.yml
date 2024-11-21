@@ -124,7 +124,7 @@ jobs:
             type=raw,value=latest,enable=${{ !contains(steps.ver.outputs.project_version, 'rc') && !contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT' )}}
             type=raw,value=latest-focal,enable=${{ !contains(steps.ver.outputs.project_version, 'rc') && !contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT' )}}
             type=raw,value=${{ steps.ver.outputs.project_version }},enable=${{ !contains(steps.ver.outputs.project_version, 'SNAPSHOT') && steps.ver.outputs.project_version != '' }}
-            type=raw,value=${{ steps.ver.outputs.project_version }}-focal,enable=${{ !contains(steps.ver.outputs.project_version, 'SNAPSHOT') && steps.ver.outputs.project_version!= '' }}
+            type=raw,value=${{ steps.ver.outputs.project_version }}-focal,enable=${{ !contains(steps.ver.outputs.project_version, 'SNAPSHOT') && steps.ver.outputs.project_version != '' }}
             type=raw,value=${{ steps.ver-snapshot.outputs.project_version }},enable=${{ contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT') }}
             type=raw,value=${{ steps.ver-snapshot.outputs.project_version }}-focal,enable=${{ contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT') }}
           flavor: |
@@ -137,7 +137,7 @@ jobs:
           images: ${{ steps.packageName.outputs.package_name }}
           tags: |
             type=raw,value=latest-distroless,enable=${{ !contains(steps.ver.outputs.project_version, 'rc') && !contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT' )}}
-            type=raw,value=${{ steps.ver.outputs.project_version }}-distroless,enable=${{ !contains(steps.ver.outputs.project_version, 'SNAPSHOT') && steps.ver.outputs.project_version != '' }}
+            type=raw,value=${{ steps.ver.outputs.project_version}}-distroless,enable=${{ !contains(steps.ver.outputs.project_version, 'SNAPSHOT') && steps.ver.outputs.project_version != '' }}
             type=raw,value=${{ steps.ver-snapshot.outputs.project_version }}-distroless,enable=${{ contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT') }}
           flavor: |
             latest=false
