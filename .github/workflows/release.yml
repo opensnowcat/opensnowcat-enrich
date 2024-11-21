@@ -9,167 +9,187 @@ on:
 
 permissions:
   contents: write # to publish artifacts
+  packages: write # to publish ghcr.io images
 
 jobs:
   github_release:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: coursier/cache-action@v6
-    - name: Set up JDK 11
-      uses: actions/setup-java@v1
-      with:
-        java-version: 11
-    - name: Get current version
-      id: ver
-      run: echo "::set-output name=tag::${GITHUB_REF#refs/tags/}"
-    - name: Assemble fat jars
-      run: |
-        sbt "project pubsub; set assembly / test := {}; assembly" \
-            "project kinesis; set assembly / test := {}; assembly" \
-            "project eventbridge; set assembly / test := {}; assembly" \
-            "project kafka; set assembly / test := {}; assembly" \
-            "project nsq; set assembly / test := {}; assembly"
-    - name: Create GitHub release and attach artifacts
-      uses: softprops/action-gh-release@v1
-      with:
-        draft: true
-        prerelease: ${{ contains(steps.ver.outputs.tag, 'rc') }}
-        name: ${{ steps.ver.outputs.tag }}
-        tag_name: ${{ steps.ver.outputs.tag }}
-        files: |
-          modules/pubsub/target/scala-2.12/opensnowcat-enrich-pubsub-${{ steps.ver.outputs.tag }}.jar
-          modules/kinesis/target/scala-2.12/opensnowcat-enrich-kinesis-${{ steps.ver.outputs.tag }}.jar
-          modules/eventbridge/target/scala-2.12/opensnowcat-enrich-eventbridge-${{ steps.ver.outputs.tag }}.jar
-          modules/kafka/target/scala-2.12/opensnowcat-enrich-kafka-${{ steps.ver.outputs.tag }}.jar
-          modules/nsq/target/scala-2.12/opensnowcat-enrich-nsq-${{ steps.ver.outputs.tag }}.jar
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-# TODO: Enable me when dockerhub is configured
-#  publish_docker:
-#    if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/snapshot')
-#    runs-on: ubuntu-latest
-#    strategy:
-#      matrix:
-#        app:
-#          - pubsub
-#          - kinesis
-#          - eventbridge
-#          - kafka
-#          - nsq
-#        include:
-#          - app: kinesis
-#            run_snyk: ${{ !contains(github.ref, 'rc') }}
-#          - app: eventbridge
-#            run_snyk: ${{ !contains(github.ref, 'rc') }}
-#          - app: pubsub
-#            run_snyk: ${{ !contains(github.ref, 'rc') }}
-#    steps:
-#    - uses: actions/checkout@v2
-#      if: startsWith(github.ref, 'refs/tags/')
-#    - name: Checkout with history for version info
-#      uses: actions/checkout@v2
-#      if: startsWith(github.ref, 'refs/heads/snapshot')
-#      with:
-#        fetch-depth: 0
-#    - uses: coursier/cache-action@v6
-#    - name: Set up JDK 11
-#      uses: actions/setup-java@v1
-#      with:
-#        java-version: 11
-#    - name: Docker login
-#      uses: docker/login-action@v1
-#      with:
-#        username: ${{ secrets.DOCKER_USERNAME }}
-#        password: ${{ secrets.DOCKER_PASSWORD }}
-#    - name: Get current version
-#      if: startsWith(github.ref, 'refs/tags/')
-#      id: ver
-#      run: echo "::set-output name=tag::${GITHUB_REF#refs/tags/}"
-#    - name: Get current version (snapshot)
-#      if: startsWith(github.ref, 'refs/heads/snapshot')
-#      id: ver-snapshot
-#      run: |
-#        export SNAPSHOT_VERSION=$(sbt common/version -Dsbt.log.noformat=true | grep 'SNAPSHOT' | awk '{ print $2 }')
-#        echo "::set-output name=tag::$SNAPSHOT_VERSION"
-#    - name: Get app package name
-#      id: packageName
-#      run: |
-#        export PACKAGE_NAME=$(sbt "project ${{ matrix.app }}" dockerAlias -Dsbt.log.noformat=true | sed -n '/\[info\]/ s/\[info\] //p' | tail -1 | tr -d '\n' | sed 's/snowplow/opensnowcat/' | cut -d":" -f1)
-#        echo "::set-output name=package_name::$PACKAGE_NAME"
-#    - name: Get app base directory
-#      id: baseDirectory
-#      run: |
-#        export BASE_DIRECTORY=$(sbt "project ${{ matrix.app }}" baseDirectory -Dsbt.log.noformat=true | sed -n '/\[info\]/ s/\[info\] //p' | tail -1 | tr -d '\n')
-#        echo "::set-output name=directory::$BASE_DIRECTORY"
-#    - name: Get app base directory (distroless)
-#      id: baseDirectoryDistroless
-#      run: |
-#        export BASE_DIRECTORY_DISTROLESS=$(sbt "project ${{ matrix.app }}Distroless" baseDirectory -Dsbt.log.noformat=true | sed -n '/\[info\]/ s/\[info\] //p' | tail -1 | tr -d '\n')
-#        echo "::set-output name=directory::$BASE_DIRECTORY_DISTROLESS"
-#    - name: Stage the Docker build
-#      run: sbt "project ${{ matrix.app }}" docker:stage
-#    - name: Stage the Docker distroless build
-#      run: sbt "project ${{ matrix.app }}Distroless" docker:stage
-#    - name: Docker metadata
-#      id: meta
-#      uses: docker/metadata-action@v3
-#      with:
-#        images: ${{ steps.packageName.outputs.package_name }}
-#        tags: |
-#          type=raw,value=latest,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
-#          type=raw,value=latest-focal,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
-#          type=raw,value=${{ steps.ver.outputs.tag }},enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
-#          type=raw,value=${{ steps.ver.outputs.tag }}-focal,enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
-#          type=raw,value=${{ steps.ver-snapshot.outputs.tag }},enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
-#          type=raw,value=${{ steps.ver-snapshot.outputs.tag }}-focal,enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
-#        flavor: |
-#          latest=false
-#    - name: Docker metadata distroless
-#      id: distroless-meta
-#      uses: docker/metadata-action@v3
-#      with:
-#        images: ${{ steps.packageName.outputs.package_name }}
-#        tags: |
-#          type=raw,value=latest-distroless,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
-#          type=raw,value=${{ steps.ver.outputs.tag }}-distroless,enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
-#          type=raw,value=${{ steps.ver-snapshot.outputs.tag }}-distroless,enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
-#        flavor: |
-#          latest=false
-#    - name: Set up QEMU
-#      uses: docker/setup-qemu-action@v1
-#    - name: Set up Docker Buildx
-#      uses: docker/setup-buildx-action@v1
-#    - name: Push image
-#      uses: docker/build-push-action@v2
-#      with:
-#        context: ${{ steps.baseDirectory.outputs.directory }}/target/docker/stage
-#        file: ${{ steps.baseDirectory.outputs.directory }}/target/docker/stage/Dockerfile
-#        platforms: linux/amd64,linux/arm64/v8
-#        tags: ${{ steps.meta.outputs.tags }}
-#        push: true
-#    - name: Push distroless image
-#      uses: docker/build-push-action@v2
-#      with:
-#        context: ${{ steps.baseDirectoryDistroless.outputs.directory }}/target/docker/stage
-#        file: ${{ steps.baseDirectoryDistroless.outputs.directory }}/target/docker/stage/Dockerfile
-#        platforms: linux/amd64,linux/arm64/v8
-#        tags: ${{ steps.distroless-meta.outputs.tags }}
-#        push: true
-#    - name: Build local distroless image, which is needed to run Snyk
-#      if: matrix.run_snyk
-#      run: sbt "project ${{ matrix.app }}Distroless" docker:publishLocal
-#    - name: Run Snyk to check for vulnerabilities
-#      uses: snyk/actions/docker@master
-#      if: matrix.run_snyk
-#      with:
-#        image: "${{ steps.packageName.outputs.package_name }}:${{ steps.ver.outputs.tag }}-distroless"
-#        args: "--app-vulns --org=data-processing-new"
-#        command: monitor
-#      env:
-#        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#
+      - uses: actions/checkout@v4
+      - uses: coursier/cache-action@v6
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: 'corretto'
+      - name: Get current version
+        id: ver
+        run: echo "project_version=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+      - name: Assemble fat jars
+        run: |
+          sbt "project pubsub; set assembly / test := {}; assembly" \
+              "project kinesis; set assembly / test := {}; assembly" \
+              "project eventbridge; set assembly / test := {}; assembly" \
+              "project kafka; set assembly / test := {}; assembly" \
+              "project nsq; set assembly / test := {}; assembly"
+      - name: Create GitHub release and attach artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          prerelease: ${{ contains(steps.ver.outputs.tag, 'rc') }}
+          name: ${{ steps.ver.outputs.tag }}
+          tag_name: ${{ steps.ver.outputs.tag }}
+          files: |
+            modules/pubsub/target/scala-2.12/opensnowcat-enrich-pubsub-${{ steps.ver.outputs.tag }}.jar
+            modules/kinesis/target/scala-2.12/opensnowcat-enrich-kinesis-${{ steps.ver.outputs.tag }}.jar
+            modules/eventbridge/target/scala-2.12/opensnowcat-enrich-eventbridge-${{ steps.ver.outputs.tag }}.jar
+            modules/kafka/target/scala-2.12/opensnowcat-enrich-kafka-${{ steps.ver.outputs.tag }}.jar
+            modules/nsq/target/scala-2.12/opensnowcat-enrich-nsq-${{ steps.ver.outputs.tag }}.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  publish_docker:
+    if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/snapshot')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - pubsub
+          - kinesis
+          - eventbridge
+          - kafka
+          - nsq
+        include:
+          - suffix: ""
+    steps:
+      - uses: actions/checkout@v4
+        if: startsWith(github.ref, 'refs/tags/')
+      - name: Checkout with history for version info
+        uses: actions/checkout@v4
+        if: startsWith(github.ref, 'refs/heads/snapshot')
+        with:
+          fetch-depth: 0
+      - uses: coursier/cache-action@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: 'corretto'
+
+      - name: Get current version
+        if: startsWith(github.ref, 'refs/tags/')
+        id: ver
+        run: echo "project_version=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+
+      - name: Get current version (snapshot)
+        if: startsWith(github.ref, 'refs/heads/snapshot')
+        id: ver-snapshot
+        run: |
+          export SNAPSHOT_VERSION=$(sbt common/version -Dsbt.log.noformat=true | grep 'SNAPSHOT' | awk '{ print $2 }')
+          echo "::set-output name=tag::$SNAPSHOT_VERSION"
+
+      - name: Get app package name
+        id: packageName
+        run: |
+          export PACKAGE_NAME=$(sbt "project ${{ matrix.app }}" dockerAlias -Dsbt.log.noformat=true | sed -n '/\[info\]/ s/\[info\] //p' | tail -1 | tr -d '\n' | sed 's/snowplow/opensnowcat/' | cut -d":" -f1)
+          echo "::set-output name=package_name::$PACKAGE_NAME"
+
+      - name: Get app base directory
+        id: baseDirectory
+        run: |
+          export BASE_DIRECTORY=$(sbt "project ${{ matrix.app }}" baseDirectory -Dsbt.log.noformat=true | sed -n '/\[info\]/ s/\[info\] //p' | tail -1 | tr -d '\n')
+          echo "::set-output name=directory::$BASE_DIRECTORY"
+
+      - name: Get app base directory (distroless)
+        id: baseDirectoryDistroless
+        run: |
+          export BASE_DIRECTORY_DISTROLESS=$(sbt "project ${{ matrix.app }}Distroless" baseDirectory -Dsbt.log.noformat=true | sed -n '/\[info\]/ s/\[info\] //p' | tail -1 | tr -d '\n')
+          echo "::set-output name=directory::$BASE_DIRECTORY_DISTROLESS"
+
+      - name: Stage the Docker build
+        run: sbt "project ${{ matrix.app }}" docker:stage
+
+      - name: Stage the Docker distroless build
+        run: sbt "project ${{ matrix.app }}Distroless" docker:stage
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ steps.packageName.outputs.package_name }}
+          tags: |
+            type=raw,value=latest,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
+            type=raw,value=latest-focal,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
+            type=raw,value=${{ steps.ver.outputs.tag }},enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
+            type=raw,value=${{ steps.ver.outputs.tag }}-focal,enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
+            type=raw,value=${{ steps.ver-snapshot.outputs.tag }},enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
+            type=raw,value=${{ steps.ver-snapshot.outputs.tag }}-focal,enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
+          flavor: |
+            latest=false
+
+      - name: Docker metadata distroless
+        id: distroless-meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ steps.packageName.outputs.package_name }}
+          tags: |
+            type=raw,value=latest-distroless,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
+            type=raw,value=${{ steps.ver.outputs.tag }}-distroless,enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
+            type=raw,value=${{ steps.ver-snapshot.outputs.tag }}-distroless,enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
+          flavor: |
+            latest=false
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+#      TODO: login to push images to GitHub Container Registry
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v3
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ steps.baseDirectory.outputs.directory }}/target/docker/stage
+          file: ${{ steps.baseDirectory.outputs.directory }}/target/docker/stage/Dockerfile
+          platforms: linux/amd64,linux/arm64/v8
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+#          TODO: tags to push images to GitHub Container Registry
+#          tags: |
+#            ghcr.io/${{ github.repository }}/opensnowcat-enrich-${{ matrix.app }}${{ matrix.suffix }}:latest
+#            ghcr.io/${{ github.repository }}/opensnowcat-enrich-${{ matrix.app }}${{ matrix.suffix }}:latest-focal
+#            ghcr.io/${{ github.repository }}/opensnowcat-enrich-${{ matrix.app }}${{ matrix.suffix }}:${{ steps.ver.outputs.project_version }}
+#            ghcr.io/${{ github.repository }}/opensnowcat-enrich-${{ matrix.app }}${{ matrix.suffix }}:${{ steps.ver.outputs.project_version }}-focal
+
+      - name: Push distroless image
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ steps.baseDirectoryDistroless.outputs.directory }}/target/docker/stage
+          file: ${{ steps.baseDirectoryDistroless.outputs.directory }}/target/docker/stage/Dockerfile
+          platforms: linux/amd64,linux/arm64/v8
+          push: true
+          tags: ${{ steps.distroless-meta.outputs.tags }}
+#          TODO: tags to push images to GitHub Container Registry
+#          tags: |
+#            ghcr.io/${{ github.repository }}/opensnowcat-enrich-${{ matrix.app }}${{ matrix.suffix }}:latest-distroless
+#            ghcr.io/${{ github.repository }}/opensnowcat-enrich-${{ matrix.app }}${{ matrix.suffix }}:${{ steps.ver.outputs.project_version }}-distroless
+
 # TODO: Enable me when sonatype is configured
 #  publish_sce:
 #    if: startsWith(github.ref, 'refs/tags/')
