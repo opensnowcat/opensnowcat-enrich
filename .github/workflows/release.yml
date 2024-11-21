@@ -37,15 +37,15 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          prerelease: ${{ contains(steps.ver.outputs.tag, 'rc') }}
-          name: ${{ steps.ver.outputs.tag }}
-          tag_name: ${{ steps.ver.outputs.tag }}
+          prerelease: ${{ contains(steps.ver.outputs.project_version, 'rc') }}
+          name: ${{ steps.ver.outputs.project_version }}
+          tag_name: ${{ steps.ver.outputs.project_version }}
           files: |
-            modules/pubsub/target/scala-2.12/opensnowcat-enrich-pubsub-${{ steps.ver.outputs.tag }}.jar
-            modules/kinesis/target/scala-2.12/opensnowcat-enrich-kinesis-${{ steps.ver.outputs.tag }}.jar
-            modules/eventbridge/target/scala-2.12/opensnowcat-enrich-eventbridge-${{ steps.ver.outputs.tag }}.jar
-            modules/kafka/target/scala-2.12/opensnowcat-enrich-kafka-${{ steps.ver.outputs.tag }}.jar
-            modules/nsq/target/scala-2.12/opensnowcat-enrich-nsq-${{ steps.ver.outputs.tag }}.jar
+            modules/pubsub/target/scala-2.12/opensnowcat-enrich-pubsub-${{ steps.ver.outputs.project_version }}.jar
+            modules/kinesis/target/scala-2.12/opensnowcat-enrich-kinesis-${{ steps.ver.outputs.project_version }}.jar
+            modules/eventbridge/target/scala-2.12/opensnowcat-enrich-eventbridge-${{ steps.ver.outputs.project_version }}.jar
+            modules/kafka/target/scala-2.12/opensnowcat-enrich-kafka-${{ steps.ver.outputs.project_version }}.jar
+            modules/nsq/target/scala-2.12/opensnowcat-enrich-nsq-${{ steps.ver.outputs.project_version }}.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -89,7 +89,7 @@ jobs:
         id: ver-snapshot
         run: |
           export SNAPSHOT_VERSION=$(sbt common/version -Dsbt.log.noformat=true | grep 'SNAPSHOT' | awk '{ print $2 }')
-          echo "::set-output name=tag::$SNAPSHOT_VERSION"
+          echo "::set-output name=project_version::$SNAPSHOT_VERSION"
 
       - name: Get app package name
         id: packageName
@@ -121,12 +121,12 @@ jobs:
         with:
           images: ${{ steps.packageName.outputs.package_name }}
           tags: |
-            type=raw,value=latest,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
-            type=raw,value=latest-focal,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
-            type=raw,value=${{ steps.ver.outputs.tag }},enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
-            type=raw,value=${{ steps.ver.outputs.tag }}-focal,enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
-            type=raw,value=${{ steps.ver-snapshot.outputs.tag }},enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
-            type=raw,value=${{ steps.ver-snapshot.outputs.tag }}-focal,enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
+            type=raw,value=latest,enable=${{ !contains(steps.ver.outputs.project_version, 'rc') && !contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT' )}}
+            type=raw,value=latest-focal,enable=${{ !contains(steps.ver.outputs.project_version, 'rc') && !contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT' )}}
+            type=raw,value=${{ steps.ver.outputs.project_version }},enable=${{ !contains(steps.ver.outputs.project_version, 'SNAPSHOT') && steps.ver.outputs.project_version != '' }}
+            type=raw,value=${{ steps.ver.outputs.project_version }}-focal,enable=${{ !contains(steps.ver.outputs.project_version, 'SNAPSHOT') && steps.ver.outputs.project_version!= '' }}
+            type=raw,value=${{ steps.ver-snapshot.outputs.project_version }},enable=${{ contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT') }}
+            type=raw,value=${{ steps.ver-snapshot.outputs.project_version }}-focal,enable=${{ contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT') }}
           flavor: |
             latest=false
 
@@ -136,9 +136,9 @@ jobs:
         with:
           images: ${{ steps.packageName.outputs.package_name }}
           tags: |
-            type=raw,value=latest-distroless,enable=${{ !contains(steps.ver.outputs.tag, 'rc') && !contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT' )}}
-            type=raw,value=${{ steps.ver.outputs.tag }}-distroless,enable=${{ !contains(steps.ver.outputs.tag, 'SNAPSHOT') && steps.ver.outputs.tag != '' }}
-            type=raw,value=${{ steps.ver-snapshot.outputs.tag }}-distroless,enable=${{ contains(steps.ver-snapshot.outputs.tag, 'SNAPSHOT') }}
+            type=raw,value=latest-distroless,enable=${{ !contains(steps.ver.outputs.project_version, 'rc') && !contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT' )}}
+            type=raw,value=${{ steps.ver.outputs.project_version }}-distroless,enable=${{ !contains(steps.ver.outputs.project_version, 'SNAPSHOT') && steps.ver.outputs.project_version != '' }}
+            type=raw,value=${{ steps.ver-snapshot.outputs.project_version }}-distroless,enable=${{ contains(steps.ver-snapshot.outputs.project_version, 'SNAPSHOT') }}
           flavor: |
             latest=false
 
