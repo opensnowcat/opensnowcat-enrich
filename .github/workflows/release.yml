@@ -94,7 +94,7 @@ jobs:
       - name: Get app package name
         id: packageName
         run: |
-          export PACKAGE_NAME=$(sbt "project ${{ matrix.app }}" dockerAlias -Dsbt.log.noformat=true | sed -n '/\[info\]/ s/\[info\] //p' | tail -1 | tr -d '\n' | sed 's/snowplow/opensnowcat/' | cut -d":" -f1)
+          export PACKAGE_NAME="jayhof/opensnowcat-enrich-${{ matrix.app }}"
           echo "::set-output name=package_name::$PACKAGE_NAME"
 
       - name: Get app base directory
