@@ -80,8 +80,8 @@ object Dependencies {
     val config = "1.3.4"
 
     val decline = "2.4.1"
-    val fs2 = "3.10.2"
-    val catsEffect = "3.5.4"
+    val fs2 = "2.5.12"
+    val catsEffect = "2.5.5"
     val fs2PubSub = "0.22.1"
     val fs2Aws = "3.1.1"
     val fs2Kafka = "1.10.0"
@@ -89,7 +89,7 @@ object Dependencies {
     val azureIdentity = "1.11.0"
     val http4s = "0.21.34"
     val log4cats = "1.7.0"
-    val catsRetry = "2.6.0"
+    val catsRetry = "2.1.1"
     val specsDiff = "0.9.0"
     val eventGen = "0.2.2"
 
