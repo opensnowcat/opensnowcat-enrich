@@ -24,7 +24,7 @@ import blobstore.s3.S3Store
 
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.core.exception.SdkException
-import software.amazon.awssdk.regions.providers.AwsRegionProviderChain
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain
 import software.amazon.awssdk.regions.Region
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.{Client, RetryableFailure}
@@ -58,7 +58,7 @@ object S3Client {
     }
 
   private def getRegion(): Region =
-    Either.catchNonFatal(new AwsRegionProviderChain().getRegion) match {
+    Either.catchNonFatal((new DefaultAwsRegionProviderChain).getRegion) match {
       case Right(region) =>
         region
       case _ =>
