@@ -32,6 +32,7 @@ object Dependencies {
     // Java
     val commonsCodec = "1.16.0"
     val commonsText = "1.12.0"
+    val commonsIO = "2.18.0"
     val jodaTime = "2.12.7"
     val useragent = "1.21"
     val uaParser = "1.6.1"
@@ -109,6 +110,7 @@ object Dependencies {
   object Libraries {
     val commonsCodec = "commons-codec"                 % "commons-codec"     % V.commonsCodec
     val commonsText = "org.apache.commons"             % "commons-text"      % V.commonsText
+    val commonsIO = "commons-io"                       % "commons-io"        % V.commonsIO
     val jodaTime = "joda-time"                         % "joda-time"         % V.jodaTime
     val useragent = "eu.bitwalker"                     % "UserAgentUtils"    % V.useragent
     val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind"  % V.jackson
@@ -215,6 +217,7 @@ object Dependencies {
       jodaTime,
       commonsCodec,
       commonsText,
+      commonsIO,
       useragent,
       jacksonDatabind,
       uaParser,
