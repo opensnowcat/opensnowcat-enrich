@@ -24,12 +24,17 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: coursier/cache-action@v6
     - name: Set up JDK 11
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
         java-version: 11
+        distribution: 'corretto'
+        cache: sbt
+    - uses: sbt/setup-sbt@v1
+      with:
+        sbt-runner-version: 1.9.9
     - name: Start HTTP server to test API enrichment in Common Enrich
       run: python integration-tests/common/api-enrichment-test.py 8001 &
     - name: Start HTTP server to test API enrichment in Common Fs2
