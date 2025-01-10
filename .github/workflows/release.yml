@@ -23,6 +23,15 @@ jobs:
         with:
           java-version: 11
           distribution: 'corretto'
+      - name: Install sbt
+        run: |
+          echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+          curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x99e82a75642ac823" | sudo apt-key add
+          sudo apt-get update
+          sudo apt-get install sbt
+      
+      - name: Verify sbt installation
+        run: sbt --version
       - name: Get current version
         id: ver
         run: echo "project_version=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
