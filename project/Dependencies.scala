@@ -33,6 +33,7 @@ object Dependencies {
     val commonsCodec = "1.16.0"
     val commonsText = "1.12.0"
     val commonsIO = "2.18.0"
+    val httpComponents = "4.5.14"
     val jodaTime = "2.12.7"
     val useragent = "1.21"
     val uaParser = "1.6.1"
@@ -50,28 +51,29 @@ object Dependencies {
     val log4j = "2.23.1"
     val thrift = "0.20.0"
     val sprayJson = "1.3.6"
-    val netty = "4.1.112.Final"
-    val protobuf = "4.29.2"
+    val netty = "4.1.118.Final"
+    val protobuf = "4.29.3"
 
-    val refererParser = "1.1.0"
-    val maxmindIplookups = "0.7.2"
-    val circe = "0.14.1"
+    val refererParser = "2.0.0"
+    val maxmindIplookups = "0.8.1"
+    val circe = "0.14.3"
     val circeOptics = "0.14.1"
-    val circeConfig = "0.7.0"
+    val circeConfig = "0.9.0"
     val circeJackson = "0.14.0"
-    val scalaForex = "1.0.0"
-    val scalaWeather = "1.0.0"
+    val scalaForex = "3.0.0"
+    val analyticsSdk = "3.2.2"
+    val scalaWeather = "2.0.0"
     val gatlingJsonpath = "0.6.14"
     val scalaUri = "4.0.3"
     val badRows = "2.1.2"
-    val igluClient = "1.5.0"
+    val igluClient = "3.2.0"
 
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val schemaSniffer = "0.0.0"
 
     val awsSdk = "1.12.780"
-    val gcpSdk = "2.31.0"
+    val gcpSdk = "2.48.2"
     val awsSdk2 = "2.25.69"
     val kinesisClient2 = "2.4.3"
     val kafka = "7.7.0-ce"
@@ -81,20 +83,21 @@ object Dependencies {
     val config = "1.3.4"
 
     val decline = "2.4.1"
-    val fs2 = "2.5.11"
-    val catsEffect = "2.5.5"
-    val fs2PubSub = "0.18.1"
-    val fs2Aws = "3.1.1"
-    val fs2Kafka = "1.10.0"
-    val fs2BlobStorage = "0.8.11"
+    val fs2 = "3.10.2"
+    val catsEffect = "3.5.7"
+    val fs2PubSub = "0.22.2"
+    val fs2Aws = "4.1.0"
+    val fs2Kafka = "3.6.0"
+    val fs2BlobStorage = "0.9.15"
     val azureIdentity = "1.11.0"
-    val http4s = "0.21.34"
-    val log4cats = "1.7.0"
-    val catsRetry = "2.1.1"
+    val http4s = "0.23.23"
+    val http4sBlaze = "0.23.15"
+    val log4cats = "2.7.0"
+    val catsRetry = "3.1.3"
     val specsDiff = "0.9.0"
     val eventGen = "0.2.2"
 
-    val snowplowTracker = "1.0.0"
+    val snowplowTracker = "2.0.0"
 
     val specs2 = "4.20.8"
     val specs2Cats = "4.11.0"
@@ -111,6 +114,7 @@ object Dependencies {
     val commonsCodec = "commons-codec"                 % "commons-codec"     % V.commonsCodec
     val commonsText = "org.apache.commons"             % "commons-text"      % V.commonsText
     val commonsIO = "commons-io"                       % "commons-io"        % V.commonsIO
+    val httpComponents = "org.apache.httpcomponents"   % "httpclient"        % V.httpComponents
     val jodaTime = "joda-time"                         % "joda-time"         % V.jodaTime
     val useragent = "eu.bitwalker"                     % "UserAgentUtils"    % V.useragent
     val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind"  % V.jackson
@@ -138,6 +142,7 @@ object Dependencies {
     val scalaUri = "io.lemonlabs"                  %% "scala-uri"                     % V.scalaUri
     val gatlingJsonpath = "io.gatling"             %% "jsonpath"                      % V.gatlingJsonpath
     val scalaForex = "com.snowplowanalytics"       %% "scala-forex"                   % V.scalaForex
+    val analyticsSdk = "com.snowplowanalytics"     %% "snowplow-scala-analytics-sdk"  % V.analyticsSdk
     val refererParser = "com.snowplowanalytics"    %% "scala-referer-parser"          % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups"       % V.maxmindIplookups
     val scalaWeather = "com.snowplowanalytics"     %% "scala-weather"                 % V.scalaWeather
@@ -181,7 +186,7 @@ object Dependencies {
     // FS2
     val decline = "com.monovore"    %% "decline"                % V.decline
     val fs2PubSub = "com.permutive" %% "fs2-google-pubsub-grpc" % V.fs2PubSub
-    val fs2Aws = ("io.laserdisc"    %% "fs2-aws"                % V.fs2Aws)
+    val fs2Aws = ("io.laserdisc"    %% "fs2-aws-kinesis"        % V.fs2Aws)
       .exclude("com.amazonaws", "amazon-kinesis-producer")
       .exclude("software.amazon.kinesis", "amazon-kinesis-client")
     val fs2 = "co.fs2"                             %% "fs2-core"              % V.fs2
@@ -198,7 +203,7 @@ object Dependencies {
     val eventbridgeSdk2 = "software.amazon.awssdk"        % "eventbridge"                           % V.awsSdk2
     val azureIdentity = "com.azure"                       % "azure-identity"                        % V.azureIdentity
     val jacksonDfXml = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml"                % V.jackson
-    val http4sClient = "org.http4s"                      %% "http4s-blaze-client"                   % V.http4s
+    val http4sClient = "org.http4s"                      %% "http4s-blaze-client"                   % V.http4sBlaze
     val http4sCirce = "org.http4s"                       %% "http4s-circe"                          % V.http4s
     val log4cats = "org.typelevel"                       %% "log4cats-slf4j"                        % V.log4cats
     val catsRetry = "com.github.cb372"                   %% "cats-retry"                            % V.catsRetry
@@ -206,7 +211,7 @@ object Dependencies {
     val fs2BlobGcs = "com.github.fs2-blobstore"          %% "gcs"                                   % V.fs2BlobStorage
     val fs2BlobAzure = "com.github.fs2-blobstore"        %% "azure"                                 % V.fs2BlobStorage
     val http4sDsl = "org.http4s"                         %% "http4s-dsl"                            % V.http4s  % Test
-    val http4sServer = "org.http4s"                      %% "http4s-blaze-server"                   % V.http4s  % Test
+    val http4sServer = "org.http4s"                      %% "http4s-blaze-server"                   % V.http4sBlaze  % Test
     val trackerCore = "com.snowplowanalytics"            %% "snowplow-scala-tracker-core"           % V.snowplowTracker
     val emitterHttps = "com.snowplowanalytics"           %% "snowplow-scala-tracker-emitter-http4s" % V.snowplowTracker
 
@@ -214,6 +219,7 @@ object Dependencies {
     val betterMonadicFor = "com.olegpy" %% "better-monadic-for" % V.betterMonadicFor
 
     val commonDependencies = Seq(
+      httpComponents,
       jodaTime,
       commonsCodec,
       commonsText,
@@ -237,6 +243,7 @@ object Dependencies {
       maxmindIplookups,
       scalaUri,
       scalaForex,
+      analyticsSdk,
       scalaWeather,
       gatlingJsonpath,
       badRows,
