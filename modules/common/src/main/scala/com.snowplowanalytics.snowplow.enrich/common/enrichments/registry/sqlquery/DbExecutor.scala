@@ -12,27 +12,23 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery
 
-import scala.collection.immutable.IntMap
+import cats.Monad
+import cats.data.EitherT
+import cats.effect.{Async, Resource, Sync}
+import cats.implicits._
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery.Input.ExtractedValue
+import io.circe.Json
 
 import java.sql.{Connection, PreparedStatement, ResultSet, ResultSetMetaData}
 import javax.sql.DataSource
-
-import io.circe.Json
-
-import cats.Monad
-import cats.data.EitherT
-import cats.implicits._
-
-import cats.effect.{Async, Blocker, Bracket, ContextShift, Resource, Sync}
-
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery.Input.ExtractedValue
+import scala.collection.immutable.IntMap
 
 // DbExecutor must have much smaller interface, ideally without any JDBC types
 /** Side-effecting ability to connect to database */
 trait DbExecutor[F[_]] {
 
   /** Get a connection from the Hikari data source */
-  def getConnection(dataSource: DataSource, blocker: Blocker): Resource[F, Connection]
+  def getConnection(dataSource: DataSource): Resource[F, Connection]
 
   /** Execute a SQL query */
   def execute(query: PreparedStatement): EitherT[F, Throwable, ResultSet]
@@ -76,45 +72,45 @@ object DbExecutor {
 
   def apply[F[_]](implicit ev: DbExecutor[F]): DbExecutor[F] = ev
 
-  def async[F[_]: Async: ContextShift]: DbExecutor[F] = sync[F]
+  def async[F[_]: Async]: DbExecutor[F] = sync[F]
 
-  def sync[F[_]: ContextShift: Sync]: DbExecutor[F] =
+  def sync[F[_]: Async]: DbExecutor[F] =
     new DbExecutor[F] {
-      def getConnection(dataSource: DataSource, blocker: Blocker): Resource[F, Connection] =
-        Resource.fromAutoCloseable(blocker.blockOn(Sync[F].delay(dataSource.getConnection())))
+      def getConnection(dataSource: DataSource): Resource[F, Connection] =
+        Resource.eval(Async[F].delay(dataSource.getConnection()))
 
       def execute(query: PreparedStatement): EitherT[F, Throwable, ResultSet] =
         Sync[F].delay(query.executeQuery()).attemptT
 
       def convert(resultSet: ResultSet, names: JsonOutput.PropertyNameMode): EitherT[F, Throwable, List[Json]] =
-        EitherT(Bracket[F, Throwable].bracket(Sync[F].pure(resultSet)) { set =>
-          val hasNext = Sync[F].delay(set.next()).attemptT
-          val convert = transform(set, names)(this, Monad[F])
-          convert.whileM[List](hasNext).value
-        } { set =>
-          Sync[F].delay(set.close())
-        })
+        EitherT(
+          Resource
+            .make(Async[F].pure(resultSet))(rs => Async[F].delay(rs.close()))
+            .use { set =>
+              val hasNext = EitherT(Async[F].delay(set.next()).attempt)
+              val convert = transform(set, names)(this, Async[F])
+              convert.whileM[List](hasNext).value
+            }
+        )
 
       def getMetaData(rs: ResultSet): EitherT[F, Throwable, ResultSetMetaData] =
-        Sync[F].delay(rs.getMetaData).attemptT
+        EitherT(Async[F].delay(rs.getMetaData).attempt)
 
       def getColumnCount(rsMeta: ResultSetMetaData): EitherT[F, Throwable, Int] =
-        Sync[F].delay(rsMeta.getColumnCount).attemptT
+        EitherT(Async[F].delay(rsMeta.getColumnCount).attempt)
 
       def getColumnLabel(column: Int, rsMeta: ResultSetMetaData): EitherT[F, Throwable, String] =
-        Sync[F].delay(rsMeta.getColumnLabel(column)).attemptT
+        EitherT(Async[F].delay(rsMeta.getColumnLabel(column)).attempt)
 
       def getColumnType(column: Int, rsMeta: ResultSetMetaData): EitherT[F, Throwable, String] =
-        Sync[F].delay(rsMeta.getColumnClassName(column)).attemptT
+        EitherT(Async[F].delay(rsMeta.getColumnClassName(column)).attempt)
 
       def getColumnValue(
         datatype: String,
         columnIdx: Int,
         rs: ResultSet
       ): EitherT[F, Throwable, Json] =
-        Sync[F]
-          .delay(rs.getObject(columnIdx))
-          .attemptT
+        EitherT(Async[F].delay(rs.getObject(columnIdx)).attempt)
           .map(Option.apply)
           .map {
             case Some(any) => JsonOutput.getValue(any, datatype)
@@ -194,6 +190,6 @@ object DbExecutor {
       if (intMap.keys.size == placeholderCount) true else false
     }
 
-  def getConnection[F[_]: Monad: DbExecutor](dataSource: DataSource, blocker: Blocker): Resource[F, Connection] =
-    DbExecutor[F].getConnection(dataSource, blocker)
+  def getConnection[F[_]: Monad: DbExecutor](dataSource: DataSource): Resource[F, Connection] =
+    DbExecutor[F].getConnection(dataSource)
 }

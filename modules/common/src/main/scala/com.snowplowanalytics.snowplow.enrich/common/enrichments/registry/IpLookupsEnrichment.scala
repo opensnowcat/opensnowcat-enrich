@@ -13,23 +13,18 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import java.net.URI
-
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
-
-import cats.effect.{Async, Blocker, ContextShift}
-
+import cats.effect.Async
 import io.circe._
-
 import inet.ipaddr.HostName
-
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey}
-
 import com.snowplowanalytics.maxmind.iplookups._
 import com.snowplowanalytics.maxmind.iplookups.model._
-
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf.IpLookupsConf
 import com.snowplowanalytics.snowplow.enrich.common.utils.CirceUtils
+
+import scala.concurrent.ExecutionContext
 
 /** Companion object. Lets us create an IpLookupsEnrichment instance from a Json. */
 object IpLookupsEnrichment extends ParseableEnrichment {
@@ -95,12 +90,12 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       } yield IpLookupsDatabase(name, uri, uriAndDb._2)).toValidated.some
     } else None
 
-  def create[F[_]: Async: ContextShift](
-    blocker: Blocker,
+  def create[F[_]: Async](
     geoFilePath: Option[String],
     ispFilePath: Option[String],
     domainFilePath: Option[String],
-    connectionFilePath: Option[String]
+    connectionFilePath: Option[String],
+    blocker: ExecutionContext
   ): F[IpLookupsEnrichment[F]] =
     CreateIpLookups[F]
       .createFromFilenames(
@@ -119,7 +114,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
  * @param ipLookups IP lookups client
  * @param blocker Runs db lookups on a separate thread pool
  */
-final case class IpLookupsEnrichment[F[_]: ContextShift](ipLookups: IpLookups[F], blocker: Blocker) extends Enrichment {
+final case class IpLookupsEnrichment[F[_]: Async](ipLookups: IpLookups[F], blocker: ExecutionContext) extends Enrichment {
 
   /**
    * Extract the geo-location using the client IP address.
@@ -127,9 +122,10 @@ final case class IpLookupsEnrichment[F[_]: ContextShift](ipLookups: IpLookups[F]
    * @return an IpLookupResult
    */
   def extractIpInformation(ip: String): F[IpLookupResult] =
-    blocker.blockOn {
-      ipLookups.performLookups(Either.catchNonFatal(new HostName(ip).toAddress).fold(_ => ip, addr => addr.toString))
-    }
+    Async[F].evalOn(
+      ipLookups.performLookups(Either.catchNonFatal(new HostName(ip).toAddress).fold(_ => ip, addr => addr.toString)),
+      blocker
+    )
 }
 
 private[enrichments] final case class IpLookupsDatabase(

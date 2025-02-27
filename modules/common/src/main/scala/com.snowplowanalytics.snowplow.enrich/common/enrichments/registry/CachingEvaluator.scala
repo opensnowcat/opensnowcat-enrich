@@ -12,13 +12,10 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-import cats.Monad
 import cats.effect.Clock
 import cats.implicits._
-import java.util.concurrent.TimeUnit
-
+import cats.{Functor, Monad}
 import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
-
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.CachingEvaluator.{Cache, CachedItem, GetResult, Value}
 
 final class CachingEvaluator[F[_], K, V](
@@ -99,7 +96,8 @@ final class CachingEvaluator[F[_], K, V](
       case _: Value.Error[V] => config.errorTtl
     }
 
-  private def getCurrentTime(implicit C: Clock[F]): F[Long] = C.realTime(TimeUnit.SECONDS)
+  private def getCurrentTime(implicit C: Clock[F], F: Functor[F]): F[Long] =
+    C.realTime.map(_.toSeconds)
 
 }
 

@@ -12,24 +12,19 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-import java.net.URI
-import java.util.concurrent.TimeUnit
-
-import scala.concurrent.duration.FiniteDuration
-
 import cats.data.EitherT
-
-import cats.effect.{Async, Blocker, Clock, ContextShift, Sync}
-
-import org.joda.money.CurrencyUnit
-
-import com.snowplowanalytics.iglu.core.SchemaKey
-
+import cats.effect.{Async, Clock, Sync}
 import com.snowplowanalytics.forex.model.AccountType
-
+import com.snowplowanalytics.iglu.core.SchemaKey
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest.{ApiRequestEnrichment, HttpApi}
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery.{Rdbms, SqlQueryEnrichment}
 import com.snowplowanalytics.snowplow.enrich.common.utils.{HttpClient, ShiftExecution}
+import org.joda.money.CurrencyUnit
+
+import java.net.URI
+import java.util.concurrent.TimeUnit
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
 
 sealed trait EnrichmentConf {
 
@@ -84,7 +79,7 @@ object EnrichmentConf {
     cache: SqlQueryEnrichment.Cache,
     ignoreOnError: Boolean
   ) extends EnrichmentConf {
-    def enrichment[F[_]: Async: Clock: ContextShift](blocker: Blocker, shifter: ShiftExecution[F]): F[SqlQueryEnrichment[F]] =
+    def enrichment[F[_]: Async: Clock](shifter: ShiftExecution[F]): F[SqlQueryEnrichment[F]] =
       SqlQueryEnrichment.create[F](
         schemaKey,
         inputs,
@@ -93,7 +88,6 @@ object EnrichmentConf {
         output,
         cache,
         ignoreOnError,
-        blocker,
         shifter
       )
   }
@@ -184,13 +178,16 @@ object EnrichmentConf {
   ) extends EnrichmentConf {
     override val filesToCache: List[(URI, String)] =
       List(geoFile, ispFile, domainFile, connectionTypeFile).flatten
-    def enrichment[F[_]: Async: ContextShift](blocker: Blocker): F[IpLookupsEnrichment[F]] =
+
+    val blocker: ExecutionContext = ExecutionContext.global
+
+    def enrichment[F[_]: Async](): F[IpLookupsEnrichment[F]] =
       IpLookupsEnrichment.create[F](
-        blocker,
         geoFile.map(_._2),
         ispFile.map(_._2),
         domainFile.map(_._2),
-        connectionTypeFile.map(_._2)
+        connectionTypeFile.map(_._2),
+        blocker
       )
   }
 

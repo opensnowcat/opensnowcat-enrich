@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments
 import cats.Monad
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
 
-import cats.effect.{Async, Blocker, Clock, ContextShift}
+import cats.effect.{Async, Clock}
 import cats.implicits._
 
 import io.circe._
@@ -100,9 +100,8 @@ object EnrichmentRegistry {
     } yield configs).toValidated
 
   // todo: ValidatedNel?
-  def build[F[_]: Async: Clock: ContextShift](
+  def build[F[_]: Async: Clock](
     confs: List[EnrichmentConf],
-    blocker: Blocker,
     shifter: ShiftExecution[F],
     httpClient: HttpClient[F]
   ): EitherT[F, String, EnrichmentRegistry[F]] =
@@ -116,7 +115,7 @@ object EnrichmentRegistry {
         case c: PiiPseudonymizerConf => er.map(_.copy(piiPseudonymizer = c.enrichment.some))
         case c: SqlQueryConf =>
           for {
-            enrichment <- EitherT.right(c.enrichment[F](blocker, shifter))
+            enrichment <- EitherT.right(c.enrichment[F](shifter))
             registry <- er
           } yield registry.copy(sqlQuery = enrichment.some)
         case c: AnonIpConf => er.map(_.copy(anonIp = c.enrichment.some))
@@ -136,7 +135,7 @@ object EnrichmentRegistry {
           } yield registry.copy(iab = enrichment.some)
         case c: IpLookupsConf =>
           for {
-            enrichment <- EitherT.right(c.enrichment[F](blocker))
+            enrichment <- EitherT.right(c.enrichment[F]())
             registry <- er
           } yield registry.copy(ipLookups = enrichment.some)
         case c: JavascriptScriptConf => er.map(_.copy(javascriptScript = c.enrichment.some))
