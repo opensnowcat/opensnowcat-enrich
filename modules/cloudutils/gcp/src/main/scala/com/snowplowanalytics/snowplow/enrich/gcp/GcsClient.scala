@@ -12,27 +12,23 @@
  */
 package com.snowplowanalytics.snowplow.enrich.gcp
 
-import java.net.URI
-
-import cats.implicits._
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Timer}
-
-import fs2.Stream
-
 import blobstore.gcs.GcsStore
 import blobstore.url.Url
-
-import com.google.cloud.storage.StorageOptions
+import cats.effect.{Async, Sync}
+import cats.implicits._
 import com.google.cloud.BaseServiceException
-
+import com.google.cloud.storage.StorageOptions
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.{Client, RetryableFailure}
+import fs2.Stream
+
+import java.net.URI
 
 object GcsClient {
 
-  def mk[F[_]: ConcurrentEffect: ContextShift: Timer](blocker: Blocker): F[Client[F]] =
-    ConcurrentEffect[F].delay(StorageOptions.getDefaultInstance.getService).map { service =>
+  def mk[F[_]: Async]: F[Client[F]] =
+    Sync[F].delay(StorageOptions.getDefaultInstance.getService).map { service =>
       new Client[F] {
-        val store = GcsStore.builder(service, blocker).unsafe
+        val store = GcsStore.builder(service).unsafe
 
         def canDownload(uri: URI): Boolean = uri.getScheme == "gs"
 
