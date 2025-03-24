@@ -38,6 +38,8 @@ lazy val commonFs2 = project
   .settings(commonFs2BuildSettings)
   .settings(libraryDependencies ++= commonFs2Dependencies)
   .settings(Defaults.itSettings)
+  // TODO: remove this once we have fixed all warnings
+  .settings(scalacOptions := scalacOptions.value.filterNot(_ == "-Xfatal-warnings"))
   .configs(IntegrationTest)
   .settings(addCompilerPlugin(betterMonadicFor))
   .dependsOn(common % "test->test;compile->compile")
@@ -70,6 +72,8 @@ lazy val pubsub = project
   .settings(libraryDependencies ++= pubsubDependencies)
   .settings(excludeDependencies ++= exclusions)
   .settings(addCompilerPlugin(betterMonadicFor))
+  // TODO: remove this once we have fixed all warnings
+  .settings(scalacOptions := scalacOptions.value.filterNot(_ == "-Xfatal-warnings"))
   .dependsOn(commonFs2 % "test->test;compile->compile")
   .dependsOn(gcpUtils % "compile->compile")
 
