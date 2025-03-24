@@ -12,37 +12,28 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2
 
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-
-import cats.data.NonEmptyList
-import cats.implicits._
-
-import cats.effect.{ConcurrentEffect, Resource, Sync, Timer}
-
-import fs2.Stream
-
-import org.http4s.client.{Client => HttpClient}
-
 import _root_.io.circe.Json
 import _root_.io.circe.syntax._
-
+import cats.data.NonEmptyList
+import cats.effect.std.Random
+import cats.effect.{Async, Resource, Sync, Temporal}
+import cats.implicits._
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
-
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Cloud, Telemetry => TelemetryConfig}
+import com.snowplowanalytics.snowplow.scalatracker.Emitter.{Result => TrackerResult, _}
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Emitter._
-import com.snowplowanalytics.snowplow.scalatracker.Emitter.{Result => TrackerResult}
-import com.snowplowanalytics.snowplow.scalatracker.emitters.http4s.Http4sEmitter
-
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Telemetry => TelemetryConfig}
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Cloud
+import com.snowplowanalytics.snowplow.scalatracker.emitters.http4s.{Http4sEmitter, ceTracking}
+import fs2.Stream
+import org.http4s.client.{Client => HttpClient}
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 object Telemetry {
 
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def run[F[_]: ConcurrentEffect: Timer, A](env: Environment[F, A]): Stream[F, Unit] =
+  def run[F[_]: Async: Temporal, A](env: Environment[F, A]): Stream[F, Unit] =
     env.telemetryConfig.disable match {
       case true =>
         Stream.empty.covary[F]
@@ -65,12 +56,13 @@ object Telemetry {
           }
     }
 
-  private def initTracker[F[_]: ConcurrentEffect: Timer](
+  private def initTracker[F[_]: Async](
     config: TelemetryConfig,
     appName: String,
     client: HttpClient[F]
   ): Resource[F, Tracker[F]] =
     for {
+      implicit0(random: Random[F]) <- Resource.eval(Random.scalaUtilRandom[F])
       emitter <- Http4sEmitter.build(
                    EndpointParams(config.collectorUri, port = Some(config.collectorPort), https = config.secure),
                    client,

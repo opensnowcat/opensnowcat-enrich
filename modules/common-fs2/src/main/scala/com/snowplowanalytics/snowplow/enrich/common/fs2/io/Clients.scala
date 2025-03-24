@@ -12,24 +12,21 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2.io
 
-import java.net.URI
-import cats.effect.{ConcurrentEffect, Resource, Timer}
+import cats.effect.{Async, Resource}
+import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients._
 import fs2.Stream
-import org.http4s.{Headers, Request, Uri}
-import org.http4s.client.defaults
-import org.http4s.client.{Client => Http4sClient}
-import org.http4s.client.blaze.BlazeClientBuilder
-
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
-
-import Clients._
 import org.http4s.blaze.pipeline.Command
+import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.middleware.{Retry, RetryPolicy}
-import org.http4s.syntax.string._
-import org.http4s.util.CaseInsensitiveString
+import org.http4s.client.{defaults, Client => Http4sClient}
+import org.http4s.{Headers, Request, Uri}
+import org.typelevel.ci.{CIString, CIStringSyntax}
 
-case class Clients[F[_]: ConcurrentEffect](clients: List[Client[F]]) {
+import java.net.URI
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
+case class Clients[F[_]: Async](clients: List[Client[F]]) {
 
   /** Download a URI as a stream of bytes, using the appropriate client */
   def download(uri: URI): Stream[F, Byte] =
@@ -42,10 +39,10 @@ case class Clients[F[_]: ConcurrentEffect](clients: List[Client[F]]) {
 }
 
 object Clients {
-  def init[F[_]: ConcurrentEffect](httpClient: Http4sClient[F], others: List[Client[F]]): Clients[F] =
+  def init[F[_]: Async](httpClient: Http4sClient[F], others: List[Client[F]]): Clients[F] =
     Clients(wrapHttpClient(httpClient) :: others)
 
-  def wrapHttpClient[F[_]: ConcurrentEffect](client: Http4sClient[F]): Client[F] =
+  def wrapHttpClient[F[_]: Async](client: Http4sClient[F]): Client[F] =
     new Client[F] {
       def canDownload(uri: URI): Boolean =
         // Since Azure Blob Storage urls' scheme are https as well and we want to fetch them with
@@ -62,7 +59,7 @@ object Clients {
       }
     }
 
-  def mkHttp[F[_]: ConcurrentEffect: Timer](
+  def mkHttp[F[_]: Async](
     connectionTimeout: FiniteDuration = defaults.ConnectTimeout,
     readTimeout: FiniteDuration = defaults.RequestTimeout,
     maxConnections: Int = 10, // http4s uses 10 by default
@@ -90,8 +87,8 @@ object Clients {
     if (attemptNumber > 1) None
     else Some(100.millis)
 
-  private def redactHeadersWhen(header: CaseInsensitiveString) =
-    (Headers.SensitiveHeaders + "apikey".ci).contains(header)
+  private def redactHeadersWhen(header: CIString) =
+    (Headers.SensitiveHeaders + ci"apikey").contains(header)
 
   trait RetryableFailure extends Throwable
 

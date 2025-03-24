@@ -12,55 +12,40 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2
 
-import scala.concurrent.duration.FiniteDuration
-
+import _root_.io.sentry.{Sentry, SentryClient}
 import cats.Show
 import cats.data.EitherT
+import cats.effect._
+import cats.effect.std.{Random, Semaphore}
 import cats.implicits._
-
-import cats.effect.{Async, Blocker, Clock, ConcurrentEffect, ContextShift, ExitCase, Resource, Sync, Timer}
-import cats.effect.concurrent.{Ref, Semaphore}
-
-import fs2.Stream
-
-import _root_.io.sentry.{Sentry, SentryClient}
-
-import org.http4s.client.{Client => Http4sClient}
-import org.http4s.Status
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-
 import com.snowplowanalytics.iglu.client.IgluCirceClient
 import com.snowplowanalytics.iglu.client.resolver.registries.{Http4sRegistryLookup, RegistryLookup}
-
 import com.snowplowanalytics.snowplow.badrows.Processor
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.RemoteAdapter
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
-import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
-import com.snowplowanalytics.snowplow.enrich.common.utils.{HttpClient, ShiftExecution}
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input.Kinesis
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Cloud, Concurrency, CustomOutputFormat, FeatureFlags, RemoteAdapterConfigs, Telemetry => TelemetryConfig}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.{ConfigFile, ParsedConfigs}
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{
-  Cloud,
-  Concurrency,
-  CustomOutputFormat,
-  FeatureFlags,
-  RemoteAdapterConfigs,
-  Telemetry => TelemetryConfig
-}
-import com.snowplowanalytics.snowplow.enrich.common.fs2.io.{Clients, Metrics}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.Client
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.experimental.Metadata
-
-import scala.concurrent.ExecutionContext
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input.Kinesis
+import com.snowplowanalytics.snowplow.enrich.common.fs2.io.{Clients, Metrics}
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.utils.{HttpClient, ShiftExecution}
+import fs2.Stream
+import org.http4s.Status
+import org.http4s.client.{Client => Http4sClient}
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.util.concurrent.TimeoutException
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * All allocated resources, configs and mutable variables necessary for running Enrich process
- * Also responsiblle for initial assets downloading (during `assetsState` initialisation)
+ * Also responsible for initial assets downloading (during `assetsState` initialisation)
  *
  * @param igluClient          Iglu Client
  * @param registryLookup      Iglu registry lookup
@@ -103,7 +88,7 @@ final case class Environment[F[_], A](
   semaphore: Semaphore[F],
   assetsState: Assets.State[F],
   httpClient: Http4sClient[F],
-  blocker: Blocker,
+  blocker: ExecutionContext,
   shifter: ShiftExecution[F],
   source: Stream[F, A],
   adapterRegistry: AdapterRegistry[F],
@@ -135,46 +120,43 @@ object Environment {
     Slf4jLogger.getLogger[F]
 
   /** Registry with all allocated clients (MaxMind, IAB etc) and their original configs */
-  final case class Enrichments[F[_]: Async: Clock: ContextShift](
+  final case class Enrichments[F[_]: Async: Clock](
     registry: EnrichmentRegistry[F],
     configs: List[EnrichmentConf],
     httpClient: HttpClient[F]
   ) {
 
     /** Initialize same enrichments, specified by configs (in case DB files updated) */
-    def reinitialize(blocker: Blocker, shifter: ShiftExecution[F]): F[Enrichments[F]] =
-      Enrichments.buildRegistry(configs, blocker, shifter, httpClient).map(registry => Enrichments(registry, configs, httpClient))
+    def reinitialize(shifter: ShiftExecution[F]): F[Enrichments[F]] =
+      Enrichments.buildRegistry(configs, shifter, httpClient).map(registry => Enrichments(registry, configs, httpClient))
   }
 
   object Enrichments {
-    def make[F[_]: Async: Clock: ContextShift](
+    def make[F[_]: Async: Clock](
       configs: List[EnrichmentConf],
-      blocker: Blocker,
       shifter: ShiftExecution[F],
       httpClient: HttpClient[F]
     ): Resource[F, Ref[F, Enrichments[F]]] =
       Resource.eval {
         for {
-          registry <- buildRegistry[F](configs, blocker, shifter, httpClient)
+          registry <- buildRegistry[F](configs, shifter, httpClient)
           ref <- Ref.of(Enrichments[F](registry, configs, httpClient))
         } yield ref
       }
 
-    def buildRegistry[F[_]: Async: Clock: ContextShift](
+    def buildRegistry[F[_]: Async: Clock](
       configs: List[EnrichmentConf],
-      blocker: Blocker,
       shifter: ShiftExecution[F],
       httpClient: HttpClient[F]
     ) =
-      EnrichmentRegistry.build[F](configs, blocker, shifter, httpClient).value.flatMap {
+      EnrichmentRegistry.build[F](configs, shifter, httpClient).value.flatMap {
         case Right(reg) => Async[F].pure(reg)
         case Left(error) => Async[F].raiseError[EnrichmentRegistry[F]](new RuntimeException(error))
       }
   }
 
   /** Initialize and allocate all necessary resources */
-  def make[F[_]: ConcurrentEffect: ContextShift: Clock: Timer, A](
-    blocker: Blocker,
+  def make[F[_]: Async, A](
     ec: ExecutionContext,
     parsedConfigs: ParsedConfigs,
     source: Stream[F, A],
@@ -202,15 +184,17 @@ object Environment {
       clts <- clients.map(Clients.init(http4s, _))
       igluClient <- IgluCirceClient.parseDefault[F](parsedConfigs.igluJson).resource
       remoteAdaptersEnabled = file.remoteAdapters.configs.nonEmpty
-      metrics <- Resource.eval(Metrics.build[F](blocker, file.monitoring.metrics, remoteAdaptersEnabled))
+      metrics <- Resource.eval(Metrics.build[F](file.monitoring.metrics, remoteAdaptersEnabled))
+      implicit0(random: Random[F]) <- Resource.eval(Random.scalaUtilRandom[F])
       metadata <- Resource.eval(metadataReporter[F](file, processor.artifact, http4s))
+      implicit0(registryLookup: RegistryLookup[F]) = Http4sRegistryLookup(http4s)
       assets = parsedConfigs.enrichmentConfigs.flatMap(_.filesToCache)
       remoteAdapters <- prepareRemoteAdapters[F](file.remoteAdapters, ec, metrics)
       adapterRegistry = new AdapterRegistry(remoteAdapters, file.adaptersSchemas)
       sem <- Resource.eval(Semaphore(1L))
-      assetsState <- Resource.eval(Assets.State.make[F](blocker, sem, clts, assets))
+      assetsState <- Resource.eval(Assets.State.make[F](sem, clts, assets))
       shifter <- ShiftExecution.ofSingleThread[F]
-      enrichments <- Enrichments.make[F](parsedConfigs.enrichmentConfigs, blocker, shifter, http)
+      enrichments <- Enrichments.make[F](parsedConfigs.enrichmentConfigs, shifter, http)
     } yield Environment[F, A](
       igluClient,
       Http4sRegistryLookup(http4s),
@@ -218,7 +202,7 @@ object Environment {
       sem,
       assetsState,
       http4s,
-      blocker,
+      ec,
       shifter,
       source,
       adapterRegistry,
@@ -250,7 +234,7 @@ object Environment {
       case Some(dsn) =>
         Resource
           .makeCase(Sync[F].delay(Sentry.init(dsn.toString))) {
-            case (sentry, ExitCase.Error(e)) =>
+            case (sentry, Resource.ExitCase.Errored(e)) =>
               Sync[F].delay(sentry.sendException(e)) >>
                 Logger[F].info("Sentry report has been sent")
             case _ => Sync[F].unit
@@ -260,7 +244,7 @@ object Environment {
         Resource.pure[F, Option[SentryClient]](none[SentryClient])
     }
 
-  private def metadataReporter[F[_]: ConcurrentEffect: ContextShift: Timer](
+  private def metadataReporter[F[_]: Async: Temporal: Random](
     config: ConfigFile,
     appName: String,
     httpClient: Http4sClient[F]
@@ -290,7 +274,7 @@ object Environment {
         None
     }
 
-  def prepareRemoteAdapters[F[_]: ConcurrentEffect: Timer](
+  def prepareRemoteAdapters[F[_]: Async](
     remoteAdapters: RemoteAdapterConfigs,
     ec: ExecutionContext,
     metrics: Metrics[F]

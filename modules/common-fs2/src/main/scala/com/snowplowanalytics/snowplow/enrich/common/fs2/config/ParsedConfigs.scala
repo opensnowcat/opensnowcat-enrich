@@ -12,36 +12,29 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2.config
 
-import java.lang.reflect.Field
-import java.util.UUID
-
-import _root_.io.circe.{Decoder, Json}
 import _root_.io.circe.syntax._
-
+import _root_.io.circe.{Decoder, Json}
+import cats.Applicative
+import cats.data.{EitherT, NonEmptyList}
+import cats.effect.{Async, Clock, Sync}
+import cats.implicits._
+import com.snowplowanalytics.iglu.client.resolver.registries.JavaNetRegistryLookup
+import com.snowplowanalytics.iglu.client.{IgluCirceClient, Resolver}
+import com.snowplowanalytics.iglu.core.circe.implicits._
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Output => OutputConfig}
+import com.snowplowanalytics.snowplow.enrich.common.fs2.io.FileSystem
+import com.snowplowanalytics.snowplow.enrich.common.fs2.{Parsed, ValidationResult}
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
+import com.typesafe.config.{Config => TSConfig}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import cats.effect.{Async, Clock, ContextShift, Sync}
-
-import cats.implicits._
-import cats.data.{EitherT, NonEmptyList}
-import cats.Applicative
-
-import com.typesafe.config.{Config => TSConfig}
-
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
-import com.snowplowanalytics.iglu.core.circe.implicits._
-
-import com.snowplowanalytics.iglu.client.{IgluCirceClient, Resolver}
-
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.EnrichmentRegistry
-import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
-import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
-
-import com.snowplowanalytics.snowplow.enrich.common.fs2.{Parsed, ValidationResult}
-import com.snowplowanalytics.snowplow.enrich.common.fs2.io.FileSystem
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Output => OutputConfig}
+import java.lang.reflect.Field
+import java.util.UUID
 
 final case class ParsedConfigs(
   igluJson: Json,
@@ -65,7 +58,8 @@ object ParsedConfigs {
   final val enrichedFieldsMap: Map[String, Field] = ConversionUtils.EnrichedFields.map(f => f.getName -> f).toMap
 
   /** Decode base64-encoded configs, passed via CLI. Read files, validate and parse */
-  def parse[F[_]: Async: Clock: ContextShift](config: CliConfig): Parsed[F, ParsedConfigs] =
+  def parse[F[_]: Async: Clock](config: CliConfig): Parsed[F, ParsedConfigs] = {
+    implicit val rl = JavaNetRegistryLookup.ioLookupInstance[F]
     for {
       igluJson <- parseHoconToJson[F](config.resolver)
       enrichmentJsons <- config.enrichments match {
@@ -95,6 +89,7 @@ object ParsedConfigs {
                  }
       _ <- EitherT.liftF(Logger[F].info(show"Parsed following enrichments: ${configs.map(_.schemaKey.name).mkString(", ")}"))
     } yield ParsedConfigs(igluJson, configs, configFile, goodPartitionKey, piiPartitionKey, goodAttributes, piiAttributes)
+  }
 
   private[config] def parseHoconToJson[F[_]: Sync](in: EncodedHoconOrPath): EitherT[F, String, Json] =
     parseEncodedOrPath(in, identity)

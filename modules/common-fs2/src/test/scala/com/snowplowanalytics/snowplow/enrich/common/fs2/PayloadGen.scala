@@ -16,7 +16,7 @@ import java.nio.file.{Path, Paths}
 import java.util.Base64
 
 import cats.effect.{Blocker, IO}
-import cats.effect.concurrent.Ref
+import cats.effect.std.Ref
 
 import cats.effect.testing.specs2.CatsIO
 

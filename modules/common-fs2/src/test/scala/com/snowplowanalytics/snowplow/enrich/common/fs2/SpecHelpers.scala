@@ -31,7 +31,7 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.test._
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients
 
 import cats.effect.testing.specs2.CatsIO
-import cats.effect.concurrent.Semaphore
+import cats.effect.std.Semaphore
 
 object SpecHelpers extends CatsIO {
   implicit val ioClock: Clock[IO] =

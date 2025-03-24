@@ -23,7 +23,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import cats.Monad
 
 import cats.effect.{Blocker, Concurrent, ContextShift, IO, Resource, Timer}
-import cats.effect.concurrent.{Ref, Semaphore}
+import cats.effect.std.{Ref, Semaphore}
 import cats.effect.testing.specs2.CatsIO
 
 import fs2.Stream

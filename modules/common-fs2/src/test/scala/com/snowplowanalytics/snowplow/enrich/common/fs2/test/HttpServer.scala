@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common.fs2.test
 
 import cats.effect.{Blocker, IO, Resource}
-import cats.effect.concurrent.Ref
+import cats.effect.std.Ref
 
 import io.circe.literal._
 

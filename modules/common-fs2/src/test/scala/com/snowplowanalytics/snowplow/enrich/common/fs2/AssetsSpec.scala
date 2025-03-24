@@ -24,7 +24,7 @@ import fs2.Stream
 import fs2.io.file.exists
 
 import cats.effect.{Blocker, IO, Resource}
-import cats.effect.concurrent.Semaphore
+import cats.effect.std.Semaphore
 
 import cats.effect.testing.specs2.CatsIO
 

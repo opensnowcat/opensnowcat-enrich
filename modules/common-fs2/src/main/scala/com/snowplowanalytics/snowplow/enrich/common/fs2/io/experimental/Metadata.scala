@@ -12,31 +12,29 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2.io.experimental
 
-import java.time.Instant
-import java.util.UUID
-
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-
-import cats.implicits._
 import cats.Applicative
 import cats.data.NonEmptyList
+import cats.effect._
+import cats.effect.std.Random
+import cats.implicits._
 import cats.kernel.Semigroup
-import cats.effect.{Async, Clock, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
-import cats.effect.concurrent.Ref
+import com.snowplowanalytics.iglu.core.circe.implicits._
+import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Metadata => MetadataConfig}
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.scalatracker.{Emitter, Tracker}
 import fs2.Stream
 import io.circe.Json
 import io.circe.parser._
 import io.circe.syntax._
 import org.http4s.Uri
 import org.http4s.client.Client
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import com.snowplowanalytics.snowplow.scalatracker.emitters.http4s.{Http4sEmitter, ceTracking}
 
-import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
-import com.snowplowanalytics.iglu.core.circe.implicits._
-import com.snowplowanalytics.snowplow.scalatracker.{Emitter, Tracker}
-import com.snowplowanalytics.snowplow.scalatracker.emitters.http4s.Http4sEmitter
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Metadata => MetadataConfig}
-import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import java.time.Instant
+import java.util.UUID
 
 /**
  * EXPERIMENTAL: This code is subject to change or being removed
@@ -65,7 +63,7 @@ object Metadata {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def build[F[_]: ContextShift: ConcurrentEffect: Timer](
+  def build[F[_]: Async](
     config: MetadataConfig,
     reporter: MetadataReporter[F]
   ): F[Metadata[F]] =
@@ -74,7 +72,7 @@ object Metadata {
         def report: Stream[F, Unit] =
           for {
             _ <- Stream.eval(Logger[F].info("Starting metadata repoter"))
-            _ <- Stream.bracket(ConcurrentEffect[F].unit)(_ => submit(reporter, observedRef))
+            _ <- Stream.bracket(Async[F].unit)(_ => submit(reporter, observedRef))
             _ <- Stream.fixedDelay[F](config.interval)
             _ <- Stream.eval(submit(reporter, observedRef))
           } yield ()
@@ -107,7 +105,7 @@ object Metadata {
     ): F[Unit]
   }
 
-  case class HttpMetadataReporter[F[_]: ConcurrentEffect: Timer](
+  case class HttpMetadataReporter[F[_]: Async: Random](
     config: MetadataConfig,
     appName: String,
     client: Client[F]
@@ -122,7 +120,7 @@ object Metadata {
                      Emitter.EndpointParams(
                        config.endpoint.host.map(_.toString()).getOrElse("localhost"),
                        config.endpoint.port,
-                       https = config.endpoint.scheme.map(_ == Uri.Scheme.https).getOrElse(false)
+                       https = config.endpoint.scheme.contains(Uri.Scheme.https)
                      ),
                      client,
                      retryPolicy = Emitter.RetryPolicy.MaxAttempts(10),
@@ -218,13 +216,13 @@ object Metadata {
   object MetadataEventsRef {
     def init[F[_]: Sync: Clock]: F[MetadataEventsRef[F]] =
       for {
-        time <- Clock[F].instantNow
+        time <- Clock[F].realTimeInstant
         aggregates <- Ref.of[F, Aggregates](Map.empty)
         periodStart <- Ref.of[F, Instant](time)
       } yield MetadataEventsRef(aggregates, periodStart)
     def snapshot[F[_]: Sync: Clock](ref: MetadataEventsRef[F]): F[MetadataSnapshot] =
       for {
-        periodEnd <- Clock[F].instantNow
+        periodEnd <- Clock[F].realTimeInstant
         aggregates <- ref.aggregates.getAndSet(Map.empty)
         periodStart <- ref.periodStart.getAndSet(periodEnd)
       } yield MetadataSnapshot(aggregates, periodStart, periodEnd)

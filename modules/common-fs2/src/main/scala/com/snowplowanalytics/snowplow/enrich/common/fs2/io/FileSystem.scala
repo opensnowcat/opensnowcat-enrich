@@ -12,27 +12,23 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2.io
 
-import java.nio.file.{Files, Path}
-
-import scala.collection.JavaConverters._
-import scala.io.{Source => SSource}
-
-import cats.data.EitherT
-
-import cats.effect.Sync
-import cats.implicits._
-
-import fs2.Stream
-
 import _root_.io.circe.Decoder
 import _root_.io.circe.config.syntax._
-
-import com.typesafe.config.{Config => TSConfig, ConfigFactory}
-
+import cats.data.EitherT
+import cats.effect.Sync
+import cats.implicits._
+import com.typesafe.config.{ConfigFactory, Config => TSConfig}
+import fs2.Stream
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
+import java.nio.file.{Files, Path}
+import scala.collection.JavaConverters._
+import scala.io.{Source => SSource}
+
 object FileSystem {
+
+  private val chunkSize = 4096
 
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
@@ -40,7 +36,7 @@ object FileSystem {
   def list[F[_]: Sync](dir: Path): Stream[F, Path] =
     for {
       paths <- Stream.eval(Sync[F].delay(Files.list(dir)))
-      path <- Stream.fromIterator(paths.iterator().asScala)
+      path <- Stream.fromIterator(paths.iterator().asScala, chunkSize)
     } yield path
 
   def readJson[F[_]: Sync, A: Decoder](path: Path, fallbacks: TSConfig => TSConfig): EitherT[F, String, A] =

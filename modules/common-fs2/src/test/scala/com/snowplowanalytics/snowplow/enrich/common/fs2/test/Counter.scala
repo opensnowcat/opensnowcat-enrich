@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 import cats.Monad
 import cats.syntax.flatMap._
 
-import cats.effect.concurrent.Ref
+import cats.effect.std.Ref
 import cats.effect.{Clock, Sync}
 
 import fs2.Stream

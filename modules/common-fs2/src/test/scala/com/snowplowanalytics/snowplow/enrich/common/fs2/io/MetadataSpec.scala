@@ -18,7 +18,7 @@ import java.time.Instant
 import scala.concurrent.duration._
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
+import cats.effect.std.Ref
 import cats.effect.testing.specs2.CatsIO
 import org.http4s.Uri
 

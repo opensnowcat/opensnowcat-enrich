@@ -330,7 +330,7 @@ object io {
       deriveConfiguredEncoder[Output]
   }
 
-  final case class Concurrency(enrich: Long, sink: Int)
+  final case class Concurrency(enrich: Int, sink: Int)
 
   object Concurrency {
     implicit val concurrencyDecoder: Decoder[Concurrency] =
