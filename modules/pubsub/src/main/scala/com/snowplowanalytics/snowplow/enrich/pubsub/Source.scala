@@ -12,37 +12,28 @@
  */
 package com.snowplowanalytics.snowplow.enrich.pubsub
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Sync}
-
+import cats.effect.Sync
 import com.google.api.gax.batching.FlowControlSettings
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior
-
-import com.permutive.pubsub.consumer.{ConsumerRecord, Model}
-import com.permutive.pubsub.consumer.grpc.{PubsubGoogleConsumer, PubsubGoogleConsumerConfig}
-
 import com.google.pubsub.v1.PubsubMessage
-
-import fs2.Stream
-
+import com.permutive.pubsub.consumer.grpc.{PubsubGoogleConsumer, PubsubGoogleConsumerConfig}
+import com.permutive.pubsub.consumer.{ConsumerRecord, Model}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input
-
-import cats.effect.{Blocker, ContextShift, Sync}
+import fs2.Stream
 
 object Source {
 
-  def init[F[_]: Concurrent: ContextShift](
-    blocker: Blocker,
+  def init[F[_]: Sync](
     input: Input
   ): Stream[F, ConsumerRecord[F, Array[Byte]]] =
     input match {
       case p: Input.PubSub =>
-        pubSub(blocker, p)
+        pubSub(p)
       case i =>
         Stream.raiseError[F](new IllegalArgumentException(s"Input $i is not PubSub"))
     }
 
-  def pubSub[F[_]: Concurrent: ContextShift](
-    blocker: Blocker,
+  def pubSub[F[_]: Sync](
     input: Input.PubSub
   ): Stream[F, ConsumerRecord[F, Array[Byte]]] = {
     val onFailedTerminate: Throwable => F[Unit] =
@@ -75,6 +66,6 @@ object Source {
         Sync[F].delay(System.err.println(s"Cannot decode message ${message.getMessageId} into array of bytes. ${error.getMessage}"))
 
     PubsubGoogleConsumer
-      .subscribe[F, Array[Byte]](blocker, projectId, subscriptionId, errorHandler, pubSubConfig)
+      .subscribe[F, Array[Byte]](projectId, subscriptionId, errorHandler, pubSubConfig)
   }
 }
