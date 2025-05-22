@@ -145,7 +145,7 @@ object ParsedConfigs {
   private[config] def outputAttributes(output: OutputConfig): EnrichedEvent => Map[String, String] =
     output match {
       case OutputConfig.PubSub(_, Some(attributes), _, _, _, _) => attributesFromFields(attributes)
-      case OutputConfig.Kafka(_, _, _, headers, _) => attributesFromFields(headers)
+      case OutputConfig.Kafka(_, _, _, headers, _, _) => attributesFromFields(headers)
       case _ => _ => Map.empty
     }
 
@@ -161,7 +161,7 @@ object ParsedConfigs {
 
   private[config] def outputPartitionKey(output: OutputConfig): EnrichedEvent => String =
     output match {
-      case OutputConfig.Kafka(_, _, partitionKey, _, _) => partitionKeyFromFields(partitionKey)
+      case OutputConfig.Kafka(_, _, partitionKey, _, _, _) => partitionKeyFromFields(partitionKey)
       case OutputConfig.Kinesis(_, _, Some(partitionKey), _, _, _, _, _) => partitionKeyFromFields(partitionKey)
       case _ => _ => UUID.randomUUID().toString
     }

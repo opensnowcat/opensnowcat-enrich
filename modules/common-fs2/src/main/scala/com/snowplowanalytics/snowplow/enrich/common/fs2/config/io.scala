@@ -222,7 +222,8 @@ object io {
   case class Outputs(
     good: Output,
     pii: Option[Output],
-    bad: Output
+    bad: Output,
+    mapping: Option[Map[String, String]] = None
   )
   object Outputs {
     implicit val outputsDecoder: Decoder[Outputs] = deriveConfiguredDecoder[Outputs]
@@ -238,7 +239,8 @@ object io {
       bootstrapServers: String,
       partitionKey: String,
       headers: Set[String],
-      producerConf: Map[String, String]
+      producerConf: Map[String, String],
+      mapping: Option[Map[String, String]]
     ) extends Output
 
     case class Nsq private (
@@ -292,7 +294,7 @@ object io {
     implicit val outputDecoder: Decoder[Output] =
       deriveConfiguredDecoder[Output]
         .emap {
-          case Kafka(topicName, bootstrapServers, _, _, _) if topicName.isEmpty ^ bootstrapServers.isEmpty =>
+          case Kafka(topicName, bootstrapServers, _, _, _, _) if topicName.isEmpty ^ bootstrapServers.isEmpty =>
             "Both topicName and bootstrapServers have to be set".asLeft
           case s @ PubSub(top, _, _, _, _, _) if top.nonEmpty =>
             top.split("/").toList match {
@@ -306,7 +308,7 @@ object io {
           case other => other.asRight
         }
         .emap {
-          case Kafka(_, _, pk, _, _) if pk.nonEmpty && !ParsedConfigs.isValidPartitionKey(pk) =>
+          case Kafka(_, _, pk, _, _, _) if pk.nonEmpty && !ParsedConfigs.isValidPartitionKey(pk) =>
             s"Kafka partition key [$pk] is invalid".asLeft
           case ka: Kafka if ka.headers.nonEmpty =>
             val invalidAttrs = ParsedConfigs.filterInvalidAttributes(ka.headers)
