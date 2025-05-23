@@ -81,12 +81,12 @@ object Run {
                     originalConf = parsed.configFile
                     mapping = originalConf.output.mapping.getOrElse(Map.empty[String, String])
                     file = parsed.configFile.copy(
-                      output = originalConf.output.copy(
-                        good = updateKafkaMapping(originalConf.output.good, mapping, "-enriched-good"),
-                        bad = updateKafkaMapping(originalConf.output.bad, mapping, "-enriched-bad"),
-                        pii = originalConf.output.pii.map(v => updateKafkaMapping(v, mapping, "-enriched-pii"))
-                      )
-                    )
+                             output = originalConf.output.copy(
+                               good = updateKafkaMapping(originalConf.output.good, mapping, "-enriched-good"),
+                               bad = updateKafkaMapping(originalConf.output.bad, mapping, "-enriched-bad"),
+                               pii = originalConf.output.pii.map(v => updateKafkaMapping(v, mapping, "-enriched-pii"))
+                             )
+                           )
                     sinkGood = initAttributedSink(blocker, file.output.good, mkSinkGood)
                     sinkPii = file.output.pii.map(out => initAttributedSink(blocker, out, mkSinkPii))
                     sinkBad = file.output.bad match {
@@ -185,7 +185,11 @@ object Run {
       }
     }
 
-  private def updateKafkaMapping(output: Output, mapping: Map[String, String], suffix: String): Output = output match {
+  private def updateKafkaMapping(
+    output: Output,
+    mapping: Map[String, String],
+    suffix: String
+  ): Output = output match {
     case k: Output.Kafka =>
       k.copy(mapping = Some(mapping.mapValues(_ + suffix)))
     case other => other
