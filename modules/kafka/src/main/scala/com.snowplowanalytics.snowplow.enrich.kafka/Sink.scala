@@ -24,6 +24,7 @@ import io.circe.Json
 import io.circe.parser.parse
 
 import java.util.UUID
+import scala.util.Try
 
 object Sink {
 
@@ -82,37 +83,60 @@ object Sink {
 
   private def resolveTopicName(data: Array[Byte], mapping: Map[String, String]): Option[String] = {
     val rawEnrichedEvent = new String(data)
-    val hostOpt = Event
-      .parse(rawEnrichedEvent)
-      .toOption
-      .flatMap { event =>
-        val rawContexts = event.derived_contexts.data
-        val headerContexts = rawContexts.filter(_.schema.toSchemaUri == "iglu:org.ietf/http_header/jsonschema/1-0-0")
-        val contextData = headerContexts.map(_.data).flatMap(_.asObject)
-        val hostValues = contextData
-          .flatMap { obj =>
-            for {
-              name <- obj("name").flatMap(_.asString)
-              value <- obj("value").flatMap(_.asString)
-            } yield (name.toLowerCase, value)
+    val hostOpt = if (mapping.values.exists(_.endsWith("enriched-bad"))) Try {
+      for {
+        json <- parse(rawEnrichedEvent).toOption
+        _ <- json.hcursor
+               .downField("schema")
+               .as[String]
+               .toOption
+               .filter(_.contains("com.snowplowanalytics.snowplow.badrows"))
+        payloadCursor = json.hcursor.downField("data").downField("payload")
+        headers <- payloadCursor
+                     .downField("raw")
+                     .downField("headers")
+                     .as[List[String]]
+                     .toOption
+                     .orElse(payloadCursor.downField("headers").as[List[String]].toOption)
+        hostHeader <- headers.find(_.toLowerCase.startsWith("host:"))
+        hostValue = hostHeader.drop("host:".length).trim
+        if hostValue.nonEmpty
+      } yield hostValue
+    }
+    else
+      Try {
+        Event
+          .parse(rawEnrichedEvent)
+          .toOption
+          .flatMap { event =>
+            val rawContexts = event.derived_contexts.data
+            val headerContexts = rawContexts.filter(_.schema.toSchemaUri == "iglu:org.ietf/http_header/jsonschema/1-0-0")
+            val contextData = headerContexts.map(_.data).flatMap(_.asObject)
+            val hostValues = contextData
+              .flatMap { obj =>
+                for {
+                  name <- obj("name").flatMap(_.asString)
+                  value <- obj("value").flatMap(_.asString)
+                } yield (name.toLowerCase, value)
+              }
+              .filter(_._1 == "host")
+              .map(_._2)
+
+            hostValues.headOption
           }
-          .filter(_._1 == "host")
-          .map(_._2)
-
-        hostValues.headOption
-      }
-      .orElse {
-        for {
-          json <- parse(rawEnrichedEvent).toOption
-          cursor = json.hcursor
-          contexts <- cursor.downField("contexts_org_ietf_http_header_1").as[List[Json]].toOption
-          hostValue <- contexts.collectFirst {
-                         case obj if obj.hcursor.downField("name").as[String].toOption.exists(_.equalsIgnoreCase("host")) =>
-                           obj.hcursor.downField("value").as[String].toOption
-                       }.flatten
-        } yield hostValue
+          .orElse {
+            for {
+              json <- parse(rawEnrichedEvent).toOption
+              cursor = json.hcursor
+              contexts <- cursor.downField("contexts_org_ietf_http_header_1").as[List[Json]].toOption
+              hostValue <- contexts.collectFirst {
+                             case obj if obj.hcursor.downField("name").as[String].toOption.exists(_.equalsIgnoreCase("host")) =>
+                               obj.hcursor.downField("value").as[String].toOption
+                           }.flatten
+            } yield hostValue
+          }
       }
 
-    hostOpt.flatMap(mapping.get)
+    hostOpt.toOption.flatten.flatMap(mapping.get)
   }
 }
