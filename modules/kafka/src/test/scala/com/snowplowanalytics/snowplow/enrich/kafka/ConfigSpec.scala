@@ -53,7 +53,8 @@ class ConfigSpec extends Specification with CatsIO {
             "localhost:9092",
             "app_id",
             Set("app_id"),
-            Map("acks" -> "all")
+            Map("acks" -> "all"),
+            None
           ),
           Some(
             io.Output.Kafka(
@@ -61,7 +62,8 @@ class ConfigSpec extends Specification with CatsIO {
               "localhost:9092",
               "app_id",
               Set("app_id"),
-              Map("acks" -> "all")
+              Map("acks" -> "all"),
+              None
             )
           ),
           io.Output.Kafka(
@@ -69,7 +71,8 @@ class ConfigSpec extends Specification with CatsIO {
             "localhost:9092",
             "",
             Set(),
-            Map("acks" -> "all")
+            Map("acks" -> "all"),
+            None
           )
         ),
         io.Concurrency(256, 1),
@@ -157,7 +160,8 @@ class ConfigSpec extends Specification with CatsIO {
             "localhost:9092",
             "",
             Set(),
-            Map("acks" -> "all")
+            Map("acks" -> "all"),
+            None
           ),
           None,
           io.Output.Kafka(
@@ -165,7 +169,8 @@ class ConfigSpec extends Specification with CatsIO {
             "localhost:9092",
             "",
             Set(),
-            Map("acks" -> "all")
+            Map("acks" -> "all"),
+            None
           )
         ),
         io.Concurrency(256, 1),

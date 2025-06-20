@@ -165,7 +165,7 @@ class ParsedConfigsSpec extends Specification with CatsIO {
 
   "outputPartitionKey" should {
     "fetch partition key's value" in {
-      val output = io.Output.Kafka("good-topic", "localhost:9092", "app_id", Set(), Map.empty)
+      val output = io.Output.Kafka("good-topic", "localhost:9092", "app_id", Set(), Map.empty, None)
       val ee = new EnrichedEvent()
       ee.app_id = "test_outputPartitionKey"
 

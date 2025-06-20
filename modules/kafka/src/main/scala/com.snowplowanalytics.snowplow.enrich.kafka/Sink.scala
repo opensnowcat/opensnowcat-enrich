@@ -13,16 +13,18 @@
 
 package com.snowplowanalytics.snowplow.enrich.kafka
 
-import java.util.UUID
-
 import cats.Parallel
-import cats.implicits._
 import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
-
-import fs2.kafka._
-
-import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
+import cats.implicits._
+import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
+import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
+import fs2.kafka._
+import io.circe.Json
+import io.circe.parser.parse
+
+import java.util.UUID
+import scala.util.Try
 
 object Sink {
 
@@ -40,10 +42,11 @@ object Sink {
   ): Resource[F, AttributedByteSink[F]] =
     output match {
       case k: Output.Kafka =>
+        val mapping = k.mapping.getOrElse(Map.empty[String, String])
         mkProducer(blocker, k).map { producer => records =>
           records.parTraverse_ { record =>
             producer
-              .produceOne_(toProducerRecord(k.topicName, record))
+              .produceOne_(toProducerRecord(k.topicName, record, mapping))
               .flatten
               .void
           }
@@ -68,7 +71,72 @@ object Sink {
     KafkaProducer[F].resource(producerSettings)
   }
 
-  private def toProducerRecord(topicName: String, record: AttributedData[Array[Byte]]): ProducerRecord[String, Array[Byte]] =
-    ProducerRecord(topicName, record.partitionKey, record.data)
+  private def toProducerRecord(
+    topicName: String,
+    record: AttributedData[Array[Byte]],
+    mapping: Map[String, String]
+  ): ProducerRecord[String, Array[Byte]] = {
+    val mappedTopic = resolveTopicName(record.data, mapping)
+    ProducerRecord(mappedTopic.getOrElse(topicName), record.partitionKey, record.data)
       .withHeaders(Headers.fromIterable(record.attributes.map(t => Header(t._1, t._2))))
+  }
+
+  private def resolveTopicName(data: Array[Byte], mapping: Map[String, String]): Option[String] = {
+    val rawEnrichedEvent = new String(data)
+    val hostOpt = if (mapping.values.exists(_.endsWith("enriched-bad"))) Try {
+      for {
+        json <- parse(rawEnrichedEvent).toOption
+        _ <- json.hcursor
+               .downField("schema")
+               .as[String]
+               .toOption
+               .filter(_.contains("com.snowplowanalytics.snowplow.badrows"))
+        payloadCursor = json.hcursor.downField("data").downField("payload")
+        headers <- payloadCursor
+                     .downField("raw")
+                     .downField("headers")
+                     .as[List[String]]
+                     .toOption
+                     .orElse(payloadCursor.downField("headers").as[List[String]].toOption)
+        hostHeader <- headers.find(_.toLowerCase.startsWith("host:"))
+        hostValue = hostHeader.drop("host:".length).trim
+        if hostValue.nonEmpty
+      } yield hostValue
+    }
+    else
+      Try {
+        Event
+          .parse(rawEnrichedEvent)
+          .toOption
+          .flatMap { event =>
+            val rawContexts = event.derived_contexts.data
+            val headerContexts = rawContexts.filter(_.schema.toSchemaUri == "iglu:org.ietf/http_header/jsonschema/1-0-0")
+            val contextData = headerContexts.map(_.data).flatMap(_.asObject)
+            val hostValues = contextData
+              .flatMap { obj =>
+                for {
+                  name <- obj("name").flatMap(_.asString)
+                  value <- obj("value").flatMap(_.asString)
+                } yield (name.toLowerCase, value)
+              }
+              .filter(_._1 == "host")
+              .map(_._2)
+
+            hostValues.headOption
+          }
+          .orElse {
+            for {
+              json <- parse(rawEnrichedEvent).toOption
+              cursor = json.hcursor
+              contexts <- cursor.downField("contexts_org_ietf_http_header_1").as[List[Json]].toOption
+              hostValue <- contexts.collectFirst {
+                             case obj if obj.hcursor.downField("name").as[String].toOption.exists(_.equalsIgnoreCase("host")) =>
+                               obj.hcursor.downField("value").as[String].toOption
+                           }.flatten
+            } yield hostValue
+          }
+      }
+
+    hostOpt.toOption.flatten.flatMap(mapping.get)
+  }
 }

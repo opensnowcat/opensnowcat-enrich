@@ -95,6 +95,7 @@ object Dependencies {
     val eventGen = "0.2.2"
 
     val snowplowTracker = "1.0.0"
+    val snowplowAnalyticsSdk = "3.0.1"
 
     val specs2 = "4.20.8"
     val specs2Cats = "4.11.0"
@@ -155,6 +156,8 @@ object Dependencies {
     val slf4j = "org.slf4j"                         % "slf4j-simple"                  % V.slf4j
     val sentry = "io.sentry"                        % "sentry"                        % V.sentry
     val protobuf = "com.google.protobuf"            % "protobuf-java"                 % V.protobuf
+
+    val snowplowanAnalyticsSdk = "com.snowplowanalytics" %% "snowplow-scala-analytics-sdk" % V.snowplowAnalyticsSdk
 
     val specs2 = "org.specs2"                        %% "specs2-core"                   % V.specs2            % Test
     val specs2Cats = "org.specs2"                    %% "specs2-cats"                   % V.specs2Cats        % Test
@@ -333,6 +336,7 @@ object Dependencies {
     val kafkaDependencies = Seq(
       fs2Kafka,
       kafkaClients, // override kafka-clients 2.8.1 from fs2Kafka to address https://security.snyk.io/vuln/SNYK-JAVA-ORGAPACHEKAFKA-3027430
+      snowplowanAnalyticsSdk,
       mskAuth,
       specs2,
       specs2CE
