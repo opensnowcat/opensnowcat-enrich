@@ -62,7 +62,7 @@ class EnrichKafkaSpec extends Specification with CatsIO {
     val resources =
       for {
         blocker <- Blocker[IO]
-        sink <- Sink.init[IO](blocker, OutKafka(collectorPayloadsStream, bootstrapServers, "", Set.empty, producerConf))
+        sink <- Sink.init[IO](blocker, OutKafka(collectorPayloadsStream, bootstrapServers, "", Set.empty, producerConf, None))
       } yield sink
 
     resources.use { sink =>
@@ -114,7 +114,7 @@ class EnrichKafkaSpec extends Specification with CatsIO {
     }
   }
 
-  val aggregates = run().unsafeRunSync()
+  val aggregates: Aggregates = run().unsafeRunSync()
 
   "enrich-kinesis" should {
     "emit the expected enriched events" in {
