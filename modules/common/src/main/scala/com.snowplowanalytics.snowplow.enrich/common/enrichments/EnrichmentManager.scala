@@ -188,7 +188,7 @@ object EnrichmentManager {
       (e, hs) => e.extract(hs)
     )
     val sqlContexts = getSqlQueryContexts[F](inputContexts, unstructEvent, registry.sqlQuery)
-    val apiContexts = getApiRequestContexts[F](inputContexts, unstructEvent, registry.apiRequest)
+    val apiContexts = getApiRequestContexts[F](inputContexts, unstructEvent, registry.apiRequest, registry.extraApiRequest)
 
     if (legacyOrder)
       for {
@@ -696,7 +696,7 @@ object EnrichmentManager {
         case Some(enrichment) =>
           enrichment.lookup(event, derivedContexts, inputContexts, unstructEvent).map(_.toEither)
         case None =>
-          List.empty[SelfDescribingData[Json]].asRight.pure[F]
+          List.empty[SelfDescribingData[Json]].asRight[NonEmptyList[FailureDetails.EnrichmentFailure]].pure[F]
       }
     }
 
@@ -704,14 +704,21 @@ object EnrichmentManager {
   def getApiRequestContexts[F[_]: Monad](
     inputContexts: List[SelfDescribingData[Json]],
     unstructEvent: Option[SelfDescribingData[Json]],
-    apiRequest: Option[ApiRequestEnrichment[F]]
+    apiRequest: Option[ApiRequestEnrichment[F]],
+    extraApiRequest: Option[ApiRequestEnrichment[F]]
   ): EStateT[F, Unit] =
     EStateT.fromEitherF { case (event, derivedContexts) =>
-      apiRequest match {
-        case Some(enrichment) =>
+      val resultsF: F[List[Either[NonEmptyList[FailureDetails.EnrichmentFailure], List[SelfDescribingData[Json]]]]] =
+        List(apiRequest, extraApiRequest).flatten.traverse { enrichment =>
           enrichment.lookup(event, derivedContexts, inputContexts, unstructEvent).map(_.toEither)
-        case None =>
-          List.empty[SelfDescribingData[Json]].asRight.pure[F]
+        }
+
+      resultsF.map { results =>
+        val (errors, contexts) = results.separate
+        if (errors.nonEmpty)
+          errors.reduce(_ concatNel _).asLeft
+        else
+          contexts.flatten.asRight
       }
     }
 

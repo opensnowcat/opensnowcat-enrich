@@ -65,6 +65,13 @@ object EnrichmentConf {
       )
   }
 
+  final case class ExtraApiRequestConf(apiRequestConf: ApiRequestConf) extends EnrichmentConf {
+    def schemaKey: SchemaKey = apiRequestConf.schemaKey
+    override def filesToCache: List[(URI, String)] = apiRequestConf.filesToCache
+    def enrichment[F[_]: Async: Clock](httpClient: HttpClient[F]): F[ApiRequestEnrichment[F]] =
+      apiRequestConf.enrichment(httpClient)
+  }
+
   final case class PiiPseudonymizerConf(
     schemaKey: SchemaKey,
     fieldList: List[pii.PiiField],
