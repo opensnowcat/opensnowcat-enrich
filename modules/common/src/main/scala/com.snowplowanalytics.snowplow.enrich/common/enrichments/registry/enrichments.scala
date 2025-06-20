@@ -32,6 +32,9 @@ trait ParseableEnrichment {
   /** The schemas supported by this enrichment */
   def supportedSchema: SchemaCriterion
 
+  /** Additional supported schemas (empty by default) */
+  def supportedSchemas: List[SchemaCriterion] = Nil
+
   /**
    * Tentatively parses an enrichment configuration and sends back the files that need to be cached
    * prior to the EnrichmentRegistry construction.
@@ -54,11 +57,11 @@ trait ParseableEnrichment {
    * @return The JSON or an error message, boxed
    */
   def isParseable(config: Json, schemaKey: SchemaKey): Either[String, Json] =
-    if (supportedSchema.matches(schemaKey))
+    if (supportedSchema.matches(schemaKey) || supportedSchemas.exists(_.matches(schemaKey)))
       config.asRight
     else
-      (s"Schema key ${schemaKey.toSchemaUri} is not supported. A '${supportedSchema.name}' " +
-        s"enrichment must have schema ${supportedSchema.asString}.").asLeft
+      (s"Schema key ${schemaKey.toSchemaUri} is not supported. Supported schemas: " +
+        (supportedSchema.asString :: supportedSchemas.map(_.asString)).mkString(", ") + ".").asLeft
 
   /**
    * Convert the path to a file from a String to a URI.

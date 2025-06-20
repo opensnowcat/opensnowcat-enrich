@@ -44,6 +44,11 @@ object ApiRequestEnrichment extends ParseableEnrichment {
       0
     )
 
+  override def supportedSchemas: List[SchemaCriterion] = List(
+    SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "api_request_enrichment_config", "jsonschema", 1, 0),
+    SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "extra_api_request_enrichment_config", "jsonschema", 1, 0)
+  )
+
   /**
    * Creates an ApiRequestEnrichment instance from a JValue.
    * @param c The enrichment JSON (not self-describing)

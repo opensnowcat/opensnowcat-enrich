@@ -108,6 +108,11 @@ object EnrichmentRegistry {
   ): EitherT[F, String, EnrichmentRegistry[F]] =
     confs.foldLeft(EitherT.pure[F, String](EnrichmentRegistry[F]())) { (er, e) =>
       e match {
+        case c: ExtraApiRequestConf =>
+          for {
+            enrichment <- EitherT.right(c.enrichment[F](httpClient))
+            registry <- er
+          } yield registry.copy(extraApiRequest = enrichment.some)
         case c: ApiRequestConf =>
           for {
             enrichment <- EitherT.right(c.enrichment[F](httpClient))
@@ -214,6 +219,10 @@ object EnrichmentRegistry {
             WeatherEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
           case "api_request_enrichment_config" =>
             ApiRequestEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
+          case "extra_api_request_enrichment_config" =>
+            ApiRequestEnrichment.parse(enrichmentConfig, schemaKey).map { enr =>
+              ExtraApiRequestConf(enr).some
+            }
           case "sql_query_enrichment_config" =>
             SqlQueryEnrichment.parse(enrichmentConfig, schemaKey).map(_.some)
           case "pii_enrichment_config" =>
@@ -229,6 +238,7 @@ object EnrichmentRegistry {
 /** A registry to hold all of our enrichments. */
 final case class EnrichmentRegistry[F[_]](
   apiRequest: Option[ApiRequestEnrichment[F]] = None,
+  extraApiRequest: Option[ApiRequestEnrichment[F]] = None,
   piiPseudonymizer: Option[PiiPseudonymizerEnrichment] = None,
   sqlQuery: Option[SqlQueryEnrichment[F]] = None,
   anonIp: Option[AnonIpEnrichment] = None,
