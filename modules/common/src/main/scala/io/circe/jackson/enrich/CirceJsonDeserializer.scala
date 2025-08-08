@@ -61,7 +61,7 @@ private[jackson] final class CirceJsonDeserializer(klass: Class[_]) extends Json
 
       case JsonTokenId.ID_FIELD_NAME =>
         parserContext match {
-          case (c: ReadingMap) :: stack => (None, c.setField(jp.getCurrentName) +: stack)
+          case (c: ReadingMap) :: stack => (None, c.setField(jp.currentName()) +: stack)
           case _ =>
             throw new IllegalStateException("Jackson read a String field name but parser context is not a json object")
         }
