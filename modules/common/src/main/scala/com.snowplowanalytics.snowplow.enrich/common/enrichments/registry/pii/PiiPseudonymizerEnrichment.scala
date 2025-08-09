@@ -292,7 +292,7 @@ final case class PiiJson(
       // - the actual value(s) for valid paths
       val pathHasValues = testResult match {
         case null => false
-        case _: com.fasterxml.jackson.databind.node.NullNode => false  // Treat NullNode as missing
+        case _: com.fasterxml.jackson.databind.node.NullNode => false // Treat NullNode as missing
         case list: java.util.List[_] => !list.isEmpty
         case collection: java.util.Collection[_] => !collection.isEmpty
         case array: Array[_] => array.nonEmpty
