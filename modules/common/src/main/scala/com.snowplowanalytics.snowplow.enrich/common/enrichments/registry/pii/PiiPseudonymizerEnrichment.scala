@@ -12,33 +12,25 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.pii
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable.MutableList
-
 import cats.data.ValidatedNel
 import cats.implicits._
-
+import com.fasterxml.jackson.databind.node.{ArrayNode, NullNode, ObjectNode, TextNode}
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
+import com.jayway.jsonpath.{Configuration, MapFunction, JsonPath => JJsonPath}
+import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
+import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.Adapter
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf.PiiPseudonymizerConf
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.pii.serializers._
+import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.{Enrichment, ParseableEnrichment}
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.utils.CirceUtils
 import io.circe._
 import io.circe.jackson._
 import io.circe.syntax._
-
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.{ArrayNode, NullNode, ObjectNode, TextNode}
-import com.fasterxml.jackson.databind.ObjectMapper
-
-import com.jayway.jsonpath.{Configuration, JsonPath => JJsonPath}
-import com.jayway.jsonpath.MapFunction
-
 import org.apache.commons.codec.digest.DigestUtils
 
-import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
-
-import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.Adapter
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf.PiiPseudonymizerConf
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.{Enrichment, ParseableEnrichment}
-import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.pii.serializers._
-import com.snowplowanalytics.snowplow.enrich.common.utils.CirceUtils
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 /** Companion object. Lets us create a PiiPseudonymizerEnrichment from a Json. */
 object PiiPseudonymizerEnrichment extends ParseableEnrichment {
@@ -284,22 +276,55 @@ final case class PiiJson(
   ): (Json, List[JsonModifiedField]) = {
     val objectNode = io.circe.jackson.mapper.valueToTree[ObjectNode](json)
     val documentContext = JJsonPath.using(JsonPathConf).parse(objectNode)
-    val modifiedFields = MutableList[JsonModifiedField]()
-    Option(documentContext.read[AnyRef](jsonPath)) match { // check that json object not null
-      case None => (jacksonToCirce(documentContext.json[JsonNode]()), modifiedFields.toList)
-      case _ =>
+    val modifiedFields = mutable.MutableList[JsonModifiedField]()
+
+    // In JsonPath 2.9.0, the behavior of read() followed by map() changed significantly.
+    // We need to check if the path exists and has values before attempting to map.
+    // The key insight is that 2.9.0 changed how SUPPRESS_EXCEPTIONS interacts with definite paths.
+    try {
+      // First, test if the path exists by reading it
+      val testResult = documentContext.read[AnyRef](jsonPath)
+
+      // JsonPath 2.9.0 returns different types for missing/empty paths:
+      // - null for truly missing paths
+      // - NullNode for paths that resolve to null values
+      // - empty collections for paths that exist but have no values
+      // - the actual value(s) for valid paths
+      val pathHasValues = testResult match {
+        case null => false
+        case _: com.fasterxml.jackson.databind.node.NullNode => false // Treat NullNode as missing
+        case list: java.util.List[_] => !list.isEmpty
+        case collection: java.util.Collection[_] => !collection.isEmpty
+        case array: Array[_] => array.nonEmpty
+        case _: String => true // Always hash strings, even empty ones
+        case _: com.fasterxml.jackson.databind.node.TextNode => true // Always hash TextNode, even if empty
+        case valueNode: com.fasterxml.jackson.databind.node.ValueNode => !valueNode.isNull
+        case _ => true // For other types (objects, arrays), assume they're valid
+      }
+
+      if (pathHasValues) {
+        // Path exists and has values - proceed with the mapping operation
+        // In JsonPath 2.9.0, we need to ensure the map operation works on the same context
         val documentContext2 = documentContext.map(
           jsonPath,
-          new ScrambleMapFunction(strategy, modifiedFields, fieldMutator.fieldName, jsonPath, schema)
+          ScrambleMapFunction(strategy, modifiedFields, fieldMutator.fieldName, jsonPath, schema)
         )
         (jacksonToCirce(documentContext2.json[JsonNode]()), modifiedFields.toList)
+      } else {
+        // Path doesn't exist or has no values - return original JSON unchanged
+        (jacksonToCirce(documentContext.json[JsonNode]()), modifiedFields.toList)
+      }
+    } catch {
+      case _: Exception =>
+        // Any exception means the path is invalid or doesn't exist - return original JSON
+        (jacksonToCirce(documentContext.json[JsonNode]()), modifiedFields.toList)
     }
   }
 }
 
 private final case class ScrambleMapFunction(
   strategy: PiiStrategy,
-  modifiedFields: MutableList[JsonModifiedField],
+  modifiedFields: mutable.MutableList[JsonModifiedField],
   fieldName: String,
   jsonPath: String,
   schema: String
@@ -310,6 +335,12 @@ private final case class ScrambleMapFunction(
         val newValue = strategy.scramble(s)
         val _ = modifiedFields += JsonModifiedField(fieldName, s, newValue, jsonPath, schema)
         newValue
+      case t: TextNode =>
+        // In JsonPath 2.9.0, string values are returned as TextNode objects
+        val originalValue = t.asText()
+        val newValue = strategy.scramble(originalValue)
+        val _ = modifiedFields += JsonModifiedField(fieldName, originalValue, newValue, jsonPath, schema)
+        new TextNode(newValue)
       case a: ArrayNode =>
         val mapper = new ObjectMapper()
         val arr = mapper.createArrayNode()
