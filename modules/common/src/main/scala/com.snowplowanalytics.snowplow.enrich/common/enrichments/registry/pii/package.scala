@@ -12,10 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
-import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider
-import com.jayway.jsonpath.{Configuration, Option => JOption}
-
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 
 package object pii {
@@ -27,19 +26,15 @@ package object pii {
   val JsonMutators = Mutators.JsonMutators
   val ScalarMutators = Mutators.ScalarMutators
 
-  // Configuration for JsonPath, SerializationFeature.FAIL_ON_EMPTY_BEANS is required otherwise an
-  // invalid path causes an exception
-  private[pii] val JacksonNodeJsonObjectMapper = {
-    val objectMapper = new ObjectMapper()
-    objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-    objectMapper
-  }
-  // SUPPRESS_EXCEPTIONS is useful here as we prefer an empty list to an exception when a path is
-  // not found.
+  // Configuration for JsonPath. In JsonPath 2.9.0, DEFAULT_PATH_LEAF_TO_NULL causes
+  // definite paths like $.emailAddress to return NullNode instead of actual values.
+  // We only need SUPPRESS_EXCEPTIONS to handle missing paths gracefully.
+  private[pii] val JacksonNodeJsonObjectMapper = new ObjectMapper()
+
   private[pii] val JsonPathConf =
     Configuration
       .builder()
-      .options(JOption.SUPPRESS_EXCEPTIONS)
+      .options(com.jayway.jsonpath.Option.SUPPRESS_EXCEPTIONS)
       .jsonProvider(new JacksonJsonNodeJsonProvider(JacksonNodeJsonObjectMapper))
       .build()
 }
