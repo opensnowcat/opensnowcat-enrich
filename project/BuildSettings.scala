@@ -34,7 +34,7 @@ object BuildSettings {
 
   lazy val projectSettings = Seq(
     organization := "com.snowplowanalytics",
-    scalaVersion := "2.12.15",
+    scalaVersion := "2.12.20",
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
   )
 
