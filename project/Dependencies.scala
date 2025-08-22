@@ -83,12 +83,13 @@ object Dependencies {
 
     val decline = "2.4.1"
     val fs2 = "2.5.11"
+    val refined = "0.10.3"
     val catsEffect = "2.5.5"
     val fs2PubSub = "0.18.1"
     val fs2Aws = "3.1.1"
     val fs2Kafka = "1.11.0"
     val fs2BlobStorage = "0.8.11"
-    val azureIdentity = "1.11.4"
+    val azureIdentity = "1.17.0"
     val http4s = "0.21.34"
     val log4cats = "1.7.0"
     val catsRetry = "2.1.1"
@@ -189,6 +190,7 @@ object Dependencies {
     val fs2Aws = ("io.laserdisc"    %% "fs2-aws"                % V.fs2Aws)
       .exclude("com.amazonaws", "amazon-kinesis-producer")
       .exclude("software.amazon.kinesis", "amazon-kinesis-client")
+    val refined = "eu.timepit"                     %% "refined"               % V.refined
     val fs2 = "co.fs2"                             %% "fs2-core"              % V.fs2
     val fs2Io = "co.fs2"                           %% "fs2-io"                % V.fs2
     val fs2Kafka = "com.github.fd4s"               %% "fs2-kafka"             % V.fs2Kafka
@@ -325,6 +327,7 @@ object Dependencies {
       kinesisSdk,
       fs2BlobS3,
       fs2Aws,
+      refined,
       kinesisSdk2,
       dynamoDbSdk2,
       s3Sdk2,
@@ -359,6 +362,7 @@ object Dependencies {
       kinesisSdk,
       fs2BlobS3,
       fs2Aws,
+      refined,
       kinesisSdk2,
       dynamoDbSdk2,
       s3Sdk2,
