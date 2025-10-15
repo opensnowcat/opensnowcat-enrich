@@ -71,10 +71,9 @@ object Dependencies {
     val collectorPayload = "0.0.0"
     val schemaSniffer = "0.0.0"
 
-    val awsSdk = "1.12.780"
     val gcpSdk = "2.31.0"
-    val awsSdk2 = "2.25.69"
-    val kinesisClient2 = "2.4.3"
+    val awsSdk2 = "2.34.2"
+    val kinesisClient2 = "2.7.1"
     val kafka = "3.9.1"
     val mskAuth = "2.2.0"
     val nsqClient = "1.3.0"
@@ -173,9 +172,6 @@ object Dependencies {
     val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators"      % V.parserCombinators % Test
     val testContainersIt = "com.dimafeng"            %% "testcontainers-scala-core"     % V.testcontainers    % IntegrationTest
 
-    val kinesisSdk = "com.amazonaws"        % "aws-java-sdk-kinesis"  % V.awsSdk
-    val dynamodbSdk = "com.amazonaws"       % "aws-java-sdk-dynamodb" % V.awsSdk
-    val sts = "com.amazonaws"               % "aws-java-sdk-sts"      % V.awsSdk     % Runtime
     val gcs = "com.google.cloud"            % "google-cloud-storage"  % V.gcpSdk
     val kafkaClients = "org.apache.kafka"   % "kafka-clients"         % V.kafka
     val mskAuth = "software.amazon.msk"     % "aws-msk-iam-auth"      % V.mskAuth    % Runtime
@@ -323,8 +319,6 @@ object Dependencies {
     )
 
     val kinesisDependencies = Seq(
-      dynamodbSdk,
-      kinesisSdk,
       fs2BlobS3,
       fs2Aws,
       refined,
@@ -334,7 +328,6 @@ object Dependencies {
       cloudwatchSdk2,
       kinesisClient2,
       stsSdk2,
-      sts,
       specs2,
       specs2CE
     )
@@ -358,8 +351,6 @@ object Dependencies {
     )
 
     val eventbridgeDependencies = Seq(
-      dynamodbSdk,
-      kinesisSdk,
       fs2BlobS3,
       fs2Aws,
       refined,
@@ -369,7 +360,6 @@ object Dependencies {
       cloudwatchSdk2,
       kinesisClient2,
       stsSdk2,
-      sts,
       specs2,
       specs2CE,
       eventbridgeSdk2

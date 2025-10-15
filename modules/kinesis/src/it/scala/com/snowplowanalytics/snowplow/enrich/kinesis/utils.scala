@@ -49,7 +49,7 @@ object utils extends CatsIO {
       val enriched = asGood(outputStream(blocker, KinesisConfig.enrichedStreamConfig(localstackPort, streams.enriched)))
       val bad = asBad(outputStream(blocker, KinesisConfig.badStreamConfig(localstackPort, streams.bad)))
 
-      collectorPayloads =>
+      (collectorPayloads: Stream[IO, Array[Byte]]) =>
         enriched
           .merge(bad)
           .interruptAfter(3.minutes)

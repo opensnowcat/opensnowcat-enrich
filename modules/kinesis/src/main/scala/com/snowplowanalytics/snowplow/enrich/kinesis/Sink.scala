@@ -12,32 +12,29 @@
  */
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
-import java.nio.ByteBuffer
-import java.util.UUID
-
-import scala.collection.JavaConverters._
-
+import cats.effect.concurrent.Ref
+import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.implicits._
 import cats.{Monoid, Parallel}
-
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
-import cats.effect.concurrent.Ref
-
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-
-import retry.syntax.all._
-import retry.RetryPolicy
-
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-
-import com.amazonaws.services.kinesis.model._
-import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
-
-import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Retries
+import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import retry.RetryPolicy
+import retry.syntax.all._
+import software.amazon.awssdk.core.SdkBytes
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.kinesis.KinesisClient
+import software.amazon.awssdk.services.kinesis.model.{DescribeStreamRequest, PutRecordsRequest, PutRecordsRequestEntry, PutRecordsResponse}
 
+import java.nio.ByteBuffer
+import java.util.UUID
+import scala.collection.JavaConverters._
+import scala.language.higherKinds
+
+//below implementation is using the Amazon Kinesis Data Streams API with the AWS SDK for Java: https://docs.aws.amazon.com/streams/latest/dev/developing-producers-with-sdk.html
+//should we use the Amazon Kinesis Producer Library (KPL) instead? https://docs.aws.amazon.com/streams/latest/dev/developing-producers-with-kpl.html
 object Sink {
 
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
@@ -60,8 +57,8 @@ object Sink {
         o.region.orElse(getRuntimeRegion) match {
           case Some(region) =>
             for {
-              producer <- Resource.eval[F, AmazonKinesis](mkProducer(o, region))
-            } yield records => writeToKinesis(blocker, o, producer, toKinesisRecords(records))
+              producer <- Resource.eval[F, KinesisClient](mkProducer(o, region))
+            } yield (records: List[AttributedData[Array[Byte]]]) => writeToKinesis(blocker, o, producer, toKinesisRecords(records))
           case None =>
             Resource.eval(Sync[F].raiseError(new RuntimeException(s"Region not found in the config and in the runtime")))
         }
@@ -72,23 +69,23 @@ object Sink {
   private def mkProducer[F[_]: Sync](
     config: Output.Kinesis,
     region: String
-  ): F[AmazonKinesis] =
+  ): F[KinesisClient] =
     for {
-      builder <- Sync[F].delay(AmazonKinesisClientBuilder.standard)
+      builder <- Sync[F].delay(KinesisClient.builder())
       withEndpoint <- config.customEndpoint match {
                         case Some(endpoint) =>
-                          Sync[F].delay(builder.withEndpointConfiguration(new EndpointConfiguration(endpoint.toString, region)))
+                          Sync[F].delay(builder.endpointOverride(endpoint))
                         case None =>
-                          Sync[F].delay(builder.withRegion(region))
+                          Sync[F].delay(builder.region(Region.of(region)))
                       }
       kinesis <- Sync[F].delay(withEndpoint.build())
       _ <- streamExists(kinesis, config.streamName)
     } yield kinesis
 
-  private def streamExists[F[_]: Sync](kinesis: AmazonKinesis, stream: String): F[Unit] =
+  private def streamExists[F[_]: Sync](kinesis: KinesisClient, stream: String): F[Unit] =
     for {
-      described <- Sync[F].delay(kinesis.describeStream(stream))
-      status = described.getStreamDescription.getStreamStatus
+      described <- Sync[F].delay(kinesis.describeStream(DescribeStreamRequest.builder().streamName(stream).build()))
+      status = described.streamDescription().streamStatusAsString()
       exists <- status match {
                   case "ACTIVE" | "UPDATING" =>
                     Sync[F].unit
@@ -100,7 +97,7 @@ object Sink {
   private def writeToKinesis[F[_]: ContextShift: Parallel: Sync: Timer](
     blocker: Blocker,
     config: Output.Kinesis,
-    kinesis: AmazonKinesis,
+    kinesis: KinesisClient,
     records: List[PutRecordsRequestEntry]
   ): F[Unit] = {
     val policyForErrors = Retries.fullJitter[F](config.backoffPolicy)
@@ -165,7 +162,7 @@ object Sink {
   }
 
   private def getRecordSize(record: PutRecordsRequestEntry) =
-    record.getData.array.size + record.getPartitionKey.getBytes.size
+    record.data.asByteArray.length + record.partitionKey.getBytes.length
 
   /**
    * Try writing a batch, and returns a list of the failures to be retried:
@@ -177,7 +174,7 @@ object Sink {
   private def tryWriteToKinesis[F[_]: ContextShift: Sync: Timer](
     blocker: Blocker,
     config: Output.Kinesis,
-    kinesis: AmazonKinesis,
+    kinesis: KinesisClient,
     records: List[PutRecordsRequestEntry],
     retryPolicy: RetryPolicy[F]
   ): F[Vector[PutRecordsRequestEntry]] =
@@ -209,10 +206,7 @@ object Sink {
     records.map { r =>
       val binaryData = r.data
       val data = ByteBuffer.wrap(binaryData)
-      val prre = new PutRecordsRequestEntry()
-      prre.setPartitionKey(r.partitionKey)
-      prre.setData(data)
-      prre
+      PutRecordsRequestEntry.builder().partitionKey(r.partitionKey).data(SdkBytes.fromByteBuffer(data)).build()
     }
 
   /**
@@ -238,7 +232,7 @@ object Sink {
 
     implicit private def tryBatchResultMonoid: Monoid[TryBatchResult] =
       new Monoid[TryBatchResult] {
-        override val empty: TryBatchResult = TryBatchResult(Vector.empty, false, false, None)
+        override val empty: TryBatchResult = TryBatchResult(Vector.empty, hadSuccess = false, wasThrottled = false, None)
         override def combine(x: TryBatchResult, y: TryBatchResult): TryBatchResult =
           TryBatchResult(
             x.nextBatchAttempt ++ y.nextBatchAttempt,
@@ -248,35 +242,30 @@ object Sink {
           )
       }
 
-    def build(records: List[PutRecordsRequestEntry], prr: PutRecordsResult): TryBatchResult =
-      if (prr.getFailedRecordCount.toInt =!= 0)
+    def build(records: List[PutRecordsRequestEntry], prr: PutRecordsResponse): TryBatchResult =
+      if (prr.failedRecordCount() > 0)
         records
-          .zip(prr.getRecords.asScala)
+          .zip(prr.records().asScala)
           .foldMap { case (orig, recordResult) =>
-            Option(recordResult.getErrorCode) match {
+            Option(recordResult.errorCode()) match {
               case None =>
-                TryBatchResult(Vector.empty, true, false, None)
+                TryBatchResult(Vector.empty, hadSuccess = true, wasThrottled = false, None)
               case Some("ProvisionedThroughputExceededException") =>
-                TryBatchResult(Vector(orig), false, true, None)
+                TryBatchResult(Vector(orig), hadSuccess = false, wasThrottled = true, None)
               case Some(_) =>
-                TryBatchResult(Vector(orig), false, false, Option(recordResult.getErrorMessage))
+                TryBatchResult(Vector(orig), hadSuccess = false, wasThrottled = false, Option(recordResult.errorMessage()))
             }
           }
       else
-        TryBatchResult(Vector.empty, true, false, None)
+        TryBatchResult(Vector.empty, hadSuccess = true, wasThrottled = false, None)
   }
 
   private def putRecords(
-    kinesis: AmazonKinesis,
+    kinesis: KinesisClient,
     streamName: String,
     records: List[PutRecordsRequestEntry]
-  ): PutRecordsResult = {
-    val putRecordsRequest = {
-      val prr = new PutRecordsRequest()
-      prr.setStreamName(streamName)
-      prr.setRecords(records.asJava)
-      prr
-    }
+  ): PutRecordsResponse = {
+    val putRecordsRequest = PutRecordsRequest.builder().streamName(streamName).records(records.asJava).build()
     kinesis.putRecords(putRecordsRequest)
   }
 

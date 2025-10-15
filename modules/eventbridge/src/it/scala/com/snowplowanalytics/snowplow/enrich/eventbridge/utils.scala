@@ -41,7 +41,7 @@ object utils {
     for {
       blocker <- Blocker[IO]
       streams = IntegrationTestConfig.getStreams(uuid)
-      kinesisRawSink <- com.snowplowanalytics.snowplow.enrich.kinesis.Sink
+      kinesisRawSink <- com.snowplowanalytics.snowplow.enrich.eventbridge.Sink
                           .init[IO](blocker, IntegrationTestConfig.kinesisOutputStreamConfig(localstackPort, streams.kinesisInput))
     } yield {
       val kinesisGoodOutput = asGood(
@@ -51,7 +51,7 @@ object utils {
         outputStream(blocker, IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputBad))
       )
 
-      collectorPayloads =>
+      (collectorPayloads: Stream[IO, Array[Byte]]) =>
         kinesisGoodOutput
           .merge(kinesisBadOutput)
           .interruptAfter(3.minutes)
@@ -59,9 +59,9 @@ object utils {
     }
 
   private def outputStream(blocker: Blocker, config: Input.Kinesis): Stream[IO, Array[Byte]] =
-    com.snowplowanalytics.snowplow.enrich.kinesis.Source
+    com.snowplowanalytics.snowplow.enrich.eventbridge.Source
       .init[IO](blocker, config, IntegrationTestConfig.monitoring)
-      .map(com.snowplowanalytics.snowplow.enrich.kinesis.KinesisRun.getPayload)
+      .map(com.snowplowanalytics.snowplow.enrich.eventbridge.EventbridgeRun.getPayload)
 
   private def asGood(source: Stream[IO, Array[Byte]]): Stream[IO, OutputRow.Good] =
     source.map { bytes =>

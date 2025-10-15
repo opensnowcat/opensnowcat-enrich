@@ -12,9 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.enrich
 
-import com.amazonaws.regions.DefaultAwsRegionProviderChain
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain
 
 package object eventbridge {
   def getRuntimeRegion: Option[String] =
-    Option((new DefaultAwsRegionProviderChain).getRegion)
+    Option((new DefaultAwsRegionProviderChain).getRegion.id())
 }
