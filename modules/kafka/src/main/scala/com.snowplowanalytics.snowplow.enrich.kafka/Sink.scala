@@ -16,7 +16,6 @@ package com.snowplowanalytics.snowplow.enrich.kafka
 import cats.Parallel
 import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
 import cats.implicits._
-import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import fs2.kafka._
@@ -24,7 +23,6 @@ import io.circe.Json
 import io.circe.parser.parse
 
 import java.util.UUID
-import scala.util.Try
 
 object Sink {
 
@@ -82,61 +80,59 @@ object Sink {
   }
 
   private def resolveTopicName(data: Array[Byte], mapping: Map[String, String]): Option[String] = {
+    if (mapping.isEmpty) return None
+
     val rawEnrichedEvent = new String(data)
-    val hostOpt = if (mapping.values.exists(_.endsWith("enriched-bad"))) Try {
-      for {
-        json <- parse(rawEnrichedEvent).toOption
-        _ <- json.hcursor
-               .downField("schema")
-               .as[String]
-               .toOption
-               .filter(_.contains("com.snowplowanalytics.snowplow.badrows"))
-        payloadCursor = json.hcursor.downField("data").downField("payload")
-        headers <- payloadCursor
-                     .downField("raw")
-                     .downField("headers")
-                     .as[List[String]]
-                     .toOption
-                     .orElse(payloadCursor.downField("headers").as[List[String]].toOption)
-        hostHeader <- headers.find(_.toLowerCase.startsWith("host:"))
-        hostValue = hostHeader.drop("host:".length).trim
-        if hostValue.nonEmpty
-      } yield hostValue
+    
+    if (!rawEnrichedEvent.startsWith("{")) {
+      extractHostFromGoodEvent(rawEnrichedEvent).flatMap(mapping.get)
+    } else {
+      extractHostFromBadRow(rawEnrichedEvent).flatMap(mapping.get)
     }
-    else
-      Try {
-        Event
-          .parse(rawEnrichedEvent)
-          .toOption
-          .flatMap { event =>
-            val rawContexts = event.derived_contexts.data
-            val headerContexts = rawContexts.filter(_.schema.toSchemaUri == "iglu:org.ietf/http_header/jsonschema/1-0-0")
-            val contextData = headerContexts.map(_.data).flatMap(_.asObject)
-            val hostValues = contextData
-              .flatMap { obj =>
-                for {
-                  name <- obj("name").flatMap(_.asString)
-                  value <- obj("value").flatMap(_.asString)
-                } yield (name.toLowerCase, value)
-              }
-              .filter(_._1 == "host")
-              .map(_._2)
+  }
 
-            hostValues.headOption
-          }
-          .orElse {
-            for {
-              json <- parse(rawEnrichedEvent).toOption
-              cursor = json.hcursor
-              contexts <- cursor.downField("contexts_org_ietf_http_header_1").as[List[Json]].toOption
-              hostValue <- contexts.collectFirst {
-                             case obj if obj.hcursor.downField("name").as[String].toOption.exists(_.equalsIgnoreCase("host")) =>
-                               obj.hcursor.downField("value").as[String].toOption
-                           }.flatten
-            } yield hostValue
-          }
-      }
+  private def extractHostFromBadRow(message: String): Option[String] = {
+    if (!message.contains("badrows")) return None
+    
+    parse(message).toOption.flatMap { json =>
+      json.hcursor
+        .downField("payload")
+        .downField("headers")
+        .as[List[String]]
+        .toOption
+        .flatMap { headers =>
+          headers
+            .find(_.startsWith("Host: "))
+            .map(_.stripPrefix("Host: "))
+        }
+    }
+  }
 
-    hostOpt.toOption.flatten.flatMap(mapping.get)
+  private def extractHostFromGoodEvent(message: String): Option[String] = {
+    if (!message.contains("http_header")) return None
+    
+    val fields = message.split("\t", -1)
+    if (fields.length < 123) return None
+    
+    val derivedContexts = fields(122)
+    if (derivedContexts.isEmpty) return None
+
+    parse(derivedContexts).toOption.flatMap { json =>
+      json.hcursor
+        .downField("data")
+        .as[List[Json]]
+        .toOption
+        .flatMap { contexts =>
+          contexts
+            .find(_.hcursor.downField("schema").as[String].toOption.exists(_.contains("http_header")))
+            .flatMap { httpHeaderContext =>
+              httpHeaderContext.hcursor
+                .downField("data")
+                .downField("Host")
+                .as[String]
+                .toOption
+            }
+        }
+    }
   }
 }
