@@ -79,7 +79,7 @@ object Sink {
       .withHeaders(Headers.fromIterable(record.attributes.map(t => Header(t._1, t._2))))
   }
 
-  private def resolveTopicName(data: Array[Byte], mapping: Map[String, String]): Option[String] = {
+  private[kafka] def resolveTopicName(data: Array[Byte], mapping: Map[String, String]): Option[String] = {
     if (mapping.isEmpty) return None
 
     val rawEnrichedEvent = new String(data)
@@ -91,11 +91,12 @@ object Sink {
     }
   }
 
-  private def extractHostFromBadRow(message: String): Option[String] = {
+  private[kafka] def extractHostFromBadRow(message: String): Option[String] = {
     if (!message.contains("badrows")) return None
 
     parse(message).toOption.flatMap { json =>
       json.hcursor
+        .downField("data")
         .downField("payload")
         .downField("headers")
         .as[List[String]]
@@ -108,7 +109,7 @@ object Sink {
     }
   }
 
-  private def extractHostFromGoodEvent(message: String): Option[String] = {
+  private[kafka] def extractHostFromGoodEvent(message: String): Option[String] = {
     if (!message.contains("http_header")) return None
 
     val fields = message.split("\t", -1)
@@ -123,15 +124,17 @@ object Sink {
         .as[List[Json]]
         .toOption
         .flatMap { contexts =>
-          contexts
-            .find(_.hcursor.downField("schema").as[String].toOption.exists(_.contains("http_header")))
-            .flatMap { httpHeaderContext =>
-              httpHeaderContext.hcursor
-                .downField("data")
-                .downField("Host")
-                .as[String]
-                .toOption
-            }
+          contexts.collectFirst {
+            case ctx if ctx.hcursor.downField("schema").as[String].toOption.exists(_.contains("http_header")) =>
+              val dataCursor = ctx.hcursor.downField("data")
+              val nameOpt = dataCursor.downField("name").as[String].toOption
+              val valueOpt = dataCursor.downField("value").as[String].toOption
+              
+              (nameOpt, valueOpt) match {
+                case (Some("Host"), Some(hostValue)) => Some(hostValue)
+                case _ => None
+              }
+          }.flatten
         }
     }
   }

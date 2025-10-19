@@ -41,10 +41,16 @@ object CollectorPayloadGen {
   def generate[F[_]: Sync](nbGoodEvents: Long, nbBadRows: Long = 0L): Stream[F, Array[Byte]] =
     generateRaw(nbGoodEvents, nbBadRows).map(_.toThrift).map(new TSerializer().serialize)
 
+  def generateWithHost[F[_]: Sync](nbGoodEvents: Long, host: String): Stream[F, Array[Byte]] =
+    generateRawWithHost(nbGoodEvents, host).map(_.toThrift).map(new TSerializer().serialize)
+
   def generateRaw[F[_]: Sync](nbGoodEvents: Long, nbBadRows: Long): Stream[F, CollectorPayload] =
     Stream.repeatEval(runGen(collectorPayloadGen(true))).take(nbGoodEvents) ++ Stream
       .repeatEval(runGen(collectorPayloadGen(false)))
       .take(nbBadRows)
+
+  def generateRawWithHost[F[_]: Sync](nbGoodEvents: Long, host: String): Stream[F, CollectorPayload] =
+    Stream.repeatEval(runGen(collectorPayloadGenWithHost(host))).take(nbGoodEvents)
 
   private def collectorPayloadGen(valid: Boolean): Gen[CollectorPayload] =
     for {
@@ -68,6 +74,32 @@ object CollectorPayloadGen {
       useragent <- Gen.option(userAgentGen)
       refererUri = None
       headers = Nil
+      userId <- Gen.uuid.map(Some(_))
+      context = CollectorPayload.Context(timestamp, ipAddress, useragent, refererUri, headers, userId)
+    } yield CollectorPayload(api, queryString, contentType, body, source, context)
+
+  private def collectorPayloadGenWithHost(host: String): Gen[CollectorPayload] =
+    for {
+      vendor <- Gen.const("com.snowplowanalytics.snowplow")
+      version <- Gen.const("tp2")
+      api = CollectorPayload.Api(vendor, version)
+
+      queryString = Nil
+
+      contentType = Some("application/json")
+
+      body <- bodyGen(true).map(Some(_))
+
+      name = "scala-tracker_1.0.0"
+      encoding = "UTF8"
+      hostname = Some(host)
+      source = CollectorPayload.Source(name, encoding, hostname)
+
+      timestamp <- Gen.option(DateTime.now)
+      ipAddress <- Gen.option(ipAddressGen)
+      useragent <- Gen.option(userAgentGen)
+      refererUri = None
+      headers = List(s"Host: $host")
       userId <- Gen.uuid.map(Some(_))
       context = CollectorPayload.Context(timestamp, ipAddress, useragent, refererUri, headers, userId)
     } yield CollectorPayload(api, queryString, contentType, body, source, context)
