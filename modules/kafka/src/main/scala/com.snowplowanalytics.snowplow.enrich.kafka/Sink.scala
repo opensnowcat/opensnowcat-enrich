@@ -83,7 +83,7 @@ object Sink {
     if (mapping.isEmpty) return None
 
     val rawEnrichedEvent = new String(data)
-    
+
     if (!rawEnrichedEvent.startsWith("{")) {
       extractHostFromGoodEvent(rawEnrichedEvent).flatMap(mapping.get)
     } else {
@@ -93,7 +93,7 @@ object Sink {
 
   private def extractHostFromBadRow(message: String): Option[String] = {
     if (!message.contains("badrows")) return None
-    
+
     parse(message).toOption.flatMap { json =>
       json.hcursor
         .downField("payload")
@@ -110,10 +110,10 @@ object Sink {
 
   private def extractHostFromGoodEvent(message: String): Option[String] = {
     if (!message.contains("http_header")) return None
-    
+
     val fields = message.split("\t", -1)
     if (fields.length < 123) return None
-    
+
     val derivedContexts = fields(122)
     if (derivedContexts.isEmpty) return None
 
