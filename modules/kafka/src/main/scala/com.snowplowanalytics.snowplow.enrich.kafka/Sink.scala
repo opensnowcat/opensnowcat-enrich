@@ -129,7 +129,7 @@ object Sink {
               val dataCursor = ctx.hcursor.downField("data")
               val nameOpt = dataCursor.downField("name").as[String].toOption
               val valueOpt = dataCursor.downField("value").as[String].toOption
-              
+
               (nameOpt, valueOpt) match {
                 case (Some("Host"), Some(hostValue)) => Some(hostValue)
                 case _ => None

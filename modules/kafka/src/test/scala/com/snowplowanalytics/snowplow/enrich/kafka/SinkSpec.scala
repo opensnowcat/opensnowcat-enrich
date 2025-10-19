@@ -19,10 +19,11 @@ class SinkSpec extends Specification {
   "extractHostFromBadRow" should {
     "extract host from badrow with headers" in {
       val host = "localhost"
-      val badRowWithKeyword = s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/tracker_protocol_violations/jsonschema/1-0-1","data":{"payload":{"headers":["Host: $host","User-Agent: test"]}}}"""
-      
+      val badRowWithKeyword =
+        s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/tracker_protocol_violations/jsonschema/1-0-1","data":{"payload":{"headers":["Host: $host","User-Agent: test"]}}}"""
+
       val result = Sink.extractHostFromBadRow(badRowWithKeyword)
-      
+
       result must beSome(host)
     }
   }
@@ -31,9 +32,9 @@ class SinkSpec extends Specification {
     "return None when mapping is empty" in {
       val data = "some\ttsv\tdata".getBytes
       val mapping = Map.empty[String, String]
-      
+
       val result = Sink.resolveTopicName(data, mapping)
-      
+
       result must beNone
     }
 
@@ -41,7 +42,7 @@ class SinkSpec extends Specification {
       val host = "localhost:8080"
       val mappedTopic = "mapped-topic"
       val mapping = Map(host -> mappedTopic)
-      
+
       val derivedContexts = s"""{
         "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1",
         "data": [
@@ -67,13 +68,13 @@ class SinkSpec extends Specification {
           }
         ]
       }"""
-      
+
       val fields = (0 until 122).map(_ => "field") :+ derivedContexts
       val tsvEvent = fields.mkString("\t")
       val data = tsvEvent.getBytes
-      
+
       val result = Sink.resolveTopicName(data, mapping)
-      
+
       result must beSome(mappedTopic)
     }
 
@@ -81,18 +82,18 @@ class SinkSpec extends Specification {
       val host = "localhost"
       val mappedTopic = "mapped-topic"
       val mapping = Map(host -> mappedTopic)
-      
+
       val derivedContexts = """{
         "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
         "data": []
       }"""
-      
+
       val fields = (0 until 122).map(_ => "field") :+ derivedContexts
       val tsvEvent = fields.mkString("\t")
       val data = tsvEvent.getBytes
-      
+
       val result = Sink.resolveTopicName(data, mapping)
-      
+
       result must beNone
     }
 
@@ -101,7 +102,7 @@ class SinkSpec extends Specification {
       val mappedHost = "localhost"
       val mappedTopic = "mapped-topic"
       val mapping = Map(mappedHost -> mappedTopic)
-      
+
       val derivedContexts = s"""{
         "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
         "data": [
@@ -113,13 +114,13 @@ class SinkSpec extends Specification {
           }
         ]
       }"""
-      
+
       val fields = (0 until 122).map(_ => "field") :+ derivedContexts
       val tsvEvent = fields.mkString("\t")
       val data = tsvEvent.getBytes
-      
+
       val result = Sink.resolveTopicName(data, mapping)
-      
+
       result must beNone
     }
 
@@ -127,7 +128,7 @@ class SinkSpec extends Specification {
       val host = "localhost:8080"
       val mappedTopic = "mapped-topic"
       val mapping = Map(host -> mappedTopic)
-      
+
       val badRow = s"""{
         "schema": "iglu:com.snowplowanalytics.snowplow.badrows/tracker_protocol_violations/jsonschema/1-0-1",
         "data": {
@@ -152,11 +153,11 @@ class SinkSpec extends Specification {
           }
         }
       }"""
-      
+
       val data = badRow.getBytes
-      
+
       val result = Sink.resolveTopicName(data, mapping)
-      
+
       result must beSome(mappedTopic)
     }
 
@@ -164,12 +165,12 @@ class SinkSpec extends Specification {
       val host = "localhost"
       val mappedTopic = "mapped-topic"
       val mapping = Map(host -> mappedTopic)
-      
+
       val notABadRow = """{"some": "json"}"""
       val data = notABadRow.getBytes
-      
+
       val result = Sink.resolveTopicName(data, mapping)
-      
+
       result must beNone
     }
   }
