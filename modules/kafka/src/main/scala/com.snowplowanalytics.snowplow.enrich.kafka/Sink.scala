@@ -42,12 +42,11 @@ object Sink {
       case k: Output.Kafka =>
         val mapping = k.mapping.getOrElse(Map.empty[String, String])
         mkProducer(blocker, k).map { producer => records =>
-          records.parTraverse_ { record =>
-            producer
-              .produceOne_(toProducerRecord(k.topicName, record, mapping))
-              .flatten
-              .void
+          val sends = records.map { record =>
+            val producerRecord = toProducerRecord(k.topicName, record, mapping)
+            producer.produce(ProducerRecords.one(producerRecord))
           }
+          sends.parSequence.void
         }
       case o => Resource.eval(Concurrent[F].raiseError(new IllegalArgumentException(s"Output $o is not Kafka")))
     }
