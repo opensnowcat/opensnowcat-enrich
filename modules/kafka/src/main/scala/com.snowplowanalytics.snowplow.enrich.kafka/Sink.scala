@@ -112,7 +112,7 @@ object Sink {
     if (!message.contains("http_header")) return None
 
     val fields = message.split("\t", -1)
-    if (fields.length < 123) return None
+    if (fields.length < 131) return None
 
     val derivedContexts = fields(122)
     if (derivedContexts.isEmpty) return None
