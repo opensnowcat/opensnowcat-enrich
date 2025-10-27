@@ -13,6 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich.kafka
 
 import org.specs2.mutable.Specification
+import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
+import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
 
 class SinkSpec extends Specification {
 
@@ -69,8 +71,10 @@ class SinkSpec extends Specification {
         ]
       }"""
 
-      val fields = (0 until 122).map(_ => "field") :+ derivedContexts
-      val tsvEvent = fields.mkString("\t")
+      val enrichedEvent = new EnrichedEvent()
+      enrichedEvent.derived_contexts = derivedContexts
+      
+      val tsvEvent = ConversionUtils.tabSeparatedEnrichedEvent(enrichedEvent)
       val data = tsvEvent.getBytes
 
       val result = Sink.resolveTopicName(data, mapping)
@@ -88,8 +92,10 @@ class SinkSpec extends Specification {
         "data": []
       }"""
 
-      val fields = (0 until 122).map(_ => "field") :+ derivedContexts
-      val tsvEvent = fields.mkString("\t")
+      val enrichedEvent = new EnrichedEvent()
+      enrichedEvent.derived_contexts = derivedContexts
+      
+      val tsvEvent = ConversionUtils.tabSeparatedEnrichedEvent(enrichedEvent)
       val data = tsvEvent.getBytes
 
       val result = Sink.resolveTopicName(data, mapping)
@@ -115,8 +121,10 @@ class SinkSpec extends Specification {
         ]
       }"""
 
-      val fields = (0 until 122).map(_ => "field") :+ derivedContexts
-      val tsvEvent = fields.mkString("\t")
+      val enrichedEvent = new EnrichedEvent()
+      enrichedEvent.derived_contexts = derivedContexts
+      
+      val tsvEvent = ConversionUtils.tabSeparatedEnrichedEvent(enrichedEvent)
       val data = tsvEvent.getBytes
 
       val result = Sink.resolveTopicName(data, mapping)
