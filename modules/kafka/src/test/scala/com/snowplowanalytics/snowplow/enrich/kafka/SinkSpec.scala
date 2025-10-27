@@ -73,7 +73,7 @@ class SinkSpec extends Specification {
 
       val enrichedEvent = new EnrichedEvent()
       enrichedEvent.derived_contexts = derivedContexts
-      
+
       val tsvEvent = ConversionUtils.tabSeparatedEnrichedEvent(enrichedEvent)
       val data = tsvEvent.getBytes
 
@@ -94,7 +94,7 @@ class SinkSpec extends Specification {
 
       val enrichedEvent = new EnrichedEvent()
       enrichedEvent.derived_contexts = derivedContexts
-      
+
       val tsvEvent = ConversionUtils.tabSeparatedEnrichedEvent(enrichedEvent)
       val data = tsvEvent.getBytes
 
@@ -123,7 +123,7 @@ class SinkSpec extends Specification {
 
       val enrichedEvent = new EnrichedEvent()
       enrichedEvent.derived_contexts = derivedContexts
-      
+
       val tsvEvent = ConversionUtils.tabSeparatedEnrichedEvent(enrichedEvent)
       val data = tsvEvent.getBytes
 
