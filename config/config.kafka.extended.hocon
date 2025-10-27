@@ -16,6 +16,17 @@
       "auto.offset.reset" : "earliest"
       "session.timeout.ms": "45000"
     }
+
+      # See specific Kafka producer recommendations for Warpstream
+      # https://docs.warpstream.com/warpstream/kafka/configure-kafka-client/tuning-for-performance#consumer-settings
+      # "consumerConf": {
+      #  "metadata.max.age.ms" : "60000"
+      #  "fetch.max.bytes" : "50242880"
+      #  "max.partition.fetch.bytes" : "50242880"
+      #  "metadata.recovery.strategy" : "rebootstrap"
+      #  "fetch.max.wait.ms" : "10000"
+      # }
+
   }
 
   "output": {
@@ -35,6 +46,21 @@
       "producerConf": {
         "acks": "all"
       }
+
+      # See specific Kafka producer recommendations for Warpstream
+      # https://docs.warpstream.com/warpstream/kafka/configure-kafka-client/tuning-for-performance#producer-settings
+      # "producerConf" {
+      #  "acks" : "all"
+      #  "enable.idempotence" : "false"
+      #  "max.in.flight.requests.per.connection" : "1000"
+      #  "linger.ms" : "100"
+      #  "metadata.max.age.ms" : "60000"
+      #  "batch.size" : "100000"
+      #  "buffer.memory" : "128000000"
+      #  "max.request.size" : "64000000"
+      #  "compression.type" : "lz4"
+      #  "metadata.recovery.strategy" : "rebootstrap"
+      # }
 
       # Optional. Enriched event field to use as Kafka partition key
       "partitionKey": "app_id"
@@ -59,6 +85,21 @@
       "producerConf": {
         "acks": "all"
       }
+     
+      # See specific Kafka producer recommendations for Warpstream
+      # https://docs.warpstream.com/warpstream/kafka/configure-kafka-client/tuning-for-performance#producer-settings
+      # "producerConf" {
+      #  "acks" : "all"
+      #  "enable.idempotence" : "false"
+      #  "max.in.flight.requests.per.connection" : "1000"
+      #  "linger.ms" : "100"
+      #  "metadata.max.age.ms" : "60000"
+      #  "batch.size" : "100000"
+      #  "buffer.memory" : "128000000"
+      #  "max.request.size" : "64000000"
+      #  "compression.type" : "lz4"
+      #  "metadata.recovery.strategy" : "rebootstrap"
+      # }
 
       # Optional. Enriched event field to use as Kafka partition key
       "partitionKey": "app_id"
@@ -83,6 +124,22 @@
       "producerConf": {
         "acks": "all"
       }
+
+      # See specific Kafka producer recommendations for Warpstream
+      # https://docs.warpstream.com/warpstream/kafka/configure-kafka-client/tuning-for-performance#producer-settings
+      # "producerConf" {
+      #  "acks" : "all"
+      #  "enable.idempotence" : "false"
+      #  "max.in.flight.requests.per.connection" : "1000"
+      #  "linger.ms" : "100"
+      #  "metadata.max.age.ms" : "60000"
+      #  "batch.size" : "100000"
+      #  "buffer.memory" : "128000000"
+      #  "max.request.size" : "64000000"
+      #  "compression.type" : "lz4"
+      #  "metadata.recovery.strategy" : "rebootstrap"
+      # }
+
     }
   }
 
