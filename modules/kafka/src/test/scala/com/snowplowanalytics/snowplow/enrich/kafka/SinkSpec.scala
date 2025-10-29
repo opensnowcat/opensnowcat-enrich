@@ -57,6 +57,13 @@ class SinkSpec extends Specification {
           {
             "schema": "iglu:org.ietf/http_header/jsonschema/1-0-0",
             "data": {
+              "name": "X-Forwarded-For",
+              "value": "203.0.113.42"
+            }
+          },
+          {
+            "schema": "iglu:org.ietf/http_header/jsonschema/1-0-0",
+            "data": {
               "name": "Host",
               "value": "$host"
             }

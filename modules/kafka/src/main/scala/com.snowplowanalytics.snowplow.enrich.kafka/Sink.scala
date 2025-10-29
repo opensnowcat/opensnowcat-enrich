@@ -123,8 +123,10 @@ object Sink {
         .as[List[Json]]
         .toOption
         .flatMap { contexts =>
-          contexts.collectFirst {
-            case ctx if ctx.hcursor.downField("schema").as[String].toOption.exists(_.contains("http_header")) =>
+          contexts
+            .iterator
+            .filter(ctx => ctx.hcursor.downField("schema").as[String].toOption.exists(_.contains("http_header")))
+            .map { ctx =>
               val dataCursor = ctx.hcursor.downField("data")
               val nameOpt = dataCursor.downField("name").as[String].toOption
               val valueOpt = dataCursor.downField("value").as[String].toOption
@@ -133,7 +135,8 @@ object Sink {
                 case (Some("Host"), Some(hostValue)) => Some(hostValue)
                 case _ => None
               }
-          }.flatten
+            }
+            .collectFirst { case Some(host) => host }
         }
     }
   }
