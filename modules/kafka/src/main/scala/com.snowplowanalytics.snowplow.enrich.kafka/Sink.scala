@@ -123,8 +123,7 @@ object Sink {
         .as[List[Json]]
         .toOption
         .flatMap { contexts =>
-          contexts
-            .iterator
+          contexts.iterator
             .filter(ctx => ctx.hcursor.downField("schema").as[String].toOption.exists(_.contains("http_header")))
             .map { ctx =>
               val dataCursor = ctx.hcursor.downField("data")
