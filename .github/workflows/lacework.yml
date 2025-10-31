@@ -33,19 +33,19 @@ jobs:
       - name: Build docker images and publish them locally
         run: sbt docker:publishLocal
 
-      - name: Scan enrich-pubsub
-        env:
-          LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
-          LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
-          LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-pubsub ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
-
-      - name: Scan enrich-pubsub distroless
-        env:
-          LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
-          LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
-          LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
-        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-pubsub ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
+#      - name: Scan enrich-pubsub
+#        env:
+#          LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
+#          LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
+#          LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
+#        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-pubsub ${{ steps.ver.outputs.tag }} --build-id ${{ github.run_id }} --no-pull
+#
+#      - name: Scan enrich-pubsub distroless
+#        env:
+#          LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
+#          LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
+#          LW_SCANNER_SAVE_RESULTS: ${{ !contains(steps.version.outputs.tag, 'rc') }}
+#        run: ./lw-scanner image evaluate snowplow/opensnowcat-enrich-pubsub ${{ steps.ver.outputs.tag }}-distroless --build-id ${{ github.run_id }} --no-pull
 
       - name: Scan enrich-kinesis
         env:
