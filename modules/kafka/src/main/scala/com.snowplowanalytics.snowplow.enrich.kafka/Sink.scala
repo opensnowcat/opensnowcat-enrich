@@ -90,22 +90,14 @@ object Sink {
     }
   }
 
+  private val HostHeaderPattern = """"Host:\s*([^"]+)"""".r
+
   private[kafka] def extractHostFromBadRow(message: String): Option[String] = {
     if (!message.contains("badrows")) return None
 
-    parse(message).toOption.flatMap { json =>
-      json.hcursor
-        .downField("data")
-        .downField("payload")
-        .downField("headers")
-        .as[List[String]]
-        .toOption
-        .flatMap { headers =>
-          headers
-            .find(_.startsWith("Host: "))
-            .map(_.stripPrefix("Host: "))
-        }
-    }
+    // Use regex to find Host header directly in the JSON string
+    // This works for any bad row structure that includes headers
+    HostHeaderPattern.findFirstMatchIn(message).map(_.group(1).trim)
   }
 
   private[kafka] def extractHostFromGoodEvent(message: String): Option[String] = {

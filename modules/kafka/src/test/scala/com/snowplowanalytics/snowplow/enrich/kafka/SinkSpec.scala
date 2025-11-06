@@ -19,14 +19,61 @@ import com.snowplowanalytics.snowplow.enrich.common.utils.ConversionUtils
 class SinkSpec extends Specification {
 
   "extractHostFromBadRow" should {
-    "extract host from badrow with headers" in {
+    "extract host from enrichment_failures badrow with headers" in {
       val host = "localhost"
       val badRowWithKeyword =
-        s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/tracker_protocol_violations/jsonschema/1-0-1","data":{"payload":{"headers":["Host: $host","User-Agent: test"]}}}"""
+        s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/enrichment_failures/jsonschema/2-0-1","data":{"payload":{"raw":{"headers":["Host: $host","User-Agent: test"]}}}}"""
 
       val result = Sink.extractHostFromBadRow(badRowWithKeyword)
 
       result must beSome(host)
+    }
+
+    "extract host from adapter_failures badrow with headers" in {
+      val host = "sp.snowcatcloud.com"
+      val badRowWithKeyword =
+        s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/adapter_failures/jsonschema/1-0-0","data":{"payload":{"headers":["Timeout-Access: <function1>","X-Forwarded-For: 54.209.79.175","Host: $host","User-Agent: Make/production"]}}}"""
+
+      val result = Sink.extractHostFromBadRow(badRowWithKeyword)
+
+      result must beSome(host)
+    }
+
+    "extract host from schema_violations badrow with headers" in {
+      val host = "sp2.meettie.com"
+      val badRowWithKeyword =
+        s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/schema_violations/jsonschema/2-0-1","data":{"payload":{"raw":{"headers":["Host: $host","User-Agent: test"]}}}}"""
+
+      val result = Sink.extractHostFromBadRow(badRowWithKeyword)
+
+      result must beSome(host)
+    }
+
+    "extract host with extra whitespace" in {
+      val host = "example.com"
+      val badRowWithKeyword =
+        s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/enrichment_failures/jsonschema/2-0-1","data":{"payload":{"raw":{"headers":["Host:   $host  ","User-Agent: test"]}}}}"""
+
+      val result = Sink.extractHostFromBadRow(badRowWithKeyword)
+
+      result must beSome(host)
+    }
+
+    "return None when badrows keyword is not present" in {
+      val notABadRow = """{"some": "json", "headers": ["Host: example.com"]}"""
+
+      val result = Sink.extractHostFromBadRow(notABadRow)
+
+      result must beNone
+    }
+
+    "return None when Host header is not present" in {
+      val badRowWithoutHost =
+        s"""{"schema":"iglu:com.snowplowanalytics.snowplow.badrows/enrichment_failures/jsonschema/2-0-1","data":{"payload":{"raw":{"headers":["User-Agent: test"]}}}}"""
+
+      val result = Sink.extractHostFromBadRow(badRowWithoutHost)
+
+      result must beNone
     }
   }
 
@@ -156,15 +203,17 @@ class SinkSpec extends Specification {
             "messages": []
           },
           "payload": {
-            "vendor": "com.snowplowanalytics.snowplow",
-            "version": "tp2",
-            "headers": [
-              "Timeout-Access: <function1>",
-              "Host: $host",
-              "User-Agent: curl/8.7.1",
-              "Accept: */*"
-            ],
-            "networkUserId": "a749479b-f971-4ece-9a8c-2b761fcc9dd2"
+            "raw": {
+              "vendor": "com.snowplowanalytics.snowplow",
+              "version": "tp2",
+              "headers": [
+                "Timeout-Access: <function1>",
+                "Host: $host",
+                "User-Agent: curl/8.7.1",
+                "Accept: */*"
+              ],
+              "networkUserId": "a749479b-f971-4ece-9a8c-2b761fcc9dd2"
+            }
           }
         }
       }"""

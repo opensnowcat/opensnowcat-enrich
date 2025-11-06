@@ -58,7 +58,7 @@ jobs:
             "project nsq; set assembly / test := {}; assembly"
 #       sbt "project pubsub; set assembly / test := {}; assembly" \
     - name: Run tests
-      run: SBT_OPTS="-Xms1G -Xmx8G -Xss4M -XX:MaxMetaspaceSize=1024M" sbt coverage +test
+      run: SBT_OPTS="-Xms1G -Xmx8G -Xss4M -XX:MaxMetaspaceSize=1024M" sbt +test
       env:
         OER_KEY: ${{ secrets.OER_KEY }}
     - name: Run integration tests for enrich-kinesis
@@ -79,11 +79,11 @@ jobs:
         docker compose -f integration-tests/enrich-kafka/docker-compose.yml down
     - name: Run integration tests for enrich-nsq
       run: sbt "project nsqDistroless" IntegrationTest/test
-    - name: Generate coverage report
-      run: sbt coverageReport
-    - name: Aggregate coverage data
-      run: sbt coverageAggregate
-    - name: Submit coveralls data
-      run: sbt coveralls
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+#    - name: Generate coverage report
+#      run: sbt coverageReport
+#    - name: Aggregate coverage data
+#      run: sbt coverageAggregate
+#    - name: Submit coveralls data
+#      run: sbt coveralls
+#      env:
+#        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
