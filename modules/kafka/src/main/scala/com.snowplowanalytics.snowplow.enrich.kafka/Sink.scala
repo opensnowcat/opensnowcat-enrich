@@ -97,6 +97,7 @@ object Sink {
       json.hcursor
         .downField("data")
         .downField("payload")
+        .downField("raw")
         .downField("headers")
         .as[List[String]]
         .toOption
