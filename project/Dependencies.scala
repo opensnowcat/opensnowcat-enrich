@@ -76,6 +76,7 @@ object Dependencies {
     val awsSdk2 = "2.25.69"
     val kinesisClient2 = "2.4.3"
     val kafka = "3.9.1"
+    val lz4Java = "1.8.1"
     val mskAuth = "2.2.0"
     val nsqClient = "1.3.0"
     val jackson = "2.19.1"
@@ -177,7 +178,9 @@ object Dependencies {
     val dynamodbSdk = "com.amazonaws"       % "aws-java-sdk-dynamodb" % V.awsSdk
     val sts = "com.amazonaws"               % "aws-java-sdk-sts"      % V.awsSdk     % Runtime
     val gcs = "com.google.cloud"            % "google-cloud-storage"  % V.gcpSdk
-    val kafkaClients = "org.apache.kafka"   % "kafka-clients"         % V.kafka
+    val kafkaClients = ("org.apache.kafka"  % "kafka-clients"         % V.kafka)
+      .exclude("org.lz4", "lz4-java")
+    val lz4Java = "at.yawk.lz4"             % "lz4-java"              % V.lz4Java    // use fixed version from maintained fork to address CVE-2025-12183
     val mskAuth = "software.amazon.msk"     % "aws-msk-iam-auth"      % V.mskAuth    % Runtime
     val config = "com.typesafe"             % "config"                % V.config
     val nsqClient = "com.snowplowanalytics" % "nsq-java-client"       % V.nsqClient
@@ -193,7 +196,8 @@ object Dependencies {
     val refined = "eu.timepit"                     %% "refined"               % V.refined
     val fs2 = "co.fs2"                             %% "fs2-core"              % V.fs2
     val fs2Io = "co.fs2"                           %% "fs2-io"                % V.fs2
-    val fs2Kafka = "com.github.fd4s"               %% "fs2-kafka"             % V.fs2Kafka
+    val fs2Kafka = ("com.github.fd4s"              %% "fs2-kafka"             % V.fs2Kafka)
+      .exclude("org.lz4", "lz4-java")
     val kinesisSdk2 = "software.amazon.awssdk"      % "kinesis"               % V.awsSdk2
     val dynamoDbSdk2 = "software.amazon.awssdk"     % "dynamodb"              % V.awsSdk2
     val s3Sdk2 = "software.amazon.awssdk"           % "s3"                    % V.awsSdk2
@@ -341,6 +345,7 @@ object Dependencies {
 
     val kafkaDependencies = Seq(
       fs2Kafka,
+      lz4Java,      // use lz4-java 1.8.1 from at.yawk.lz4 fork to address CVE-2025-12183 (excludes vulnerable 1.8.0 from kafka-clients)
       kafkaClients, // override kafka-clients 2.8.1 from fs2Kafka to address https://security.snyk.io/vuln/SNYK-JAVA-ORGAPACHEKAFKA-3027430
       snowplowanAnalyticsSdk,
       mskAuth,
