@@ -18,7 +18,7 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.EitherMatchers
 
 import cats.effect.IO
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import cats.implicits._
 import cats.data.NonEmptyList
@@ -54,7 +54,7 @@ import com.snowplowanalytics.snowplow.enrich.common.AcceptInvalid
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsIO {
+class EnrichmentManagerSpec extends Specification with EitherMatchers with CatsEffect {
   import EnrichmentManagerSpec._
 
   "enrichEvent" should {

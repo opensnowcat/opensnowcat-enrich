@@ -23,7 +23,7 @@ import cats.Monad
 import cats.data.EitherT
 import cats.implicits._
 
-import cats.effect.{Async, Blocker, Bracket, ContextShift, Resource, Sync}
+import cats.effect.kernel.{Async, MonadCancel, Resource, Sync}
 
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquery.Input.ExtractedValue
 
@@ -32,7 +32,7 @@ import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.sqlquer
 trait DbExecutor[F[_]] {
 
   /** Get a connection from the Hikari data source */
-  def getConnection(dataSource: DataSource, blocker: Blocker): Resource[F, Connection]
+  def getConnection(dataSource: DataSource): Resource[F, Connection]
 
   /** Execute a SQL query */
   def execute(query: PreparedStatement): EitherT[F, Throwable, ResultSet]
@@ -76,18 +76,18 @@ object DbExecutor {
 
   def apply[F[_]](implicit ev: DbExecutor[F]): DbExecutor[F] = ev
 
-  def async[F[_]: Async: ContextShift]: DbExecutor[F] = sync[F]
+  def async[F[_]: Async]: DbExecutor[F] = sync[F]
 
-  def sync[F[_]: ContextShift: Sync]: DbExecutor[F] =
+  def sync[F[_]: Sync]: DbExecutor[F] =
     new DbExecutor[F] {
-      def getConnection(dataSource: DataSource, blocker: Blocker): Resource[F, Connection] =
-        Resource.fromAutoCloseable(blocker.blockOn(Sync[F].delay(dataSource.getConnection())))
+      def getConnection(dataSource: DataSource): Resource[F, Connection] =
+        Resource.fromAutoCloseable(Sync[F].blocking(dataSource.getConnection()))
 
       def execute(query: PreparedStatement): EitherT[F, Throwable, ResultSet] =
         Sync[F].delay(query.executeQuery()).attemptT
 
       def convert(resultSet: ResultSet, names: JsonOutput.PropertyNameMode): EitherT[F, Throwable, List[Json]] =
-        EitherT(Bracket[F, Throwable].bracket(Sync[F].pure(resultSet)) { set =>
+        EitherT(MonadCancel[F, Throwable].bracket(Sync[F].pure(resultSet)) { set =>
           val hasNext = Sync[F].delay(set.next()).attemptT
           val convert = transform(set, names)(this, Monad[F])
           convert.whileM[List](hasNext).value
@@ -194,6 +194,6 @@ object DbExecutor {
       if (intMap.keys.size == placeholderCount) true else false
     }
 
-  def getConnection[F[_]: Monad: DbExecutor](dataSource: DataSource, blocker: Blocker): Resource[F, Connection] =
-    DbExecutor[F].getConnection(dataSource, blocker)
+  def getConnection[F[_]: Monad: DbExecutor](dataSource: DataSource): Resource[F, Connection] =
+    DbExecutor[F].getConnection(dataSource)
 }

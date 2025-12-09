@@ -15,13 +15,11 @@ package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
 import cats.data.NonEmptyList
 import cats.syntax.option._
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
-
-import com.snowplowanalytics.iglu.client.resolver.registries.RegistryLookup._
 
 import com.snowplowanalytics.snowplow.badrows._
 
@@ -31,7 +29,7 @@ import com.snowplowanalytics.snowplow.enrich.common.adapters.RawEvent
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class CallrailAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsIO {
+class CallrailAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsEffect {
   def is = s2"""
   toRawEvents should return a NEL containing one RawEvent if the querystring is correctly populated $e1
   toRawEvents should return a Validation Failure if there are no parameters on the querystring      $e2

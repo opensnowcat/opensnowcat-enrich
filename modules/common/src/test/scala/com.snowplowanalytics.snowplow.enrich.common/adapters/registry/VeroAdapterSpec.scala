@@ -14,7 +14,11 @@ package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
-import cats.effect.testing.specs2.CatsIO
+
+import cats.effect.unsafe.implicits.global
+
+import cats.effect.testing.specs2.CatsEffect
+
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
@@ -27,7 +31,7 @@ import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class VeroAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsIO {
+class VeroAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsEffect {
   def is = s2"""
   toRawEvents must return a success for a valid "sent" type payload body being passed                $e1
   toRawEvents must return a success for a valid "delivered" type payload body being passed           $e2
@@ -317,6 +321,7 @@ class VeroAdapterSpec extends Specification with DataTables with ValidatedMatche
               )
             )
           )
+          .unsafeRunSync()
       }
 
   def e10 = {

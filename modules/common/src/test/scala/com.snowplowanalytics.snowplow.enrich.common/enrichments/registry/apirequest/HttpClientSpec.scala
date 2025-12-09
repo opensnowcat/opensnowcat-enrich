@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common.utils
 
 import org.http4s.{BasicCredentials, Header, Headers}
 import org.http4s.headers.Authorization
+import org.typelevel.ci.CIString
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mock.Mockito
@@ -27,16 +28,17 @@ class HttpClientSpec extends Specification with ValidatedMatchers with Mockito {
   def e1 = {
     val headers = HttpClient.getHeaders(None, Some("2778e1d8-500b-4f9f-a14e-f68b6b4e7b9f"))
     val expected =
-      Headers(Authorization(BasicCredentials("", "2778e1d8-500b-4f9f-a14e-f68b6b4e7b9f")),
-              Header("content-type", "application/json"),
-              Header("accept", "*/*")
+      Headers(
+        Authorization(BasicCredentials("", "2778e1d8-500b-4f9f-a14e-f68b6b4e7b9f")),
+        Header.Raw(CIString("content-type"), "application/json"),
+        Header.Raw(CIString("accept"), "*/*")
       )
     headers must beEqualTo(expected)
   }
 
   def e2 = {
     val headers = HttpClient.getHeaders(None, None)
-    val expected = Headers(Header("content-type", "application/json"), Header("accept", "*/*"))
+    val expected = Headers(Header.Raw(CIString("content-type"), "application/json"), Header.Raw(CIString("accept"), "*/*"))
     headers must beEqualTo(expected)
   }
 }
