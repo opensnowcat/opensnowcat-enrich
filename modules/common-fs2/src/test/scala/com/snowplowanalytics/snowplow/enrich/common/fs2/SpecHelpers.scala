@@ -12,62 +12,64 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2
 
-import java.nio.file.{NoSuchFileException, Path}
+import java.nio.file.NoSuchFileException
 import java.util.concurrent.Executors
 
-import scala.concurrent.duration.TimeUnit
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{Blocker, Clock, IO, Resource}
+import cats.effect.{Clock, IO, Resource}
+import cats.effect.std.Semaphore
 
 import cats.implicits._
 
-import fs2.io.file.deleteIfExists
+import fs2.io.file.{Files, Path}
 
 import com.snowplowanalytics.iglu.client.{IgluCirceClient, Resolver}
-import com.snowplowanalytics.iglu.client.resolver.registries.Registry
+import com.snowplowanalytics.iglu.client.resolver.registries.{JavaNetRegistryLookup, Registry, RegistryLookup}
 
-import com.snowplowanalytics.snowplow.enrich.common.fs2.test._
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients
 
-import cats.effect.testing.specs2.CatsIO
-import cats.effect.concurrent.Semaphore
+import cats.effect.testing.specs2.CatsEffect
 
-object SpecHelpers extends CatsIO {
-  implicit val ioClock: Clock[IO] =
-    Clock.create[IO]
-
+object SpecHelpers extends CatsEffect {
   val StaticTime = 1599750938180L
 
-  val staticIoClock: Clock[IO] =
-    new Clock[IO] {
-      def realTime(unit: TimeUnit): IO[Long] = IO.pure(StaticTime)
-      def monotonic(unit: TimeUnit): IO[Long] = IO.pure(StaticTime)
-    }
+  // RegistryLookup instance for IO
+  implicit val registryLookup: RegistryLookup[IO] = JavaNetRegistryLookup.ioLookupInstance[IO]
+
+  // Import adaptersSchemas from common.SpecHelpers
+  val adaptersSchemas = com.snowplowanalytics.snowplow.enrich.common.SpecHelpers.adaptersSchemas
+
+  implicit val staticIoClock: Clock[IO] = new Clock[IO] {
+    override def applicative: cats.Applicative[IO] = cats.Applicative[IO]
+    override def realTime: IO[scala.concurrent.duration.FiniteDuration] =
+      IO.pure(scala.concurrent.duration.Duration(StaticTime, scala.concurrent.duration.MILLISECONDS))
+    override def monotonic: IO[scala.concurrent.duration.FiniteDuration] =
+      IO.pure(scala.concurrent.duration.Duration(StaticTime, scala.concurrent.duration.MILLISECONDS))
+  }
 
   def refreshState(assets: List[Assets.Asset]): Resource[IO, Assets.State[IO]] =
     for {
-      b <- TestEnvironment.ioBlocker
       sem <- Resource.eval(Semaphore[IO](1L))
-      http <- Clients.mkHttp[IO](ec = SpecHelpers.blockingEC)
+      http <- Clients.mkHttp[IO]()
       clients = Clients.init[IO](http, Nil)
-      state <- Resource.eval(Assets.State.make[IO](b, sem, clients, assets))
+      state <- Resource.eval(Assets.State.make[IO](sem, clients, assets))
     } yield state
 
   /** Clean-up predefined list of files */
-  def filesCleanup(blocker: Blocker, files: List[Path]): IO[Unit] =
+  def filesCleanup(files: List[Path]): IO[Unit] =
     files.traverse_ { path =>
-      deleteIfExists[IO](blocker, path).recover { case _: NoSuchFileException =>
+      Files[IO].deleteIfExists(path).recover { case _: NoSuchFileException =>
         false
       }
     }
 
   /** Make sure files don't exist before and after test starts */
-  def filesResource(blocker: Blocker, files: List[Path]): Resource[IO, Unit] =
-    Resource.make(filesCleanup(blocker, files))(_ => filesCleanup(blocker, files))
+  def filesResource(files: List[Path]): Resource[IO, Unit] =
+    Resource.make(filesCleanup(files))(_ => filesCleanup(files))
 
   def createIgluClient(registries: List[Registry]): IO[IgluCirceClient[IO]] =
-    IgluCirceClient.fromResolver[IO](Resolver(registries, None), cacheSize = 0)
+    IgluCirceClient.fromResolver[IO](Resolver[IO](registries, None), cacheSize = 0, maxJsonDepth = 40)
 
   val blockingEC = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool)
 }

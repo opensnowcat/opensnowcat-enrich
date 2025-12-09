@@ -12,13 +12,10 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2.test
 
-import java.util.concurrent.TimeUnit
-
 import cats.Monad
 import cats.syntax.flatMap._
 
-import cats.effect.concurrent.Ref
-import cats.effect.{Clock, Sync}
+import cats.effect.kernel.{Clock, Ref, Sync}
 
 import fs2.Stream
 
@@ -48,8 +45,8 @@ object Counter {
       def report: Stream[F, Unit] = Stream.empty.covary[F]
 
       def enrichLatency(collectorTstamp: Option[Long]): F[Unit] =
-        Clock[F].realTime(TimeUnit.MILLISECONDS).flatMap { now =>
-          ref.update(_.copy(latency = collectorTstamp.map(ct => now - ct)))
+        Clock[F].realTime.flatMap { now =>
+          ref.update(_.copy(latency = collectorTstamp.map(ct => now.toMillis - ct)))
         }
 
       def rawCount(nb: Int): F[Unit] =
