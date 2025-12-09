@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.aws
 import java.net.URI
 
 import cats.implicits._
-import cats.effect.{ConcurrentEffect, Resource, Timer}
+import cats.effect.kernel.{Async, Resource, Sync}
 
 import fs2.Stream
 
@@ -31,9 +31,9 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.{Client, Retr
 
 object S3Client {
 
-  def mk[F[_]: ConcurrentEffect: Timer]: Resource[F, Client[F]] =
+  def mk[F[_]: Async]: Resource[F, Client[F]] =
     for {
-      s3Client <- Resource.fromAutoCloseable(ConcurrentEffect[F].delay(S3AsyncClient.builder().region(getRegion).build()))
+      s3Client <- Resource.fromAutoCloseable(Sync[F].delay(S3AsyncClient.builder().region(getRegion).build()))
       store <- Resource.eval(S3Store.builder[F](s3Client).build.toEither.leftMap(_.head).pure[F].rethrow)
     } yield new Client[F] {
       def canDownload(uri: URI): Boolean =
