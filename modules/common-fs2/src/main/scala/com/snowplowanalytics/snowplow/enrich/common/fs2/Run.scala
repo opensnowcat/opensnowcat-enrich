@@ -12,14 +12,16 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2
 
-import cats.Parallel
+import scala.concurrent.ExecutionContext
+
 import cats.implicits._
 
 import fs2.Stream
 
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{Blocker, Clock, Concurrent, ConcurrentEffect, ContextShift, ExitCode, Resource, Sync, Timer}
+import cats.effect.kernel.{Async, Resource, Sync}
+import cats.effect.ExitCode
 
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -45,19 +47,19 @@ object Run {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def run[F[_]: Clock: ConcurrentEffect: ContextShift: Parallel: Timer, A](
+  def run[F[_]: Async, A](
     args: List[String],
     name: String,
     version: String,
     description: String,
-    ec: ExecutionContext,
-    updateCliConfig: (Blocker, CliConfig) => F[CliConfig],
-    mkSource: (Blocker, Input, Monitoring) => Stream[F, A],
-    mkSinkGood: (Blocker, Output) => Resource[F, AttributedByteSink[F]],
-    mkSinkPii: (Blocker, Output) => Resource[F, AttributedByteSink[F]],
-    mkSinkBad: (Blocker, Output) => Resource[F, ByteSink[F]],
+    blockingEC: ExecutionContext,
+    updateCliConfig: CliConfig => F[CliConfig],
+    mkSource: (Input, Monitoring) => Stream[F, A],
+    mkSinkGood: Output => Resource[F, AttributedByteSink[F]],
+    mkSinkPii: Output => Resource[F, AttributedByteSink[F]],
+    mkSinkBad: Output => Resource[F, ByteSink[F]],
     checkpoint: List[A] => F[Unit],
-    mkClients: BlobStorageClients => List[Blocker => Resource[F, Client[F]]],
+    mkClients: BlobStorageClients => List[Resource[F, Client[F]]],
     getPayload: A => Array[Byte],
     maxRecordSize: Int,
     cloud: Option[Cloud],
@@ -65,116 +67,111 @@ object Run {
   ): F[ExitCode] =
     CliConfig.command(name, version, description).parse(args) match {
       case Right(cli) =>
-        Blocker[F].use { blocker =>
-          updateCliConfig(blocker, cli).flatMap { cfg =>
-            ParsedConfigs
-              .parse[F](cfg)
-              .fold(
-                err =>
-                  Logger[F]
-                    .error(s"CLI arguments valid but some of the configuration is not correct. Error: $err")
-                    .as[ExitCode](ExitCode.Error),
-                parsed =>
-                  for {
-                    _ <- Logger[F].info(s"Initialising resources for $name $version")
-                    processor = Processor(name, version)
-                    originalConf = parsed.configFile
-                    mapping = originalConf.output.mapping.getOrElse(Map.empty[String, String])
-                    file = parsed.configFile.copy(
-                             output = originalConf.output.copy(
-                               good = updateKafkaMapping(originalConf.output.good, mapping, "-enriched-good"),
-                               bad = updateKafkaMapping(originalConf.output.bad, mapping, "-enriched-bad"),
-                               pii = originalConf.output.pii.map(v => updateKafkaMapping(v, mapping, "-enriched-pii"))
-                             )
+        updateCliConfig(cli).flatMap { cfg =>
+          ParsedConfigs
+            .parse[F](cfg)
+            .fold(
+              err =>
+                Logger[F]
+                  .error(s"CLI arguments valid but some of the configuration is not correct. Error: $err")
+                  .as[ExitCode](ExitCode.Error),
+              parsed =>
+                for {
+                  _ <- Logger[F].info(s"Initialising resources for $name $version")
+                  processor = Processor(name, version)
+                  originalConf = parsed.configFile
+                  mapping = originalConf.output.mapping.getOrElse(Map.empty[String, String])
+                  file = parsed.configFile.copy(
+                           output = originalConf.output.copy(
+                             good = updateKafkaMapping(originalConf.output.good, mapping, "-enriched-good"),
+                             bad = updateKafkaMapping(originalConf.output.bad, mapping, "-enriched-bad"),
+                             pii = originalConf.output.pii.map(v => updateKafkaMapping(v, mapping, "-enriched-pii"))
                            )
-                    sinkGood = initAttributedSink(blocker, file.output.good, mkSinkGood)
-                    sinkPii = file.output.pii.map(out => initAttributedSink(blocker, out, mkSinkPii))
-                    sinkBad = file.output.bad match {
-                                case f: Output.FileSystem =>
-                                  FileSink.fileSink[F](f, blocker)
-                                case _ =>
-                                  mkSinkBad(blocker, file.output.bad)
-                              }
-                    clients = mkClients(file.blobStorage).map(mk => mk(blocker)).sequence
-                    exit <- file.input match {
-                              case p: Input.FileSystem =>
-                                val env = Environment
-                                  .make[F, Array[Byte]](
-                                    blocker,
-                                    ec,
-                                    parsed,
-                                    Source.filesystem[F](blocker, p.dir),
-                                    sinkGood,
-                                    sinkPii,
-                                    sinkBad,
-                                    clients,
-                                    _ => Sync[F].unit,
-                                    identity,
-                                    processor,
-                                    maxRecordSize,
-                                    cloud,
-                                    getRegion,
-                                    file.featureFlags
-                                  )
-                                runEnvironment[F, Array[Byte]](env)
-                              case input =>
-                                val checkpointing = input match {
-                                  case retrySettings: RetryCheckpointing =>
-                                    withRetries(
-                                      retrySettings.checkpointBackoff,
-                                      "Checkpointing failed",
-                                      checkpoint
-                                    )
-                                  case _ =>
-                                    checkpoint
-                                }
-                                val env = Environment
-                                  .make[F, A](
-                                    blocker,
-                                    ec,
-                                    parsed,
-                                    mkSource(blocker, file.input, file.monitoring),
-                                    sinkGood,
-                                    sinkPii,
-                                    sinkBad,
-                                    clients,
-                                    checkpointing,
-                                    getPayload,
-                                    processor,
-                                    maxRecordSize,
-                                    cloud,
-                                    getRegion,
-                                    file.featureFlags
-                                  )
-                                runEnvironment[F, A](env)
+                         )
+                  sinkGood = initAttributedSink(file.output.good, mkSinkGood)
+                  sinkPii = file.output.pii.map(out => initAttributedSink(out, mkSinkPii))
+                  sinkBad = file.output.bad match {
+                              case f: Output.FileSystem =>
+                                FileSink.fileSink[F](f)
+                              case _ =>
+                                mkSinkBad(file.output.bad)
                             }
-                  } yield exit
-              )
-              .flatten
-          }
+                  clients = mkClients(file.blobStorage).sequence
+                  exit <- file.input match {
+                            case p: Input.FileSystem =>
+                              val env = Environment
+                                .make[F, Array[Byte]](
+                                  blockingEC,
+                                  parsed,
+                                  Source.filesystem[F](p.dir),
+                                  sinkGood,
+                                  sinkPii,
+                                  sinkBad,
+                                  clients,
+                                  _ => Sync[F].unit,
+                                  identity,
+                                  processor,
+                                  maxRecordSize,
+                                  cloud,
+                                  getRegion,
+                                  file.featureFlags
+                                )
+                              runEnvironment[F, Array[Byte]](env)
+                            case input =>
+                              val checkpointing = input match {
+                                case retrySettings: RetryCheckpointing =>
+                                  withRetries(
+                                    retrySettings.checkpointBackoff,
+                                    "Checkpointing failed",
+                                    checkpoint
+                                  )
+                                case _ =>
+                                  checkpoint
+                              }
+                              val env = Environment
+                                .make[F, A](
+                                  blockingEC,
+                                  parsed,
+                                  mkSource(file.input, file.monitoring),
+                                  sinkGood,
+                                  sinkPii,
+                                  sinkBad,
+                                  clients,
+                                  checkpointing,
+                                  getPayload,
+                                  processor,
+                                  maxRecordSize,
+                                  cloud,
+                                  getRegion,
+                                  file.featureFlags
+                                )
+                              runEnvironment[F, A](env)
+                          }
+                } yield exit
+            )
+            .flatten
         }
       case Left(error) =>
         Logger[F].error(s"CLI arguments are invalid. Error: $error") >> Sync[F].pure(ExitCode.Error)
     }
 
-  private def initAttributedSink[F[_]: Concurrent: ContextShift: Timer](
-    blocker: Blocker,
+  private def initAttributedSink[F[_]: Async](
     output: Output,
-    mkSinkGood: (Blocker, Output) => Resource[F, AttributedByteSink[F]]
+    mkSinkGood: Output => Resource[F, AttributedByteSink[F]]
   ): Resource[F, AttributedByteSink[F]] =
     output match {
       case f: Output.FileSystem =>
-        FileSink.fileSink[F](f, blocker).map(sink => records => sink(records.map(_.data)))
+        FileSink.fileSink[F](f).map(sink => records => sink(records.map(_.data)))
       case _ =>
-        mkSinkGood(blocker, output)
+        mkSinkGood(output)
     }
 
-  private def runEnvironment[F[_]: ConcurrentEffect: ContextShift: Parallel: Timer, A](
+  private def runEnvironment[F[_]: Async, A](
     environment: Resource[F, Environment[F, A]]
   ): F[ExitCode] =
     environment.use { env =>
       val enrich = Enrich.run[F, A](env)
-      val updates = Assets.run[F, A](env.blocker, env.shifter, env.semaphore, env.assetsUpdatePeriod, env.assetsState, env.enrichments)
+      val updates = Assets.run[F, A](env.blockingEC, env.shifter, env.semaphore, env.assetsUpdatePeriod, env.assetsState, env.enrichments)
       val telemetry = Telemetry.run[F, A](env)
       val reporting = env.metrics.report
       val metadata = env.metadata.report
@@ -195,7 +192,7 @@ object Run {
     case other => other
   }
 
-  private def withRetries[F[_]: Sync: Timer, A, B](
+  private def withRetries[F[_]: Async, A, B](
     config: BackoffPolicy,
     errorMessage: String,
     f: A => F[B]

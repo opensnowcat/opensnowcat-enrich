@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
 import cats.effect.IO
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe._
 import io.circe.literal._
@@ -39,7 +39,7 @@ object ApiRequestEnrichmentIntegrationTest {
 }
 
 import ApiRequestEnrichmentIntegrationTest._
-class ApiRequestEnrichmentIntegrationTest extends Specification with ValidatedMatchers with CatsIO {
+class ApiRequestEnrichmentIntegrationTest extends Specification with ValidatedMatchers with CatsEffect {
   def is =
     skipAllUnless(continuousIntegration) ^
       s2"""

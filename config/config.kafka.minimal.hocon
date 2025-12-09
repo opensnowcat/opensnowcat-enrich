@@ -15,4 +15,5 @@
       "bootstrapServers": "localhost:9092"
     }
   }
+  "maxJsonDepth": 40
 }

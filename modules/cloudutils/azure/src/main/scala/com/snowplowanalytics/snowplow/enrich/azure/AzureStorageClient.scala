@@ -12,23 +12,28 @@
  */
 package com.snowplowanalytics.snowplow.enrich.azure
 
+import java.net.URI
+
+import com.azure.identity.DefaultAzureCredentialBuilder
+import com.azure.storage.blob.{BlobServiceAsyncClient, BlobServiceClientBuilder, BlobUrlParts}
+
 import blobstore.azure.AzureStore
 import blobstore.url.exception.{MultipleUrlValidationException, Throwables}
 import blobstore.url.{Authority, Path, Url}
+
 import cats.data.Validated.{Invalid, Valid}
-import cats.effect._
 import cats.implicits._
-import com.azure.identity.DefaultAzureCredentialBuilder
-import com.azure.storage.blob.{BlobServiceAsyncClient, BlobServiceClientBuilder, BlobUrlParts}
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.BlobStorageClients.AzureStorage
-import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.Client
+
+import cats.effect.kernel.{Async, Resource, Sync}
+
 import fs2.Stream
 
-import java.net.URI
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.BlobStorageClients.AzureStorage
+import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.Client
 
 object AzureStorageClient {
 
-  def mk[F[_]: ConcurrentEffect](config: AzureStorage): Resource[F, Client[F]] =
+  def mk[F[_]: Async](config: AzureStorage): Resource[F, Client[F]] =
     for {
       stores <- createStores(config)
     } yield new Client[F] {
@@ -51,7 +56,7 @@ object AzureStorageClient {
       }
     }
 
-  private def createStores[F[_]: ConcurrentEffect: Async](config: AzureStorage): Resource[F, Map[String, AzureStore[F]]] =
+  private def createStores[F[_]: Async](config: AzureStorage): Resource[F, Map[String, AzureStore[F]]] =
     config.accounts
       .map { account =>
         createStore(account).map(store => (account.name, store))
@@ -59,21 +64,21 @@ object AzureStorageClient {
       .sequence
       .map(_.toMap)
 
-  private def createStore[F[_]: ConcurrentEffect: Async](account: AzureStorage.Account): Resource[F, AzureStore[F]] =
+  private def createStore[F[_]: Async](account: AzureStorage.Account): Resource[F, AzureStore[F]] =
     for {
       client <- createClient(account)
       store <- AzureStore
-                 .builder[F](client)
-                 .build
-                 .fold(
-                   errors => Resource.eval(ConcurrentEffect[F].raiseError(errors.reduce(Throwables.collapsingSemigroup))),
-                   s => Resource.pure[F, AzureStore[F]](s)
-                 )
+        .builder[F](client)
+        .build
+        .fold(
+          errors => Resource.eval(Sync[F].raiseError(errors.reduce(Throwables.collapsingSemigroup))),
+          s => Resource.pure[F, AzureStore[F]](s)
+        )
     } yield store
 
-  private def createClient[F[_]: ConcurrentEffect: Async](account: AzureStorage.Account): Resource[F, BlobServiceAsyncClient] =
+  private def createClient[F[_]: Sync](account: AzureStorage.Account): Resource[F, BlobServiceAsyncClient] =
     Resource.eval {
-      ConcurrentEffect[F].delay {
+      Sync[F].delay {
         createClientBuilder(account)
           .endpoint(createStorageEndpoint(account.name))
           .buildAsyncClient()

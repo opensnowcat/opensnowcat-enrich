@@ -14,10 +14,12 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import java.net.URI
 
+import scala.concurrent.ExecutionContext
+
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.implicits._
 
-import cats.effect.{Async, Blocker, ContextShift}
+import cats.effect.kernel.Async
 
 import io.circe._
 
@@ -95,8 +97,8 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       } yield IpLookupsDatabase(name, uri, uriAndDb._2)).toValidated.some
     } else None
 
-  def create[F[_]: Async: ContextShift](
-    blocker: Blocker,
+  def create[F[_]: Async](
+    blockingEC: ExecutionContext,
     geoFilePath: Option[String],
     ispFilePath: Option[String],
     domainFilePath: Option[String],
@@ -111,15 +113,15 @@ object IpLookupsEnrichment extends ParseableEnrichment {
         memCache = true,
         lruCacheSize = 20000
       )
-      .map(i => IpLookupsEnrichment(i, blocker))
+      .map(i => IpLookupsEnrichment(i, blockingEC))
 }
 
 /**
  * Contains enrichments based on IP address.
  * @param ipLookups IP lookups client
- * @param blocker Runs db lookups on a separate thread pool
+ * @param blockingEC Execution context for running db lookups on a separate thread pool
  */
-final case class IpLookupsEnrichment[F[_]: ContextShift](ipLookups: IpLookups[F], blocker: Blocker) extends Enrichment {
+final case class IpLookupsEnrichment[F[_]: Async](ipLookups: IpLookups[F], blockingEC: ExecutionContext) extends Enrichment {
 
   /**
    * Extract the geo-location using the client IP address.
@@ -127,9 +129,10 @@ final case class IpLookupsEnrichment[F[_]: ContextShift](ipLookups: IpLookups[F]
    * @return an IpLookupResult
    */
   def extractIpInformation(ip: String): F[IpLookupResult] =
-    blocker.blockOn {
-      ipLookups.performLookups(Either.catchNonFatal(new HostName(ip).toAddress).fold(_ => ip, addr => addr.toString))
-    }
+    Async[F].evalOn(
+      ipLookups.performLookups(Either.catchNonFatal(new HostName(ip).toAddress).fold(_ => ip, addr => addr.toString)),
+      blockingEC
+    )
 }
 
 private[enrichments] final case class IpLookupsDatabase(

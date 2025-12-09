@@ -18,11 +18,11 @@ import java.util.Base64
 
 import org.specs2.mutable.Specification
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.blackbox.BlackBoxTesting
 
-class PiiEnrichmentSpec extends Specification with CatsIO {
+class PiiEnrichmentSpec extends Specification with CatsEffect {
   "enrichWith" should {
     "enrich with PiiEnrichment" in {
       val base64Encoded =

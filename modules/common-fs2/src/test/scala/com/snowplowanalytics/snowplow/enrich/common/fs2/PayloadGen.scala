@@ -12,18 +12,17 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2
 
-import java.nio.file.{Path, Paths}
 import java.util.Base64
 
-import cats.effect.{Blocker, IO}
-import cats.effect.concurrent.Ref
+import cats.effect.IO
+import cats.effect.kernel.Ref
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import _root_.io.circe.literal._
 
-import fs2.{Chunk, Stream}
-import fs2.io.file.{createDirectory, writeAll}
+import fs2.Stream
+import fs2.io.file.{Files, Path}
 
 import org.apache.http.message.BasicNameValuePair
 
@@ -33,7 +32,7 @@ import org.scalacheck.{Arbitrary, Gen}
 
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 
-object PayloadGen extends CatsIO {
+object PayloadGen extends CatsEffect {
 
   val api: CollectorPayload.Api =
     CollectorPayload.Api("com.snowplowanalytics.snowplow", "tp2")
@@ -100,16 +99,13 @@ object PayloadGen extends CatsIO {
   def write(dir: Path, cardinality: Long): IO[Unit] =
     for {
       counter <- Ref.of[IO, Int](0)
-      dir <- Blocker[IO].use(b => createDirectory[IO](b, dir))
-      filename = counter.updateAndGet(_ + 1).map(i => Paths.get(s"${dir.toAbsolutePath}/payload.$i.thrift"))
-      _ <- Blocker[IO].use { b =>
-             val result =
-               for {
+      _ <- Files[IO].createDirectories(dir)
+      filename = counter.updateAndGet(_ + 1).map(i => Path(s"$dir/payload.$i.thrift"))
+      result = for {
                  payload <- payloadStream.take(cardinality)
                  fileName <- Stream.eval(filename)
-                 _ <- Stream.chunk(Chunk.bytes(payload.toRaw)).through(writeAll[IO](fileName, b))
+                 _ <- Stream(payload.toRaw: _*).through(Files[IO].writeAll(fileName)).as(())
                } yield ()
-             result.compile.drain
-           }
+      _ <- result.compile.drain
     } yield ()
 }

@@ -18,8 +18,8 @@ import java.time.Instant
 import scala.concurrent.duration._
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.kernel.Ref
+import cats.effect.testing.specs2.CatsEffect
 import org.http4s.Uri
 
 import org.specs2.mutable.Specification
@@ -29,7 +29,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Metadata => MetadataConfig}
 import Metadata.{EntitiesAndCount, MetadataEvent, MetadataReporter}
 
-class MetadataSpec extends Specification with CatsIO {
+class MetadataSpec extends Specification with CatsEffect {
   case class Report(
     periodStart: Instant,
     periodEnd: Instant,
@@ -56,7 +56,7 @@ class MetadataSpec extends Specification with CatsIO {
       event.contexts =
         """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/web_page/jsonschema/1-0-0","data":{"id":"39a9934a-ddd3-4581-a4ea-d0ba20e63b92"}},{"schema":"iglu:org.w3/PerformanceTiming/jsonschema/1-0-0","data":{"navigationStart":1581931694397,"unloadEventStart":1581931696046,"unloadEventEnd":1581931694764,"redirectStart":0,"redirectEnd":0,"fetchStart":1581931694397,"domainLookupStart":1581931694440,"domainLookupEnd":1581931694513,"connectStart":1581931694513,"connectEnd":1581931694665,"secureConnectionStart":1581931694572,"requestStart":1581931694665,"responseStart":1581931694750,"responseEnd":1581931694750,"domLoading":1581931694762,"domInteractive":1581931695963,"domContentLoadedEventStart":1581931696039,"domContentLoadedEventEnd":1581931696039,"domComplete":0,"loadEventStart":0,"loadEventEnd":0}}]}"""
       val config = MetadataConfig(
-        Uri.uri("https://localhost:443"),
+        Uri.unsafeFromString("https://localhost:443"),
         50.millis,
         UUID.fromString("dfc1aef8-2656-492b-b5ba-c77702f850bc"),
         UUID.fromString("8c121fdd-dc8c-4cdc-bad1-3cefbe2b01ff")

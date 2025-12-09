@@ -540,6 +540,9 @@ object EnrichmentManager {
                     case PaidReferer(medium, source) =>
                       event.refr_medium = CU.makeTsvSafe(medium.value)
                       event.refr_source = CU.makeTsvSafe(source)
+                    case ChatbotReferer(medium, source) =>
+                      event.refr_medium = CU.makeTsvSafe(medium.value)
+                      event.refr_source = CU.makeTsvSafe(source)
                   }
               case None => ()
             }

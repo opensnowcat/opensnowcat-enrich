@@ -13,26 +13,23 @@
 package com.snowplowanalytics.snowplow.enrich.common.fs2.io
 
 import cats.implicits._
-import cats.effect.{Blocker, IO}
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.IO
+import cats.effect.testing.specs2.CatsEffect
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters._
 import scala.io.{Source => ScalaSource}
 
 import org.specs2.mutable.Specification
 
-import com.snowplowanalytics.snowplow.enrich.common.fs2.SpecHelpers
-
-class SinkSpec extends Specification with CatsIO {
+class SinkSpec extends Specification with CatsEffect {
 
   "rotating file sink" should {
 
     "write to a single file if max bytes is not exceeded" in {
       val dir = Files.createTempDirectory("enrich-sink-spec")
-      val blocker = Blocker.liftExecutionContext(SpecHelpers.blockingEC)
       val maxBytes = 100L
 
-      val write = FileSink.rotatingFileSink[IO](dir.resolve("out"), maxBytes, blocker).use { sink =>
+      val write = FileSink.rotatingFileSink[IO](dir.resolve("out"), maxBytes).use { sink =>
         sink(List("AAAAA".getBytes, "BBBBB".getBytes, "CCCCC".getBytes))
       }
 
@@ -51,10 +48,9 @@ class SinkSpec extends Specification with CatsIO {
 
     "rotate files when max bytes is exceeded" in {
       val dir = Files.createTempDirectory("enrich-sink-spec")
-      val blocker = Blocker.liftExecutionContext(SpecHelpers.blockingEC)
       val maxBytes = 15L
 
-      val write = FileSink.rotatingFileSink[IO](dir.resolve("out"), maxBytes, blocker).use { sink =>
+      val write = FileSink.rotatingFileSink[IO](dir.resolve("out"), maxBytes).use { sink =>
         sink(List("AAAAA".getBytes, "BBBBB".getBytes, "CCCCC".getBytes, "DDDDD".getBytes, "EEEEE".getBytes))
       }
 

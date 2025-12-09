@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 import org.joda.time.DateTime
 import org.specs2.matcher.ValidatedMatchers
 import org.specs2.mutable.Specification
@@ -27,7 +27,7 @@ import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class SendgridAdapterSpec extends Specification with ValidatedMatchers with CatsIO {
+class SendgridAdapterSpec extends Specification with ValidatedMatchers with CatsEffect {
   object Shared {
     val api = CollectorPayload.Api("com.sendgrid", "v3")
     val cljSource = CollectorPayload.Source("clj-tomcat", "UTF-8", None)

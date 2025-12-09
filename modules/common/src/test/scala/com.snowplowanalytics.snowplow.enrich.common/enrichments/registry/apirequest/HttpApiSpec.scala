@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.apirequest
 
 import cats.effect.IO
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import org.specs2.Specification
 import org.specs2.matcher.ValidatedMatchers
@@ -26,7 +26,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 
-class HttpApiSpec extends Specification with ValidatedMatchers with Mockito with CatsIO {
+class HttpApiSpec extends Specification with ValidatedMatchers with Mockito with CatsEffect {
   def is = s2"""
   fail to build request string without all keys $e1
   build request string from template context    $e2

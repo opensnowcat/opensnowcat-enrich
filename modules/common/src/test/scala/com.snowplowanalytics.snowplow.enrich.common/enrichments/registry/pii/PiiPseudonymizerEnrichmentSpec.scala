@@ -16,9 +16,9 @@ import cats.data.Validated
 import cats.syntax.option._
 import cats.syntax.validated._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.literal._
 import io.circe.parser._
@@ -51,8 +51,8 @@ import com.snowplowanalytics.snowplow.enrich.common.AcceptInvalid
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatchers with CatsIO {
-  val blocker: Blocker = Blocker.liftExecutionContext(SpecHelpers.blockingEC)
+class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatchers with CatsEffect {
+  val blockingEC = SpecHelpers.blockingEC
 
   def is = s2"""
   Hashing configured scalar fields in POJO should work                                                        $e1
@@ -173,7 +173,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
     )
     val reg = Registry.Embedded(regConf, path = "/iglu-schemas")
     for {
-      client <- IgluCirceClient.fromResolver[IO](Resolver(List(reg), None), cacheSize = 0)
+      client <- IgluCirceClient.fromResolver[IO](Resolver[IO](List(reg), None), cacheSize = 0, maxJsonDepth = 40)
       result <- EtlPipeline
                   .processEvents[IO](
                     new AdapterRegistry[IO](Map.empty[(String, String), RemoteAdapter[IO]], adaptersSchemas),
@@ -208,7 +208,7 @@ class PiiPseudonymizerEnrichmentSpec extends Specification with ValidatedMatcher
       "jsonschema",
       SchemaVer.Full(2, 0, 0)
     )
-    IpLookupsEnrichment.parse(js, schemaKey, true).toOption.get.enrichment[IO](blocker)
+    IpLookupsEnrichment.parse(js, schemaKey, true).toOption.get.enrichment[IO](blockingEC)
   }
 
   private val campaignAttributionEnrichment = {

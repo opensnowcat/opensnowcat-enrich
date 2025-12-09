@@ -22,8 +22,8 @@ import cats.implicits._
 import cats.Applicative
 import cats.data.NonEmptyList
 import cats.kernel.Semigroup
-import cats.effect.{Async, Clock, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
-import cats.effect.concurrent.Ref
+import cats.effect.kernel.{Async, Clock, Ref, Resource, Spawn, Sync}
+import cats.effect.std.Random
 import fs2.Stream
 import io.circe.Json
 import io.circe.parser._
@@ -34,7 +34,8 @@ import org.http4s.client.Client
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 import com.snowplowanalytics.iglu.core.circe.implicits._
 import com.snowplowanalytics.snowplow.scalatracker.{Emitter, Tracker}
-import com.snowplowanalytics.snowplow.scalatracker.emitters.http4s.Http4sEmitter
+import com.snowplowanalytics.snowplow.scalatracker.emitters.http4s.{Http4sEmitter, ceTracking}
+
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Metadata => MetadataConfig}
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 
@@ -65,7 +66,7 @@ object Metadata {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def build[F[_]: ContextShift: ConcurrentEffect: Timer](
+  def build[F[_]: Async](
     config: MetadataConfig,
     reporter: MetadataReporter[F]
   ): F[Metadata[F]] =
@@ -74,7 +75,7 @@ object Metadata {
         def report: Stream[F, Unit] =
           for {
             _ <- Stream.eval(Logger[F].info("Starting metadata repoter"))
-            _ <- Stream.bracket(ConcurrentEffect[F].unit)(_ => submit(reporter, observedRef))
+            _ <- Stream.bracket(Sync[F].unit)(_ => submit(reporter, observedRef))
             _ <- Stream.fixedDelay[F](config.interval)
             _ <- Stream.eval(submit(reporter, observedRef))
           } yield ()
@@ -84,13 +85,13 @@ object Metadata {
       }
     }
 
-  def noop[F[_]: Async]: Metadata[F] =
+  def noop[F[_]: Spawn]: Metadata[F] =
     new Metadata[F] {
       def report: Stream[F, Unit] = Stream.never[F]
       def observe(events: List[EnrichedEvent]): F[Unit] = Applicative[F].unit
     }
 
-  private def submit[F[_]: Sync: Clock](reporter: MetadataReporter[F], ref: MetadataEventsRef[F]): F[Unit] =
+  private def submit[F[_]: Sync](reporter: MetadataReporter[F], ref: MetadataEventsRef[F]): F[Unit] =
     for {
       snapshot <- MetadataEventsRef.snapshot(ref)
       _ <- snapshot.aggregates.toList.traverse { case (event, entitiesAndCount) =>
@@ -107,7 +108,7 @@ object Metadata {
     ): F[Unit]
   }
 
-  case class HttpMetadataReporter[F[_]: ConcurrentEffect: Timer](
+  case class HttpMetadataReporter[F[_]: Async](
     config: MetadataConfig,
     appName: String,
     client: Client[F]
@@ -118,6 +119,7 @@ object Metadata {
       client: Client[F]
     ): Resource[F, Tracker[F]] =
       for {
+        implicit0(random: Random[F]) <- Resource.eval(Random.scalaUtilRandom[F])
         emitter <- Http4sEmitter.build(
                      Emitter.EndpointParams(
                        config.endpoint.host.map(_.toString()).getOrElse("localhost"),
@@ -216,15 +218,15 @@ object Metadata {
   )
 
   object MetadataEventsRef {
-    def init[F[_]: Sync: Clock]: F[MetadataEventsRef[F]] =
+    def init[F[_]: Sync]: F[MetadataEventsRef[F]] =
       for {
-        time <- Clock[F].instantNow
+        time <- Clock[F].realTimeInstant
         aggregates <- Ref.of[F, Aggregates](Map.empty)
         periodStart <- Ref.of[F, Instant](time)
       } yield MetadataEventsRef(aggregates, periodStart)
-    def snapshot[F[_]: Sync: Clock](ref: MetadataEventsRef[F]): F[MetadataSnapshot] =
+    def snapshot[F[_]: Sync](ref: MetadataEventsRef[F]): F[MetadataSnapshot] =
       for {
-        periodEnd <- Clock[F].instantNow
+        periodEnd <- Clock[F].realTimeInstant
         aggregates <- ref.aggregates.getAndSet(Map.empty)
         periodStart <- ref.periodStart.getAndSet(periodEnd)
       } yield MetadataSnapshot(aggregates, periodStart, periodEnd)

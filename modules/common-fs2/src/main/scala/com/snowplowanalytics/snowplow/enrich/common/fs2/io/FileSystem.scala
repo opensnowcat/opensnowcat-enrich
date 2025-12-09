@@ -40,7 +40,7 @@ object FileSystem {
   def list[F[_]: Sync](dir: Path): Stream[F, Path] =
     for {
       paths <- Stream.eval(Sync[F].delay(Files.list(dir)))
-      path <- Stream.fromIterator(paths.iterator().asScala)
+      path <- Stream.fromIterator(paths.iterator().asScala, 1)
     } yield path
 
   def readJson[F[_]: Sync, A: Decoder](path: Path, fallbacks: TSConfig => TSConfig): EitherT[F, String, A] =
