@@ -295,16 +295,17 @@
       "accounts": [
         # Example public account with no auth
         { "name": "storageAccount1"},
-        
+
         # Example private account using default auth chain -> https://learn.microsoft.com/en-us/java/api/com.azure.identity.defaultazurecredential?view=azure-java-stable
         { "name": "storageAccount2", "auth": { "type": "default"} },
-        
+
         # Example private account using SAS token auth
         { "name": "storageAccount3",  "auth": { "type": "sas", "value": "tokenValue"}}
       ]
     }
   }
-
+  # Maximum depth of JSON objects when parsing self-describing JSONs
+  "maxJsonDepth": 40
   # Optional. Configuration for experimental/preview features
   "experimental": {
     # Whether to export metadata using a webhook URL.

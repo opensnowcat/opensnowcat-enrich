@@ -14,13 +14,13 @@ package com.snowplowanalytics.snowplow.enrich.common.fs2.blackbox.misc
 
 import org.specs2.mutable.Specification
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import cats.syntax.option._
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.blackbox.BlackBoxTesting
 
-class TransactionItemSpec extends Specification with CatsIO {
+class TransactionItemSpec extends Specification with CatsEffect {
   "enrichWith" should {
     "enrich transaction items" in {
       val querystring =

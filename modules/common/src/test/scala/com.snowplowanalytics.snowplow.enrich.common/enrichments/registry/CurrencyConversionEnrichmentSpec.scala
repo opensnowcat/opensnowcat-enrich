@@ -24,7 +24,7 @@ import cats.implicits._
 
 import cats.effect.IO
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import com.snowplowanalytics.forex.model._
 
@@ -34,7 +34,7 @@ import com.snowplowanalytics.snowplow.badrows.FailureDetails
 
 import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.EnrichmentConf.CurrencyConversionConf
 
-class CurrencyConversionEnrichmentSpec extends Specification with CatsIO {
+class CurrencyConversionEnrichmentSpec extends Specification with CatsEffect {
   import CurrencyConversionEnrichmentSpec._
 
   def is =

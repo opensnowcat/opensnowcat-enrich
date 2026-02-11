@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 import io.circe.literal._
 import org.joda.time.DateTime
 import org.specs2.Specification
@@ -29,7 +29,7 @@ import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class HubSpotAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsIO {
+class HubSpotAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsEffect {
   def is = s2"""
   payloadBodyToEvents must return a Success list of event JSON's from a valid payload body $e1
   payloadBodyToEvents must return a Failure Nel for an invalid payload body being passed   $e2
