@@ -38,7 +38,7 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
             self.write_body(response)
         else:
             self.do_AUTHHEAD()
-            self.write_body(self.headers.getheader('Authorization'))
+            self.write_body(self.headers.get('Authorization'))
             self.write_body('not authenticated')
 
     def do_GET(self):
