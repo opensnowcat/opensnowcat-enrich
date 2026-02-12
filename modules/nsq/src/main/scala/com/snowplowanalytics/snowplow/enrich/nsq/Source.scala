@@ -14,11 +14,11 @@ package com.snowplowanalytics.snowplow.enrich.nsq
 
 import cats.syntax.all._
 
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync}
+import cats.effect.{Resource, Sync}
+import cats.effect.kernel.Async
+import cats.effect.std.{Dispatcher, Queue}
 
 import fs2.Stream
-
-import fs2.concurrent.Queue
 
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -35,52 +35,53 @@ object Source {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def init[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
+  def init[F[_]: Async](
     input: Input
   ): Stream[F, Record[F]] =
     input match {
       case config: Input.Nsq =>
         for {
+          dispatcher <- Stream.resource(Dispatcher.parallel[F])
           q <- Stream.eval(Queue.bounded[F, Either[Throwable, Record[F]]](config.maxBufferQueueSize))
-          _ <- Stream.resource(startConsumer(blocker, q, config))
-          msg <- q.dequeueChunk(config.maxBufferQueueSize).flatMap(m => Stream.fromEither[F](m))
+          _ <- Stream.resource(startConsumer(dispatcher, q, config))
+          msg <- Stream.fromQueueUnterminated(q).flatMap(m => Stream.fromEither[F](m))
         } yield msg
       case i =>
         Stream.raiseError[F](new IllegalArgumentException(s"Input $i is not NSQ"))
     }
 
-  private def startConsumer[F[_]: Sync: ContextShift: ConcurrentEffect](
-    blocker: Blocker,
+  private def startConsumer[F[_]: Async](
+    dispatcher: Dispatcher[F],
     queue: Queue[F, Either[Throwable, Record[F]]],
     config: Input.Nsq
   ): Resource[F, NSQConsumer] =
     Resource.make(
       Sync[F].delay {
-        val consumer = createConsumer(queue, config)
+        val consumer = createConsumer(dispatcher, queue, config)
         consumer.start()
       }
     )(consumer =>
-      blocker
-        .delay(consumer.shutdown())
+      Async[F]
+        .blocking(consumer.shutdown())
         .handleErrorWith(e => Logger[F].error(e)(s"Cannot terminate NSQ consumer"))
     )
 
-  private def createConsumer[F[_]: Sync: ContextShift: ConcurrentEffect](
+  private def createConsumer[F[_]: Async](
+    dispatcher: Dispatcher[F],
     queue: Queue[F, Either[Throwable, Record[F]]],
     config: Input.Nsq
   ): NSQConsumer = {
     val messageCallback = new NSQMessageCallback {
       override def message(message: NSQMessage): Unit = {
         val msgBytes = message.getMessage
-        val enqueue = queue.enqueue1(Right(Record(msgBytes, Sync[F].delay(message.finished()))))
-        ConcurrentEffect[F].toIO(enqueue).unsafeRunSync()
+        val enqueue = queue.offer(Right(Record(msgBytes, Sync[F].delay(message.finished()))))
+        dispatcher.unsafeRunSync(enqueue)
       }
     }
     val errorCallback = new NSQErrorCallback {
       override def error(e: NSQException): Unit = {
-        val enqueue = queue.enqueue1(Left(e))
-        ConcurrentEffect[F].toIO(enqueue).unsafeRunSync()
+        val enqueue = queue.offer(Left(e))
+        dispatcher.unsafeRunSync(enqueue)
       }
     }
     val lookup = new DefaultNSQLookup
