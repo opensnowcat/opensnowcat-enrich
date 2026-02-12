@@ -52,7 +52,7 @@ object Dependencies {
     val thrift = "0.20.0"
     val sprayJson = "1.3.6"
     val netty = "4.1.128.Final"
-    val protobuf = "4.29.2"
+    val protobuf = "4.29.6"
     val httpclient = "4.5.13"
 
     val refererParser = "2.1.0"
@@ -73,7 +73,7 @@ object Dependencies {
     val schemaSniffer = "0.0.0"
 
     val awsSdk = "1.12.797"
-    val gcpSdk = "2.31.0"
+    val gcpSdk = "2.62.1"
     val awsSdk2 = "2.25.69"
     val kinesisClient2 = "2.4.3"
     val kafka = "3.9.1"
@@ -86,7 +86,7 @@ object Dependencies {
     val fs2 = "3.11.0"
     val refined = "0.10.3"
     val catsEffect = "3.5.4"
-    val fs2PubSub = "0.22.0"
+    val fs2PubSub = "0.22.1"
     val fs2Aws = "4.1.0"
     val fs2Kafka = "3.5.1"
     val fs2BlobStorage = "0.9.12"
