@@ -12,7 +12,8 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Resource, Sync}
+import cats.effect.kernel.Async
 import cats.implicits._
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input.Kinesis.InitPosition
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{Input, Monitoring}
@@ -37,8 +38,7 @@ import java.util.{Date, UUID}
 
 object Source {
 
-  def init[F[_]: ConcurrentEffect: ContextShift: Timer](
-    blocker: Blocker,
+  def init[F[_]: Async](
     input: Input,
     monitoring: Monitoring
   ): Stream[F, CommittableRecord] =
@@ -46,7 +46,7 @@ object Source {
       case k: Input.Kinesis =>
         k.region.orElse(getRuntimeRegion) match {
           case Some(region) =>
-            kinesis(blocker, k, region, monitoring)
+            kinesis(k, region, monitoring)
           case None =>
             Stream.raiseError[F](new RuntimeException(s"Region not found in the config and in the runtime"))
         }
@@ -54,8 +54,7 @@ object Source {
         Stream.raiseError[F](new IllegalArgumentException(s"Input $i is not Kinesis"))
     }
 
-  def kinesis[F[_]: ConcurrentEffect: ContextShift: Sync: Timer](
-    blocker: Blocker,
+  def kinesis[F[_]: Async](
     kinesisConfig: Input.Kinesis,
     region: String,
     monitoring: Monitoring
@@ -83,7 +82,7 @@ object Source {
         dynamoClient <- mkDynamoDbClient[F](region, kinesisConfig.dynamodbCustomEndpoint)
         cloudWatchClient <- mkCloudWatchClient[F](region, kinesisConfig.cloudwatchCustomEndpoint)
         kinesis <- Resource.pure[F, Kinesis[F]](
-                     Kinesis.create(blocker, scheduler(kinesisClient, dynamoClient, cloudWatchClient, kinesisConfig, monitoring, _))
+                     Kinesis.create(scheduler(kinesisClient, dynamoClient, cloudWatchClient, kinesisConfig, monitoring, _))
                    )
       } yield (consumerSettings, kinesis)
 
