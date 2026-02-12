@@ -12,8 +12,8 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-import cats.effect.concurrent.Ref
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Resource, Sync}
+import cats.effect.kernel.{Async, Ref}
 import cats.implicits._
 import cats.{Monoid, Parallel}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
@@ -22,7 +22,7 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, Att
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import retry.RetryPolicy
-import retry.implicits.{retrySyntaxBase, retrySyntaxError}
+import retry.syntax.all._
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.eventbridge.EventBridgeClient
 import software.amazon.awssdk.services.eventbridge.model.{EventBridgeException, PutEventsRequest, PutEventsRequestEntry, PutEventsResponse}
@@ -36,16 +36,14 @@ object Sink {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def init[F[_]: Concurrent: ContextShift: Parallel: Timer](
-    blocker: Blocker,
+  def init[F[_]: Async: Parallel](
     output: Output
   ): Resource[F, ByteSink[F]] =
     for {
-      sink <- initAttributed(blocker, output)
+      sink <- initAttributed(output)
     } yield (records: List[Array[Byte]]) => sink(records.map(AttributedData(_, UUID.randomUUID().toString, Map.empty)))
 
-  def initAttributed[F[_]: Concurrent: ContextShift: Parallel: Timer](
-    blocker: Blocker,
+  def initAttributed[F[_]: Async: Parallel](
     output: Output
   ): Resource[F, AttributedByteSink[F]] =
     output match {
@@ -54,8 +52,7 @@ object Sink {
           case Some(region) =>
             for {
               producer <- Resource.eval[F, EventBridgeClient](mkProducer(o, region))
-            } yield (records: List[AttributedData[Array[Byte]]]) =>
-              writeToEventbridge(blocker, o, producer, toEventBridgeEvents(records, o))
+            } yield (records: List[AttributedData[Array[Byte]]]) => writeToEventbridge(o, producer, toEventBridgeEvents(records, o))
           case None =>
             Resource.eval(Sync[F].raiseError(new RuntimeException(s"Region not found in the config and in the runtime")))
         }
@@ -95,8 +92,7 @@ object Sink {
           .build()
       }
 
-  private def writeToEventbridge[F[_]: ContextShift: Parallel: Sync: Timer](
-    blocker: Blocker,
+  private def writeToEventbridge[F[_]: Async: Parallel](
     config: Output.Eventbridge,
     eventbridge: EventBridgeClient,
     allEvents: List[PutEventsRequestEntry]
@@ -112,7 +108,7 @@ object Sink {
       for {
         records <- ref.get
         failures <- group(records, recordLimit = config.recordLimit, sizeLimit = config.byteLimit, getRecordSize)
-                      .parTraverse(g => tryWriteToEventbridge(blocker, config, eventbridge, g, policyForErrors))
+                      .parTraverse(g => tryWriteToEventbridge(config, eventbridge, g, policyForErrors))
         flattened = failures.flatten
         _ <- ref.set(flattened)
       } yield flattened
@@ -128,7 +124,7 @@ object Sink {
       failures <- runAndCaptureFailures(ref)
                     .retryingOnFailures(
                       policy = policyForThrottling,
-                      wasSuccessful = _.isEmpty,
+                      wasSuccessful = l => Sync[F].pure(l.isEmpty),
                       onFailure = { case (result, retryDetails) =>
                         val msg = failureMessageForThrottling(result, config.eventBusName)
                         Logger[F].warn(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
@@ -179,20 +175,19 @@ object Sink {
    * If we are throttled by eventbridge, the list contains throttled records and records that gave internal errors.
    * If there is an exception, or if all records give internal errors, then we retry using the policy.
    */
-  private def tryWriteToEventbridge[F[_]: ContextShift: Sync: Timer](
-    blocker: Blocker,
+  private def tryWriteToEventbridge[F[_]: Async](
     config: Output.Eventbridge,
     eventbridge: EventBridgeClient,
     events: List[PutEventsRequestEntry],
     retryPolicy: RetryPolicy[F]
   ): F[Vector[PutEventsRequestEntry]] =
     Logger[F].debug(s"Writing ${events.size} records to ${config.eventBusName}") *>
-      blocker
-        .blockOn(Sync[F].delay(putEvents(eventbridge, events)))
+      Async[F]
+        .blocking(putEvents(eventbridge, events))
         .map(TryBatchResult.build(events, _))
         .retryingOnFailuresAndSomeErrors(
           policy = retryPolicy,
-          wasSuccessful = r => !r.shouldRetrySameBatch,
+          wasSuccessful = r => Sync[F].pure(!r.shouldRetrySameBatch),
           onFailure = { case (result, retryDetails) =>
             val msg = failureMessageForInternalErrors(events, config.eventBusName, result)
             Logger[F].error(s"$msg (${retryDetails.retriesSoFar} retries from cats-retry)")
@@ -206,8 +201,8 @@ object Sink {
             // Do not retry when getting error 4xx, these occur due to a request problem and retrying won't help
             // For example:
             // - Total size of the entries in the request is over the limit
-            case ex: EventBridgeException if ex.statusCode() % 100 == 4 => false
-            case _ => true
+            case ex: EventBridgeException if ex.statusCode() % 100 == 4 => Sync[F].pure(false)
+            case _ => Sync[F].pure(true)
           }
         )
         .flatMap { result =>
