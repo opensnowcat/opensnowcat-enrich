@@ -12,31 +12,31 @@
  */
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
-import cats.effect.{ExitCode, IO, IOApp, Resource, SyncIO}
-
 import java.util.concurrent.{Executors, TimeUnit}
 
 import scala.concurrent.ExecutionContext
 
-object Main extends IOApp.WithContext {
+import cats.effect.{ExitCode, IO, IOApp, Resource}
 
-  /**
-   * An execution context matching the cats effect IOApp default. We create it explicitly so we can
-   * also use it for our Blaze client.
-   */
-  override protected val executionContextResource: Resource[SyncIO, ExecutionContext] = {
-    val poolSize = math.max(2, Runtime.getRuntime().availableProcessors())
+object Main extends IOApp {
+
+  // Resource-managed blocking ExecutionContext for I/O operations
+  private val executionContextResource: Resource[IO, ExecutionContext] =
     Resource
-      .make(SyncIO(Executors.newFixedThreadPool(poolSize)))(pool =>
-        SyncIO {
+      .make(IO {
+        val poolSize = math.max(2, Runtime.getRuntime.availableProcessors())
+        Executors.newFixedThreadPool(poolSize)
+      })(pool =>
+        IO {
           pool.shutdown()
           pool.awaitTermination(10, TimeUnit.SECONDS)
           ()
         }
       )
       .map(ExecutionContext.fromExecutorService)
-  }
 
   def run(args: List[String]): IO[ExitCode] =
-    KinesisRun.run[IO](args, executionContext)
+    executionContextResource.use { blockingEC =>
+      KinesisRun.run[IO](args, blockingEC)
+    }
 }
