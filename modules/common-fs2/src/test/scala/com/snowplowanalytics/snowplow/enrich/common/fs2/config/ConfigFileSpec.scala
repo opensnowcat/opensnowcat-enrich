@@ -191,5 +191,58 @@ class ConfigFileSpec extends Specification with CatsEffect {
       val configPath = Paths.get("does-not-exist")
       ConfigFile.parse[IO](configPath.asRight).value.map(result => result must beLeft)
     }
+
+    "default maxJsonDepth to 40 when not specified" in {
+      val input =
+        """{
+          "input": {
+            "type": "FileSystem"
+            "dir": "/path/to/input"
+          },
+          "output": {
+            "good": {
+              "type": "FileSystem"
+              "file": "/path/to/good"
+            },
+            "bad": {
+              "type": "FileSystem"
+              "file": "/path/to/bad"
+            }
+          },
+          "concurrency": {
+            "enrich": 256
+            "sink": 3
+          },
+          "remoteAdapters": {
+            "connectionTimeout": "10 seconds"
+            "readTimeout": "45 seconds"
+            "maxConnections": 10
+            "configs": []
+          },
+          "telemetry": {
+            "disable": false
+            "interval": "15 minutes"
+            "method": "POST"
+            "collectorUri": "sp.snowcatcloud.com"
+            "collectorPort": 443
+            "secure": true
+          },
+          "featureFlags" : {
+            "acceptInvalid": false,
+            "legacyEnrichmentOrder": false,
+            "tryBase64Decoding": false
+          },
+          "blobStorage": {
+            "gcs": false,
+            "s3": false
+          }
+        }"""
+
+      ConfigFile.parse[IO](Base64Hocon(ConfigFactory.parseString(input)).asLeft).value.map { result =>
+        result must beRight.like { case configFile =>
+          configFile.maxJsonDepth must_== 40
+        }
+      }
+    }
   }
 }
