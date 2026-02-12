@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.pubsub
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Sync}
+import cats.effect.kernel.{Async, Sync}
 
 import com.google.api.gax.batching.FlowControlSettings
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior
@@ -26,23 +26,19 @@ import fs2.Stream
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input
 
-import cats.effect.{Blocker, ContextShift, Sync}
-
 object Source {
 
-  def init[F[_]: Concurrent: ContextShift](
-    blocker: Blocker,
+  def init[F[_]: Async](
     input: Input
   ): Stream[F, ConsumerRecord[F, Array[Byte]]] =
     input match {
       case p: Input.PubSub =>
-        pubSub(blocker, p)
+        pubSub(p)
       case i =>
         Stream.raiseError[F](new IllegalArgumentException(s"Input $i is not PubSub"))
     }
 
-  def pubSub[F[_]: Concurrent: ContextShift](
-    blocker: Blocker,
+  def pubSub[F[_]: Async](
     input: Input.PubSub
   ): Stream[F, ConsumerRecord[F, Array[Byte]]] = {
     val onFailedTerminate: Throwable => F[Unit] =
@@ -75,6 +71,6 @@ object Source {
         Sync[F].delay(System.err.println(s"Cannot decode message ${message.getMessageId} into array of bytes. ${error.getMessage}"))
 
     PubsubGoogleConsumer
-      .subscribe[F, Array[Byte]](blocker, projectId, subscriptionId, errorHandler, pubSubConfig)
+      .subscribe[F, Array[Byte]](projectId, subscriptionId, errorHandler, pubSubConfig)
   }
 }
