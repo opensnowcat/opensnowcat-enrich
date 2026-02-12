@@ -40,8 +40,8 @@ jobs:
           sbt "project kinesis; set assembly / test := {}; assembly" \
               "project eventbridge; set assembly / test := {}; assembly" \
               "project kafka; set assembly / test := {}; assembly" \
-              "project nsq; set assembly / test := {}; assembly"
-#          sbt "project pubsub; set assembly / test := {}; assembly" \
+              "project nsq; set assembly / test := {}; assembly" \
+              "project pubsub; set assembly / test := {}; assembly"
       - name: Create GitHub release and attach artifacts
         uses: softprops/action-gh-release@v1
         with:
@@ -54,7 +54,7 @@ jobs:
             modules/eventbridge/target/scala-2.12/opensnowcat-enrich-eventbridge-${{ steps.ver.outputs.project_version }}.jar
             modules/kafka/target/scala-2.12/opensnowcat-enrich-kafka-${{ steps.ver.outputs.project_version }}.jar
             modules/nsq/target/scala-2.12/opensnowcat-enrich-nsq-${{ steps.ver.outputs.project_version }}.jar
-#            modules/pubsub/target/scala-2.12/opensnowcat-enrich-pubsub-${{ steps.ver.outputs.project_version }}.jar
+            modules/pubsub/target/scala-2.12/opensnowcat-enrich-pubsub-${{ steps.ver.outputs.project_version }}.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,7 +65,7 @@ jobs:
     strategy:
       matrix:
         app:
-#          - pubsub
+          - pubsub
           - kinesis
           - eventbridge
           - kafka
