@@ -178,7 +178,8 @@ object Sink {
     retryPolicy: RetryPolicy[F]
   ): F[Vector[PutRecordsRequestEntry]] =
     Logger[F].debug(s"Writing ${records.size} records to ${config.streamName}") *>
-      Async[F].blocking(putRecords(kinesis, config.streamName, records))
+      Async[F]
+        .blocking(putRecords(kinesis, config.streamName, records))
         .map(TryBatchResult.build(records, _))
         .retryingOnFailuresAndAllErrors(
           policy = retryPolicy,
