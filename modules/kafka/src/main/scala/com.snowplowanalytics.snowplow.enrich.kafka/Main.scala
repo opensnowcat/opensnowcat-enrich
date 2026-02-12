@@ -49,9 +49,12 @@ object Main extends IOApp {
         val poolSize = math.max(2, Runtime.getRuntime.availableProcessors())
         Executors.newFixedThreadPool(poolSize)
       })(pool =>
-        IO {
+        IO.blocking {
           pool.shutdown()
-          pool.awaitTermination(10, java.util.concurrent.TimeUnit.SECONDS)
+          val terminated = pool.awaitTermination(10, java.util.concurrent.TimeUnit.SECONDS)
+          if (!terminated) {
+            pool.shutdownNow()
+          }
           ()
         }
       )
