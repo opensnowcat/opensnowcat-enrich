@@ -148,10 +148,11 @@ object Containers {
             s"--tcp-address=0.0.0.0:${networkInfo.tcpPort}"
           ),
           exposedPorts = List(networkInfo.httpPort, networkInfo.tcpPort),
-          exposedContainerPort = networkInfo.httpPort,
-          exposedHostPort = networkInfo.httpPort
+          portBindings = Seq(
+            (networkInfo.httpPort, networkInfo.httpPort),
+            (networkInfo.tcpPort, networkInfo.tcpPort)
+          )
         )
-        container.container.withFixedExposedPort(networkInfo.tcpPort, networkInfo.tcpPort)
         container.container.withNetwork(network)
         container.container.withNetworkAliases(networkInfo.networkAlias)
         startContainerWithLogs(container.container, "nsqlookupd")
@@ -177,10 +178,11 @@ object Containers {
             s"--lookupd-tcp-address=$lookupAddress"
           ),
           exposedPorts = List(networkInfo.httpPort, networkInfo.tcpPort),
-          exposedContainerPort = networkInfo.httpPort,
-          exposedHostPort = networkInfo.httpPort
+          portBindings = Seq(
+            (networkInfo.httpPort, networkInfo.httpPort),
+            (networkInfo.tcpPort, networkInfo.tcpPort)
+          )
         )
-        container.container.withFixedExposedPort(networkInfo.tcpPort, networkInfo.tcpPort)
         container.container.withNetwork(network)
         container.container.withNetworkAliases(networkInfo.networkAlias)
         startContainerWithLogs(container.container, "nsqd")
