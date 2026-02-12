@@ -201,7 +201,7 @@ object Sink {
             // Do not retry when getting error 4xx, these occur due to a request problem and retrying won't help
             // For example:
             // - Total size of the entries in the request is over the limit
-            case ex: EventBridgeException if ex.statusCode() % 100 == 4 => Sync[F].pure(false)
+            case ex: EventBridgeException if ex.statusCode() / 100 == 4 => Sync[F].pure(false)
             case _ => Sync[F].pure(true)
           }
         )
