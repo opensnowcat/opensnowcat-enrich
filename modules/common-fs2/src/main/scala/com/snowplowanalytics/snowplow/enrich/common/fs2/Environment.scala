@@ -297,7 +297,7 @@ object Environment {
     remoteAdapters.configs match {
       case adapters if adapters.nonEmpty =>
         Clients
-          .mkHttp(remoteAdapters.connectionTimeout, remoteAdapters.readTimeout, remoteAdapters.maxConnections)
+          .mkHttp(remoteAdapters.readTimeout, remoteAdapters.maxConnections)
           .map(enableRemoteAdapterMetrics(metrics))
           .map { client =>
             val http = HttpClient.fromHttp4sClient(client)

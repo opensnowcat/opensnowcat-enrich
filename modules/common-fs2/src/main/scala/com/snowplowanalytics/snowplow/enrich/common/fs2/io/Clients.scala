@@ -65,15 +65,17 @@ object Clients {
     }
 
   def mkHttp[F[_]: Async](
-    connectionTimeout: FiniteDuration = defaults.ConnectTimeout,
     readTimeout: FiniteDuration = defaults.RequestTimeout,
     maxConnections: Int = 100 // http4s uses by default
   ): Resource[F, Http4sClient[F]] = {
     implicit val network: Network[F] = Network.forAsync[F]
+    // idleConnectionTime must be > timeout to avoid warnings
+    // We set it to 2x the request timeout to ensure connections are reused efficiently
+    val idleTime = readTimeout * 2
     val builder = EmberClientBuilder
       .default[F]
       .withTimeout(readTimeout)
-      .withIdleConnectionTime(connectionTimeout)
+      .withIdleConnectionTime(idleTime)
       .withMaxTotal(maxConnections)
     builder.build.map(Retry[F](builder.retryPolicy, redactHeadersWhen))
   }

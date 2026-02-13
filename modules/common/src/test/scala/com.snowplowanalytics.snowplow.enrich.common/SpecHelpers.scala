@@ -15,6 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 import java.util.concurrent.Executors
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 import cats.implicits._
 import cats.effect.IO
@@ -83,7 +84,11 @@ object SpecHelpers extends CatsEffect {
   implicit val registryIOLookup: RegistryLookup[IO] = JavaNetRegistryLookup.ioLookupInstance[IO]
 
   val blockingEC = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool)
-  private val http4sClient = EmberClientBuilder.default[IO].build
+  private val http4sClient = EmberClientBuilder
+    .default[IO]
+    .withTimeout(30.seconds)
+    .withIdleConnectionTime(60.seconds)
+    .build
   val httpClient = http4sClient.map(HttpClient.fromHttp4sClient[IO])
 
   private type NvPair = (String, String)
