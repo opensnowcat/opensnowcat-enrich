@@ -33,6 +33,7 @@ object HttpClient {
 
   private[utils] def getHeaders(authUser: Option[String], authPassword: Option[String]): Headers = {
     val alwaysIncludedHeaders = List(
+      Header.Raw(CIString("content-type"), "application/json"),
       Header.Raw(CIString("accept"), "*/*")
     )
     if (authUser.isDefined || authPassword.isDefined)
