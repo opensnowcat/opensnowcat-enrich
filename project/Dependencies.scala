@@ -53,6 +53,7 @@ object Dependencies {
     val sprayJson = "1.3.6"
     val netty = "4.1.128.Final"
     val protobuf = "4.29.2"
+    val grpcNettyShaded = "1.76.1"
 
     val refererParser = "1.1.0"
     val maxmindIplookups = "0.7.2"
@@ -160,6 +161,7 @@ object Dependencies {
     val slf4j = "org.slf4j"                         % "slf4j-simple"                  % V.slf4j
     val sentry = "io.sentry"                        % "sentry"                        % V.sentry
     val protobuf = "com.google.protobuf"            % "protobuf-java"                 % V.protobuf
+    val grpcNettyShaded = "io.grpc"                 % "grpc-netty-shaded"             % V.grpcNettyShaded
 
     val snowplowanAnalyticsSdk = "com.snowplowanalytics" %% "snowplow-scala-analytics-sdk" % V.snowplowAnalyticsSdk
 
@@ -309,7 +311,8 @@ object Dependencies {
 
     val gcpUtilsDependencies = Seq(
       fs2BlobGcs,
-      gcs
+      gcs,
+      grpcNettyShaded
     )
 
     val azureUtilsDependencies = Seq(
@@ -323,7 +326,8 @@ object Dependencies {
       gcs,
       fs2PubSub,
       specs2,
-      specs2CE
+      specs2CE,
+      grpcNettyShaded
     )
 
     val kinesisDependencies = Seq(
@@ -357,6 +361,7 @@ object Dependencies {
       nsqClient,
       fs2BlobS3,
       fs2BlobGcs,
+      grpcNettyShaded,
       log4j, // for security vulnerabilities
       specs2,
       specs2CE
