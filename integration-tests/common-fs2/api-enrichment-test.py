@@ -24,7 +24,9 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/guest"):
             self.send_response(200)
             response = self.generate_response("POST")
-            self.send_header('Content-length', len(response))
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', len(response))
+            self.send_header('Connection', 'close')
             self.end_headers()
             self.write_body(response)
         elif auth is None:
@@ -33,7 +35,9 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
         elif auth == 'Basic ' + base64.b64encode(b'snowplower:supersecret').decode('UTF-8'):
             response = self.generate_response("POST", auth)
             self.send_response(200)
-            self.send_header('Content-length', len(response))
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', len(response))
+            self.send_header('Connection', 'close')
             self.end_headers()
             self.write_body(response)
         else:
@@ -45,6 +49,9 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/guest"):
             self.send_response(200)
             response = self.generate_response("GET")
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', len(response))
+            self.send_header('Connection', 'close')
             self.end_headers()
             self.write_body(response)
         else:
