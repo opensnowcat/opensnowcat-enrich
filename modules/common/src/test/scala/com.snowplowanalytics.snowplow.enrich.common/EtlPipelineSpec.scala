@@ -16,7 +16,7 @@ import cats.data.Validated
 import cats.syntax.validated._
 
 import cats.effect.IO
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import org.apache.thrift.TSerializer
 
@@ -42,7 +42,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class EtlPipelineSpec extends Specification with ValidatedMatchers with CatsIO {
+class EtlPipelineSpec extends Specification with ValidatedMatchers with CatsEffect {
   def is = s2"""
   EtlPipeline should always produce either bad or good row for each event of the payload   $e1
   Processing of events with malformed query string should be supported                     $e2
@@ -56,7 +56,7 @@ class EtlPipelineSpec extends Specification with ValidatedMatchers with CatsIO {
   )
   val enrichmentReg = EnrichmentRegistry[IO]()
   val igluCentral = Registry.IgluCentral
-  def igluClient = IgluCirceClient.fromResolver[IO](Resolver(List(igluCentral), None), cacheSize = 0)
+  def igluClient = IgluCirceClient.fromResolver[IO](Resolver[IO](List(igluCentral), None), cacheSize = 0, maxJsonDepth = 40)
   val processor = Processor("sce-test-suite", "1.0.0")
   val dateTime = DateTime.now()
 

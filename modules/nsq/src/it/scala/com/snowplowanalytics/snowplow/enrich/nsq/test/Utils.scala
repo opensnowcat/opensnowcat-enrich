@@ -14,20 +14,15 @@ package com.snowplowanalytics.snowplow.enrich.nsq
 package test
 
 import scala.concurrent.duration._
-
 import cats.implicits._
-
-import cats.effect.{Async, Blocker, ConcurrentEffect, ContextShift, Sync, Timer}
-import cats.effect.concurrent.Ref
-
+import cats.effect.{Async, Sync}
+import cats.effect.kernel.{Ref, Resource}
 import fs2.Stream
-
+import fs2.io.net.{Network => Fs2Network}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-
 import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import com.snowplowanalytics.snowplow.badrows.BadRow
-
 import com.snowplowanalytics.snowplow.enrich.common.fs2.ByteSink
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input.{Nsq => InNsq}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output.{Nsq => OutNsq}
@@ -50,12 +45,10 @@ object Utils {
   type AggregateGood = List[Event]
   type AggregateBad = List[BadRow]
 
-  def mkResources[F[_]: Async: ContextShift: Timer] =
+  def mkResources[F[_]: Async: Fs2Network]: Resource[F, (NetworkTopology, ByteSink[F])] =
     for {
-      blocker <- Blocker[F]
-      topology <- Containers.createContainers[F](blocker)
+      topology <- Containers.createContainers[F]
       sink <- Sink.init[F](
-                blocker,
                 OutNsq(
                   topology.sourceTopic,
                   "127.0.0.1",
@@ -63,9 +56,9 @@ object Utils {
                   backoffPolicy
                 )
               )
-    } yield (blocker, topology, sink)
+    } yield (topology, sink)
 
-  def generateEvents[F[_]: Sync: ContextShift: Timer](
+  def generateEvents[F[_]: Sync](
     sink: ByteSink[F],
     goodCount: Long,
     badCount: Long,
@@ -76,22 +69,19 @@ object Utils {
       .evalMap(events => sink(List(events)))
       .onComplete(fs2.Stream.eval(Logger[F].info(s"Random data has been generated and sent to ${topology.sourceTopic}")))
 
-  def consume[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
+  def consume[F[_]: Async](
     refGood: Ref[F, AggregateGood],
     refBad: Ref[F, AggregateBad],
     topology: NetworkTopology
   ): Stream[F, Unit] =
-    consumeGood(blocker, refGood, topology).merge(consumeBad(blocker, refBad, topology))
+    consumeGood(refGood, topology).merge(consumeBad(refBad, topology))
 
-  def consumeGood[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
+  def consumeGood[F[_]: Async](
     ref: Ref[F, AggregateGood],
     topology: NetworkTopology
   ): Stream[F, Unit] =
     Source
       .init[F](
-        blocker,
         InNsq(
           topology.goodDestTopic,
           "EnrichedChannel",
@@ -103,14 +93,12 @@ object Utils {
       )
       .evalMap(aggregateGood(_, ref))
 
-  def consumeBad[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
+  def consumeBad[F[_]: Async](
     ref: Ref[F, AggregateBad],
     topology: NetworkTopology
   ): Stream[F, Unit] =
     Source
       .init[F](
-        blocker,
         InNsq(
           topology.badDestTopic,
           "BadRowsChannel",
@@ -124,7 +112,8 @@ object Utils {
 
   def aggregateGood[F[_]: Sync](r: Record[F], ref: Ref[F, AggregateGood]): F[Unit] =
     for {
-      e <- Sync[F].delay(Event.parse(new String(r.data)).getOrElse(throw new RuntimeException("can't parse enriched event")))
+      _ <- Sync[F].delay(Event.parse(new String(r.data)).getOrElse(throw new RuntimeException("can't parse enriched event")))
+      e = Event.parse(new String(r.data)).getOrElse(throw new RuntimeException("can't parse enriched event"))
       _ <- r.ack
       _ <- ref.update(updateAggregateGood(_, e))
     } yield ()
@@ -132,13 +121,15 @@ object Utils {
   def aggregateBad[F[_]: Sync](r: Record[F], ref: Ref[F, AggregateBad]): F[Unit] =
     for {
       s <- Sync[F].delay(new String(r.data))
-      br = CommonUtils.parseBadRow(s) match {
-             case Right(br) => br
-             case Left(e) =>
-               throw new RuntimeException(s"Can't decode bad row $s. Error: $e")
-           }
       _ <- r.ack
-      _ <- ref.update(updateAggregateBad(_, br))
+      _ <- ref.update { agg =>
+             val br = CommonUtils.parseBadRow(s) match {
+               case Right(br) => br
+               case Left(e) =>
+                 throw new RuntimeException(s"Can't decode bad row $s. Error: $e")
+             }
+             updateAggregateBad(agg, br)
+           }
     } yield ()
 
   def updateAggregateGood(aggregate: AggregateGood, e: Event): AggregateGood =

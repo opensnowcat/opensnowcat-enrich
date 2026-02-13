@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
 import java.time.Instant
 import cats.implicits._
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 import org.joda.time.DateTime
 import org.specs2.Specification
 import org.specs2.matcher.{DataTables, ValidatedMatchers}
@@ -29,7 +29,7 @@ import com.snowplowanalytics.snowplow.enrich.common.adapters.RawEvent
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsIO {
+class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsEffect {
   val processor = Processor("CloudfrontAccessLogAdapterSpec", "v1")
 
   def is = s2"""

@@ -12,19 +12,14 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-import cats.effect.{Blocker, ContextShift, IO, Resource, Timer}
+import cats.effect.{IO, Resource}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input
 import fs2.{Pipe, Stream}
 import io.circe.Json
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 object utils {
-
-  private val executionContext: ExecutionContext = ExecutionContext.global
-  implicit val ioContextShift: ContextShift[IO] = IO.contextShift(executionContext)
-  implicit val ioTimer: Timer[IO] = IO.timer(executionContext)
 
   sealed trait OutputRow
   object OutputRow {
@@ -37,18 +32,17 @@ object utils {
   def mkEnrichPipe(
     localstackPort: Int,
     uuid: String
-  ): Resource[IO, Pipe[IO, Array[Byte], OutputRow]] =
+  ): Resource[IO, Pipe[IO, Array[Byte], OutputRow]] = {
+    val streams = IntegrationTestConfig.getStreams(uuid)
     for {
-      blocker <- Blocker[IO]
-      streams = IntegrationTestConfig.getStreams(uuid)
       kinesisRawSink <- com.snowplowanalytics.snowplow.enrich.kinesis.Sink
-                          .init[IO](blocker, IntegrationTestConfig.kinesisOutputStreamConfig(localstackPort, streams.kinesisInput))
+                          .init[IO](IntegrationTestConfig.kinesisOutputStreamConfig(localstackPort, streams.kinesisInput))
     } yield {
       val kinesisGoodOutput = asGood(
-        outputStream(blocker, IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputGood))
+        outputStream(IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputGood))
       )
       val kinesisBadOutput = asBad(
-        outputStream(blocker, IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputBad))
+        outputStream(IntegrationTestConfig.kinesisInputStreamConfig(localstackPort, streams.kinesisOutputBad))
       )
 
       collectorPayloads =>
@@ -57,11 +51,12 @@ object utils {
           .interruptAfter(3.minutes)
           .concurrently(collectorPayloads.evalMap(bytes => kinesisRawSink(List(bytes))))
     }
+  }
 
-  private def outputStream(blocker: Blocker, config: Input.Kinesis): Stream[IO, Array[Byte]] =
+  private def outputStream(config: Input.Kinesis): Stream[IO, Array[Byte]] =
     com.snowplowanalytics.snowplow.enrich.kinesis.Source
-      .init[IO](blocker, config, IntegrationTestConfig.monitoring)
-      .map(com.snowplowanalytics.snowplow.enrich.kinesis.KinesisRun.getPayload)
+      .init[IO](config, IntegrationTestConfig.monitoring)
+      .map(r => com.snowplowanalytics.snowplow.enrich.kinesis.KinesisRun.getPayload(r))
 
   private def asGood(source: Stream[IO, Array[Byte]]): Stream[IO, OutputRow.Good] =
     source.map { bytes =>

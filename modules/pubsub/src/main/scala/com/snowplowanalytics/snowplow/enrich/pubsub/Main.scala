@@ -12,25 +12,26 @@
  */
 package com.snowplowanalytics.snowplow.enrich.pubsub
 
-import cats.Parallel
-import cats.implicits._
-
-import cats.effect.{ExitCode, IO, IOApp, Resource, Sync, SyncIO}
-
 import java.util.concurrent.{Executors, TimeUnit}
 
 import scala.concurrent.ExecutionContext
 
+import cats.Parallel
+import cats.implicits._
+
+import cats.effect.{ExitCode, IO, IOApp, Resource, Sync}
+
 import com.permutive.pubsub.consumer.ConsumerRecord
 
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Cloud
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{BlobStorageClients, Cloud}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.Run
+import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.Client
 
 import com.snowplowanalytics.snowplow.enrich.gcp.GcsClient
 
 import com.snowplowanalytics.snowplow.enrich.pubsub.generated.BuildInfo
 
-object Main extends IOApp.WithContext {
+object Main extends IOApp {
 
   /**
    * The maximum size of a serialized payload that can be written to pubsub.
@@ -40,43 +41,51 @@ object Main extends IOApp.WithContext {
    */
   private val MaxRecordSize = 6900000
 
-  /**
-   * An execution context matching the cats effect IOApp default. We create it explicitly so we can
-   * also use it for our Blaze client.
-   */
-  override protected val executionContextResource: Resource[SyncIO, ExecutionContext] = {
-    val poolSize = math.max(2, Runtime.getRuntime().availableProcessors())
+  // Blocking ExecutionContext for I/O operations
+  private val executionContextResource: Resource[IO, ExecutionContext] =
     Resource
-      .make(SyncIO(Executors.newFixedThreadPool(poolSize)))(pool =>
-        SyncIO {
+      .make(IO {
+        val poolSize = math.max(2, Runtime.getRuntime.availableProcessors())
+        Executors.newFixedThreadPool(poolSize)
+      })(pool =>
+        IO.blocking {
           pool.shutdown()
-          pool.awaitTermination(10, TimeUnit.SECONDS)
+          val terminated = pool.awaitTermination(10, TimeUnit.SECONDS)
+          if (!terminated) {
+            pool.shutdownNow()
+          }
           ()
         }
       )
       .map(ExecutionContext.fromExecutorService)
-  }
 
   def run(args: List[String]): IO[ExitCode] =
-    Run.run[IO, ConsumerRecord[IO, Array[Byte]]](
-      args,
-      BuildInfo.name,
-      BuildInfo.version,
-      BuildInfo.description,
-      executionContext,
-      (_, cliConfig) => IO(cliConfig),
-      (blocker, input, _) => Source.init(blocker, input),
-      (_, out) => Sink.initAttributed(out),
-      (_, out) => Sink.initAttributed(out),
-      (_, out) => Sink.init(out),
-      checkpoint,
-      _ => List(b => Resource.eval(GcsClient.mk[IO](b))),
-      _.value,
-      MaxRecordSize,
-      Some(Cloud.Gcp),
-      None
-    )
+    executionContextResource.use { blockingEC =>
+      Run.run[IO, ConsumerRecord[IO, Array[Byte]]](
+        args,
+        BuildInfo.name,
+        BuildInfo.version,
+        BuildInfo.description,
+        blockingEC,
+        cliConfig => IO.pure(cliConfig),
+        (input, _) => Source.init[IO](input),
+        out => Sink.initAttributed(out),
+        out => Sink.initAttributed(out),
+        out => Sink.init(out),
+        checkpoint,
+        createBlobStorageClient,
+        _.value,
+        MaxRecordSize,
+        Some(Cloud.Gcp),
+        None
+      )
+    }
 
   private def checkpoint[F[_]: Parallel: Sync](records: List[ConsumerRecord[F, Array[Byte]]]): F[Unit] =
     records.parTraverse_(_.ack)
+
+  private def createBlobStorageClient(conf: BlobStorageClients): List[Resource[IO, Client[IO]]] = {
+    val gcs = if (conf.gcs) Some(Resource.eval(GcsClient.mk[IO])) else None
+    List(gcs).flatten
+  }
 }

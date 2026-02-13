@@ -15,11 +15,12 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
 import cats.data.EitherT
 
-import cats.effect.{Async, Blocker, Clock, ContextShift, Sync}
+import cats.effect.kernel.{Async, Sync}
 
 import org.joda.money.CurrencyUnit
 
@@ -53,7 +54,7 @@ object EnrichmentConf {
     cache: apirequest.Cache,
     ignoreOnError: Boolean
   ) extends EnrichmentConf {
-    def enrichment[F[_]: Async: Clock](httpClient: HttpClient[F]): F[ApiRequestEnrichment[F]] =
+    def enrichment[F[_]: Async](httpClient: HttpClient[F]): F[ApiRequestEnrichment[F]] =
       ApiRequestEnrichment.create[F](
         schemaKey,
         inputs,
@@ -68,7 +69,7 @@ object EnrichmentConf {
   final case class ExtraApiRequestConf(apiRequestConf: ApiRequestConf) extends EnrichmentConf {
     def schemaKey: SchemaKey = apiRequestConf.schemaKey
     override def filesToCache: List[(URI, String)] = apiRequestConf.filesToCache
-    def enrichment[F[_]: Async: Clock](httpClient: HttpClient[F]): F[ApiRequestEnrichment[F]] =
+    def enrichment[F[_]: Async](httpClient: HttpClient[F]): F[ApiRequestEnrichment[F]] =
       apiRequestConf.enrichment(httpClient)
   }
 
@@ -91,7 +92,7 @@ object EnrichmentConf {
     cache: SqlQueryEnrichment.Cache,
     ignoreOnError: Boolean
   ) extends EnrichmentConf {
-    def enrichment[F[_]: Async: Clock: ContextShift](blocker: Blocker, shifter: ShiftExecution[F]): F[SqlQueryEnrichment[F]] =
+    def enrichment[F[_]: Async](shifter: ShiftExecution[F]): F[SqlQueryEnrichment[F]] =
       SqlQueryEnrichment.create[F](
         schemaKey,
         inputs,
@@ -100,7 +101,6 @@ object EnrichmentConf {
         output,
         cache,
         ignoreOnError,
-        blocker,
         shifter
       )
   }
@@ -191,9 +191,9 @@ object EnrichmentConf {
   ) extends EnrichmentConf {
     override val filesToCache: List[(URI, String)] =
       List(geoFile, ispFile, domainFile, connectionTypeFile).flatten
-    def enrichment[F[_]: Async: ContextShift](blocker: Blocker): F[IpLookupsEnrichment[F]] =
+    def enrichment[F[_]: Async](blockingEC: ExecutionContext): F[IpLookupsEnrichment[F]] =
       IpLookupsEnrichment.create[F](
-        blocker,
+        blockingEC,
         geoFile.map(_._2),
         ispFile.map(_._2),
         domainFile.map(_._2),

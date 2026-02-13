@@ -13,13 +13,18 @@
 
 package com.snowplowanalytics.snowplow.enrich.nsq.test
 
+import scala.concurrent.duration._
+
 import org.slf4j.LoggerFactory
 
 import cats.implicits._
 
-import cats.effect.{Async, Blocker, ContextShift, Resource, Sync}
+import cats.effect.{Async, Resource, Sync}
 
-import org.http4s.client.{JavaNetClientBuilder, Client => Http4sClient}
+import fs2.io.net.{Network => Fs2Network}
+
+import org.http4s.ember.client.EmberClientBuilder
+import org.http4s.client.{Client => Http4sClient}
 import org.http4s.{Method, Request, Uri}
 
 import org.testcontainers.containers.{BindMode, GenericContainer => JGenericContainer, Network}
@@ -61,7 +66,7 @@ object Containers {
    * integration tests and NSQ messages sent to first nsqd instance will be replicated
    * to second nsqd instance with nsq_to_nsq tool.
    */
-  def createContainers[F[_]: Async: ContextShift](blocker: Blocker): Resource[F, NetworkTopology] =
+  def createContainers[F[_]: Async: Fs2Network]: Resource[F, NetworkTopology] =
     for {
       network <- network()
       topology = NetworkTopology(
@@ -85,7 +90,7 @@ object Containers {
              topology.nsqd2,
              lookupAddress = s"${topology.lookup2.networkAlias}:${topology.lookup2.tcpPort}"
            )
-      _ <- Resource.eval(createTopics[F](blocker, topology))
+      _ <- Resource.eval(createTopics[F](topology))
       _ <- nsqToNsq(
              network,
              sourceAddress = s"${topology.nsqd1.networkAlias}:${topology.nsqd1.tcpPort}",
@@ -103,18 +108,23 @@ object Containers {
       _ <- enrich(network, topology)
     } yield topology
 
-  private def createTopics[F[_]: Async: ContextShift](blocker: Blocker, topology: NetworkTopology): F[Unit] = {
-    val client = JavaNetClientBuilder[F](blocker).create
-    for {
-      _ <- createTopic(client, topology.sourceTopic, 4151)
-      _ <- createTopic(client, topology.goodDestTopic, 4151)
-      _ <- createTopic(client, topology.badDestTopic, 4151)
-      _ <- createTopic(client, topology.goodDestTopic, 4251)
-      _ <- createTopic(client, topology.badDestTopic, 4251)
-    } yield ()
-  }
+  private def createTopics[F[_]: Async: Fs2Network](topology: NetworkTopology): F[Unit] =
+    EmberClientBuilder
+      .default[F]
+      .withTimeout(30.seconds)
+      .withIdleConnectionTime(60.seconds)
+      .build
+      .use { client =>
+        for {
+          _ <- createTopic(client, topology.sourceTopic, 4151)
+          _ <- createTopic(client, topology.goodDestTopic, 4151)
+          _ <- createTopic(client, topology.badDestTopic, 4151)
+          _ <- createTopic(client, topology.goodDestTopic, 4251)
+          _ <- createTopic(client, topology.badDestTopic, 4251)
+        } yield ()
+      }
 
-  private def createTopic[F[_]: Async: ContextShift](
+  private def createTopic[F[_]: Async](
     client: Http4sClient[F],
     topic: String,
     port: Int

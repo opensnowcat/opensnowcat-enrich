@@ -17,13 +17,13 @@ import java.nio.file.Paths
 import cats.syntax.either._
 import cats.effect.IO
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import com.typesafe.config.ConfigFactory
 
 import org.specs2.mutable.Specification
 
-class ConfigFileSpec extends Specification with CatsIO {
+class ConfigFileSpec extends Specification with CatsEffect {
   "parse" should {
     "parse valid 0 minutes as None" in {
       val input =
@@ -96,6 +96,7 @@ class ConfigFileSpec extends Specification with CatsIO {
             "legacyEnrichmentOrder": false,
             "tryBase64Decoding": false
           },
+          "maxJsonDepth": 40,
           "experimental": {
             "metadata": {
                "endpoint": "https://my_pipeline.my_domain.com/iglu",
@@ -171,6 +172,7 @@ class ConfigFileSpec extends Specification with CatsIO {
             "legacyEnrichmentOrder": false,
             "tryBase64Decoding": false
           },
+          "maxJsonDepth": 40,
           "blobStorage": {
             "gcs": true,
             "s3": true
@@ -188,6 +190,59 @@ class ConfigFileSpec extends Specification with CatsIO {
     "not throw an exception if file not found" in {
       val configPath = Paths.get("does-not-exist")
       ConfigFile.parse[IO](configPath.asRight).value.map(result => result must beLeft)
+    }
+
+    "default maxJsonDepth to 40 when not specified" in {
+      val input =
+        """{
+          "input": {
+            "type": "FileSystem"
+            "dir": "/path/to/input"
+          },
+          "output": {
+            "good": {
+              "type": "FileSystem"
+              "file": "/path/to/good"
+            },
+            "bad": {
+              "type": "FileSystem"
+              "file": "/path/to/bad"
+            }
+          },
+          "concurrency": {
+            "enrich": 256
+            "sink": 3
+          },
+          "remoteAdapters": {
+            "connectionTimeout": "10 seconds"
+            "readTimeout": "45 seconds"
+            "maxConnections": 10
+            "configs": []
+          },
+          "telemetry": {
+            "disable": false
+            "interval": "15 minutes"
+            "method": "POST"
+            "collectorUri": "sp.snowcatcloud.com"
+            "collectorPort": 443
+            "secure": true
+          },
+          "featureFlags" : {
+            "acceptInvalid": false,
+            "legacyEnrichmentOrder": false,
+            "tryBase64Decoding": false
+          },
+          "blobStorage": {
+            "gcs": false,
+            "s3": false
+          }
+        }"""
+
+      ConfigFile.parse[IO](Base64Hocon(ConfigFactory.parseString(input)).asLeft).value.map { result =>
+        result must beRight.like { case configFile =>
+          configFile.maxJsonDepth must_== 40
+        }
+      }
     }
   }
 }

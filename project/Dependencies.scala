@@ -52,29 +52,30 @@ object Dependencies {
     val thrift = "0.20.0"
     val sprayJson = "1.3.6"
     val netty = "4.1.128.Final"
-    val protobuf = "4.29.2"
     val grpcNettyShaded = "1.76.1"
+    val protobuf = "4.29.6"
+    val httpclient = "4.5.13"
 
-    val refererParser = "1.1.0"
-    val maxmindIplookups = "0.7.2"
-    val circe = "0.14.1"
+    val refererParser = "2.1.0"
+    val maxmindIplookups = "0.8.2"
+    val circe = "0.14.3"
     val circeOptics = "0.14.1"
-    val circeConfig = "0.7.0"
+    val circeConfig = "0.10.1"
     val circeJackson = "0.14.0"
-    val scalaForex = "1.0.0"
-    val scalaWeather = "1.0.0"
+    val scalaForex = "3.0.0"
+    val scalaWeather = "2.0.0"
     val gatlingJsonpath = "0.6.14"
     val scalaUri = "4.0.3"
-    val badRows = "2.1.2"
-    val igluClient = "1.5.0"
+    val badRows = "2.3.0"
+    val igluClient = "4.0.2"
 
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val schemaSniffer = "0.0.0"
 
-    val awsSdk = "1.12.780"
-    val gcpSdk = "2.31.0"
-    val awsSdk2 = "2.25.69"
+    val awsSdk = "1.12.797"
+    val gcpSdk = "2.62.1"
+    val awsSdk2 = "2.41.26"
     val kinesisClient2 = "2.4.3"
     val kafka = "3.9.1"
     val lz4Java = "1.8.1"
@@ -84,26 +85,26 @@ object Dependencies {
     val config = "1.3.4"
 
     val decline = "2.4.1"
-    val fs2 = "2.5.13"
+    val fs2 = "3.11.0"
     val refined = "0.10.3"
-    val catsEffect = "2.5.5"
-    val fs2PubSub = "0.18.1"
-    val fs2Aws = "3.1.1"
-    val fs2Kafka = "1.11.0"
-    val fs2BlobStorage = "0.8.11"
+    val catsEffect = "3.5.4"
+    val fs2PubSub = "0.22.1"
+    val fs2Aws = "4.1.0"
+    val fs2Kafka = "3.5.1"
+    val fs2BlobStorage = "0.9.12"
     val azureIdentity = "1.17.0"
-    val http4s = "0.21.34"
-    val log4cats = "1.7.0"
-    val catsRetry = "2.1.1"
+    val http4s = "0.23.29"
+    val log4cats = "2.7.0"
+    val catsRetry = "3.1.3"
     val specsDiff = "0.9.0"
     val eventGen = "0.2.2"
 
-    val snowplowTracker = "1.0.0"
-    val snowplowAnalyticsSdk = "3.0.1"
+    val snowplowTracker = "2.0.0"
+    val snowplowAnalyticsSdk = "3.1.0"
 
     val specs2 = "4.20.8"
-    val specs2Cats = "4.11.0"
-    val specs2CE = "0.5.4"
+    val specs2Cats = "4.20.8"
+    val specs2CE = "1.7.0"
     val scalacheck = "1.18.0"
     val testcontainers = "0.44.1"
     val parserCombinators = "2.4.0"
@@ -117,6 +118,7 @@ object Dependencies {
     val commonsText = "org.apache.commons"             % "commons-text"      % V.commonsText
     val commonsIO = "commons-io"                       % "commons-io"        % V.commonsIO
     val commonsLang = "org.apache.commons"             % "commons-lang3"     % V.commonsLang
+    val httpclient = "org.apache.httpcomponents"       % "httpclient"        % V.httpclient
     val jodaTime = "joda-time"                         % "joda-time"         % V.jodaTime
     val useragent = "eu.bitwalker"                     % "UserAgentUtils"    % V.useragent
     val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind"  % V.jackson
@@ -169,8 +171,8 @@ object Dependencies {
     val specs2Cats = "org.specs2"                    %% "specs2-cats"                   % V.specs2Cats        % Test
     val specs2Scalacheck = "org.specs2"              %% "specs2-scalacheck"             % V.specs2            % Test
     val specs2Mock = "org.specs2"                    %% "specs2-mock"                   % V.specs2            % Test
-    val specs2CE = "com.codecommit"                  %% "cats-effect-testing-specs2"    % V.specs2CE          % Test
-    val specs2CEIt = "com.codecommit"                %% "cats-effect-testing-specs2"    % V.specs2CE          % IntegrationTest
+    val specs2CE = "org.typelevel"                   %% "cats-effect-testing-specs2"    % V.specs2CE          % Test
+    val specs2CEIt = "org.typelevel"                 %% "cats-effect-testing-specs2"    % V.specs2CE          % IntegrationTest
     val specsDiff = "com.softwaremill.diffx"         %% "diffx-specs2"                  % V.specsDiff         % Test
     val eventGen = "com.snowplowanalytics"           %% "snowplow-event-generator-core" % V.eventGen          % Test
     val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators"      % V.parserCombinators % Test
@@ -192,7 +194,7 @@ object Dependencies {
     // FS2
     val decline = "com.monovore"    %% "decline"                % V.decline
     val fs2PubSub = "com.permutive" %% "fs2-google-pubsub-grpc" % V.fs2PubSub
-    val fs2Aws = ("io.laserdisc"    %% "fs2-aws"                % V.fs2Aws)
+    val fs2Aws = ("io.laserdisc"    %% "fs2-aws-kinesis"        % V.fs2Aws)
       .exclude("com.amazonaws", "amazon-kinesis-producer")
       .exclude("software.amazon.kinesis", "amazon-kinesis-client")
     val refined = "eu.timepit"                     %% "refined"               % V.refined
@@ -211,7 +213,7 @@ object Dependencies {
     val eventbridgeSdk2 = "software.amazon.awssdk"        % "eventbridge"                           % V.awsSdk2
     val azureIdentity = "com.azure"                       % "azure-identity"                        % V.azureIdentity
     val jacksonDfXml = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml"                % V.jackson
-    val http4sClient = "org.http4s"                      %% "http4s-blaze-client"                   % V.http4s
+    val http4sClient = "org.http4s"                      %% "http4s-ember-client"                   % V.http4s
     val http4sCirce = "org.http4s"                       %% "http4s-circe"                          % V.http4s
     val log4cats = "org.typelevel"                       %% "log4cats-slf4j"                        % V.log4cats
     val catsRetry = "com.github.cb372"                   %% "cats-retry"                            % V.catsRetry
@@ -219,7 +221,7 @@ object Dependencies {
     val fs2BlobGcs = "com.github.fs2-blobstore"          %% "gcs"                                   % V.fs2BlobStorage
     val fs2BlobAzure = "com.github.fs2-blobstore"        %% "azure"                                 % V.fs2BlobStorage
     val http4sDsl = "org.http4s"                         %% "http4s-dsl"                            % V.http4s  % Test
-    val http4sServer = "org.http4s"                      %% "http4s-blaze-server"                   % V.http4s  % Test
+    val http4sServer = "org.http4s"                      %% "http4s-ember-server"                   % V.http4s  % Test
     val trackerCore = "com.snowplowanalytics"            %% "snowplow-scala-tracker-core"           % V.snowplowTracker
     val emitterHttps = "com.snowplowanalytics"           %% "snowplow-scala-tracker-emitter-http4s" % V.snowplowTracker
 
@@ -232,6 +234,7 @@ object Dependencies {
       commonsText,
       commonsIO,
       commonsLang,
+      httpclient,
       useragent,
       jacksonDatabind,
       uaParser,

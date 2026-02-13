@@ -14,8 +14,9 @@
 package com.snowplowanalytics.snowplow.enrich.kafka
 
 import cats.Parallel
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
 import cats.implicits._
+
+import cats.effect.kernel.{Async, Resource, Sync}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import fs2.kafka._
@@ -26,40 +27,36 @@ import java.util.UUID
 
 object Sink {
 
-  def init[F[_]: ConcurrentEffect: ContextShift: Parallel: Timer](
-    blocker: Blocker,
+  def init[F[_]: Async: Parallel](
     output: Output
   ): Resource[F, ByteSink[F]] =
     for {
-      sink <- initAttributed(blocker, output)
+      sink <- initAttributed(output)
     } yield (records: List[Array[Byte]]) => sink(records.map(AttributedData(_, UUID.randomUUID().toString, Map.empty)))
 
-  def initAttributed[F[_]: ConcurrentEffect: ContextShift: Parallel: Timer](
-    blocker: Blocker,
+  def initAttributed[F[_]: Async: Parallel](
     output: Output
   ): Resource[F, AttributedByteSink[F]] =
     output match {
       case k: Output.Kafka =>
         val mapping = k.mapping.getOrElse(Map.empty[String, String])
-        mkProducer(blocker, k).map { producer => records =>
+        mkProducer(k).map { producer => records =>
           val sends = records.map { record =>
             val producerRecord = toProducerRecord(k.topicName, record, mapping)
-            producer.produce(ProducerRecords.one(producerRecord))
+            producer.produceOne_(producerRecord)
           }
           sends.parSequence.void
         }
-      case o => Resource.eval(Concurrent[F].raiseError(new IllegalArgumentException(s"Output $o is not Kafka")))
+      case o => Resource.eval(Sync[F].raiseError(new IllegalArgumentException(s"Output $o is not Kafka")))
     }
 
-  private def mkProducer[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
+  private def mkProducer[F[_]: Async](
     output: Output.Kafka
   ): Resource[F, KafkaProducer[F, String, Array[Byte]]] = {
     val producerSettings =
       ProducerSettings[F, String, Array[Byte]]
         .withBootstrapServers(output.bootstrapServers)
         .withProperties(output.producerConf)
-        .withBlocker(blocker)
         .withProperties(
           ("key.serializer", "org.apache.kafka.common.serialization.StringSerializer"),
           ("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")

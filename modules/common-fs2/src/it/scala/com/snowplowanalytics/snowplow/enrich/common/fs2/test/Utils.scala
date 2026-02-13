@@ -18,14 +18,12 @@ import io.circe.parser
 
 import com.snowplowanalytics.snowplow.badrows.BadRow
 import com.snowplowanalytics.iglu.core.SelfDescribingData
-import com.snowplowanalytics.iglu.core.circe.implicits._
 
 object Utils {
 
   def parseBadRow(s: String): Either[String, BadRow] =
     for {
       json <- parser.parse(s).leftMap(_.message)
-      sdj <- SelfDescribingData.parse(json).leftMap(_.message("Can't decode JSON as SDJ"))
-      br <- sdj.data.as[BadRow].leftMap(_.getMessage())
-    } yield br
+      sdj <- json.as[SelfDescribingData[BadRow]].leftMap(_.getMessage())
+    } yield sdj.data
 }
