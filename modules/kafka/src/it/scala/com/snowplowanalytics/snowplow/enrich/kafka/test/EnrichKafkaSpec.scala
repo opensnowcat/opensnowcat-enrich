@@ -14,19 +14,25 @@ package com.snowplowanalytics.snowplow.enrich.kafka
 package test
 
 import scala.concurrent.duration._
+
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import cats.effect.{Blocker, IO}
-import cats.effect.concurrent.Ref
+
+import cats.effect.IO
+import cats.effect.kernel.Ref
+import cats.effect.testing.specs2.CatsEffect
+import cats.effect.unsafe.implicits.global
+
 import fs2.Stream
+
 import org.specs2.mutable.Specification
-import cats.effect.testing.specs2.CatsIO
+
 import com.snowplowanalytics.snowplow.analytics.scalasdk.Event
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Input.{Kafka => InKafka}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output.{Kafka => OutKafka}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.test.CollectorPayloadGen
 
-class EnrichKafkaSpec extends Specification with CatsIO {
+class EnrichKafkaSpec extends Specification with CatsEffect {
 
   sequential
 
@@ -61,8 +67,7 @@ class EnrichKafkaSpec extends Specification with CatsIO {
 
     val resources =
       for {
-        blocker <- Blocker[IO]
-        sink <- Sink.init[IO](blocker, OutKafka(collectorPayloadsStream, bootstrapServers, "", Set.empty, producerConf, None))
+        sink <- Sink.init[IO](OutKafka(collectorPayloadsStream, bootstrapServers, "", Set.empty, producerConf, None))
       } yield sink
 
     resources.use { sink =>
