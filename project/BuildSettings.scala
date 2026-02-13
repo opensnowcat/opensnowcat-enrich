@@ -35,7 +35,9 @@ object BuildSettings {
   lazy val projectSettings = Seq(
     organization := "com.snowplowanalytics",
     scalaVersion := "2.12.20",
-    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+    // Allow cats-parse version override (scala-uri 4.x uses 0.3.x but http4s 0.23.x uses 1.0.x)
+    libraryDependencySchemes += "org.typelevel" %% "cats-parse" % "always"
   )
 
   lazy val commonProjectSettings = projectSettings ++ Seq(
