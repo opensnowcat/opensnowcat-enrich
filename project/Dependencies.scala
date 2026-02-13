@@ -52,6 +52,7 @@ object Dependencies {
     val thrift = "0.20.0"
     val sprayJson = "1.3.6"
     val netty = "4.1.128.Final"
+    val grpcNettyShaded = "1.76.1"
     val protobuf = "4.29.6"
     val httpclient = "4.5.13"
 
@@ -77,6 +78,7 @@ object Dependencies {
     val awsSdk2 = "2.41.26"
     val kinesisClient2 = "2.4.3"
     val kafka = "3.9.1"
+    val lz4Java = "1.8.1"
     val mskAuth = "2.2.0"
     val nsqClient = "1.3.0"
     val jackson = "2.19.1"
@@ -104,7 +106,7 @@ object Dependencies {
     val specs2Cats = "4.20.8"
     val specs2CE = "1.7.0"
     val scalacheck = "1.18.0"
-    val testcontainers = "0.40.10"
+    val testcontainers = "0.44.1"
     val parserCombinators = "2.4.0"
     val sentry = "1.7.30"
 
@@ -161,6 +163,7 @@ object Dependencies {
     val slf4j = "org.slf4j"                         % "slf4j-simple"                  % V.slf4j
     val sentry = "io.sentry"                        % "sentry"                        % V.sentry
     val protobuf = "com.google.protobuf"            % "protobuf-java"                 % V.protobuf
+    val grpcNettyShaded = "io.grpc"                 % "grpc-netty-shaded"             % V.grpcNettyShaded
 
     val snowplowanAnalyticsSdk = "com.snowplowanalytics" %% "snowplow-scala-analytics-sdk" % V.snowplowAnalyticsSdk
 
@@ -179,7 +182,9 @@ object Dependencies {
     val dynamodbSdk = "com.amazonaws"       % "aws-java-sdk-dynamodb" % V.awsSdk
     val sts = "com.amazonaws"               % "aws-java-sdk-sts"      % V.awsSdk     % Runtime
     val gcs = "com.google.cloud"            % "google-cloud-storage"  % V.gcpSdk
-    val kafkaClients = "org.apache.kafka"   % "kafka-clients"         % V.kafka
+    val kafkaClients = ("org.apache.kafka"  % "kafka-clients"         % V.kafka)
+      .exclude("org.lz4", "lz4-java")
+    val lz4Java = "at.yawk.lz4"             % "lz4-java"              % V.lz4Java    // use fixed version from maintained fork to address CVE-2025-12183
     val mskAuth = "software.amazon.msk"     % "aws-msk-iam-auth"      % V.mskAuth    % Runtime
     val config = "com.typesafe"             % "config"                % V.config
     val nsqClient = "com.snowplowanalytics" % "nsq-java-client"       % V.nsqClient
@@ -195,7 +200,8 @@ object Dependencies {
     val refined = "eu.timepit"                     %% "refined"               % V.refined
     val fs2 = "co.fs2"                             %% "fs2-core"              % V.fs2
     val fs2Io = "co.fs2"                           %% "fs2-io"                % V.fs2
-    val fs2Kafka = "com.github.fd4s"               %% "fs2-kafka"             % V.fs2Kafka
+    val fs2Kafka = ("com.github.fd4s"              %% "fs2-kafka"             % V.fs2Kafka)
+      .exclude("org.lz4", "lz4-java")
     val kinesisSdk2 = "software.amazon.awssdk"      % "kinesis"               % V.awsSdk2
     val dynamoDbSdk2 = "software.amazon.awssdk"     % "dynamodb"              % V.awsSdk2
     val s3Sdk2 = "software.amazon.awssdk"           % "s3"                    % V.awsSdk2
@@ -308,7 +314,8 @@ object Dependencies {
 
     val gcpUtilsDependencies = Seq(
       fs2BlobGcs,
-      gcs
+      gcs,
+      grpcNettyShaded
     )
 
     val azureUtilsDependencies = Seq(
@@ -322,7 +329,8 @@ object Dependencies {
       gcs,
       fs2PubSub,
       specs2,
-      specs2CE
+      specs2CE,
+      grpcNettyShaded
     )
 
     val kinesisDependencies = Seq(
@@ -344,6 +352,7 @@ object Dependencies {
 
     val kafkaDependencies = Seq(
       fs2Kafka,
+      lz4Java,      // use lz4-java 1.8.1 from at.yawk.lz4 fork to address CVE-2025-12183 (excludes vulnerable 1.8.0 from kafka-clients)
       kafkaClients, // override kafka-clients 2.8.1 from fs2Kafka to address https://security.snyk.io/vuln/SNYK-JAVA-ORGAPACHEKAFKA-3027430
       snowplowanAnalyticsSdk,
       mskAuth,
@@ -355,6 +364,7 @@ object Dependencies {
       nsqClient,
       fs2BlobS3,
       fs2BlobGcs,
+      grpcNettyShaded,
       log4j, // for security vulnerabilities
       specs2,
       specs2CE
