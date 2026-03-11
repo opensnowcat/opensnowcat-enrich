@@ -2,7 +2,7 @@ package com.snowplowanalytics.snowplow.enrich.common.fs2
 
 import scala.concurrent.duration._
 
-import cats.effect.{IO, Deferred, Outcome, Ref}
+import cats.effect.{Deferred, IO, Outcome, Ref}
 import cats.effect.std.Queue
 import cats.effect.testing.specs2.CatsEffect
 
@@ -107,9 +107,11 @@ class RunWithShutdownSpec extends Specification with CatsEffect {
         val wrappedSink: Pipe[IO, List[Int], Unit] =
           _.evalMap(chunk => sunk.update(_ ++ chunk))
 
-        val producer = source.evalMap(x => queue.offer(Some(x))).onFinalize(
-          queue.offer(None) >> queueReceivedNone.complete(()).void
-        )
+        val producer = source
+          .evalMap(x => queue.offer(Some(x)))
+          .onFinalize(
+            queue.offer(None) >> queueReceivedNone.complete(()).void
+          )
 
         val consumer = Stream.fromQueueNoneTerminated(queue).through(wrappedSink)
 
@@ -117,9 +119,7 @@ class RunWithShutdownSpec extends Specification with CatsEffect {
           _ <- consumer.concurrently(producer).compile.drain
           _ <- queueReceivedNone.get
           sunkValues <- sunk.get
-        } yield {
-          sunkValues must beEqualTo(Vector(1, 2))
-        }
+        } yield sunkValues must beEqualTo(Vector(1, 2))
       }
     }
 
@@ -193,7 +193,7 @@ class RunWithShutdownSpec extends Specification with CatsEffect {
       val source: Stream[IO, List[Int]] =
         Stream.emits(List(List(1), List(2), List(3))) ++
           Stream.exec(gate.get) ++ // blocks until gate is opened (never in this test)
-          Stream.emit(List(999))   // should never be reached
+          Stream.emit(List(999)) // should never be reached
 
       val sinkAndCheckpoint: Pipe[IO, List[Int], Unit] =
         _.evalMap { chunk =>
@@ -251,15 +251,15 @@ class RunWithShutdownSpec extends Specification with CatsEffect {
               // Spawn a background observer that watches the inner fiber's fate
               innerFiber.join.flatMap {
                 case Outcome.Succeeded(_) => innerFiberOutcome.complete("succeeded")
-                case Outcome.Canceled()   => innerFiberOutcome.complete("canceled")
-                case Outcome.Errored(_)   => innerFiberOutcome.complete("errored")
+                case Outcome.Canceled() => innerFiberOutcome.complete("canceled")
+                case Outcome.Errored(_) => innerFiberOutcome.complete("errored")
               }.start >> // observer runs independently
-              // Now the main path: wait on inner fiber (this flatMap will be interrupted on cancel)
-              innerFiber.join.flatMap {
-                case Outcome.Succeeded(_) => IO.unit
-                case Outcome.Canceled()   => queue.offer(None) >> innerFiber.join.void
-                case Outcome.Errored(e)   => IO.raiseError(e)
-              }
+                // Now the main path: wait on inner fiber (this flatMap will be interrupted on cancel)
+                innerFiber.join.flatMap {
+                  case Outcome.Succeeded(_) => IO.unit
+                  case Outcome.Canceled() => queue.offer(None) >> innerFiber.join.void
+                  case Outcome.Errored(e) => IO.raiseError(e)
+                }
             }
         }
 
@@ -269,9 +269,9 @@ class RunWithShutdownSpec extends Specification with CatsEffect {
         _ <- outerFiber.cancel
         // The inner fiber is orphaned. Try to observe its outcome with a timeout.
         result <- innerFiberOutcome.get.timeoutTo(
-          3.seconds,
-          IO.pure("still-running")
-        )
+                    3.seconds,
+                    IO.pure("still-running")
+                  )
         sunkValues <- sunk.get
       } yield {
         // Items emitted before cancel are sunk
@@ -375,7 +375,7 @@ class RunWithShutdownSpec extends Specification with CatsEffect {
       val sinkAndCheckpoint: Pipe[IO, List[Int], Unit] =
         _.evalMap { chunk =>
           sinkClosed.get.flatMap {
-            case true  => IO.raiseError(new RuntimeException("Sink closed!"))
+            case true => IO.raiseError(new RuntimeException("Sink closed!"))
             case false => sunk.update(_ ++ chunk)
           }
         }
@@ -413,4 +413,3 @@ class RunWithShutdownSpec extends Specification with CatsEffect {
     }
   }
 }
-
