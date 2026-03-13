@@ -12,7 +12,8 @@
  */
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
-import cats.effect.{Blocker, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Resource, Sync}
+import cats.effect.kernel.Async
 
 import cats.Applicative
 import cats.implicits._
@@ -55,29 +56,27 @@ object DynamoDbConfig {
    * Retrieves JSONs from DynamoDB if cli arguments start with dynamodb:
    *  and passes them as base64 encoded JSONs
    */
-  def updateCliConfig[F[_]: ContextShift: Sync: Timer](blocker: Blocker, original: CliConfig): F[CliConfig] =
+  def updateCliConfig[F[_]: Async](original: CliConfig): F[CliConfig] =
     for {
-      resolver <- updateArg[F](blocker, original.resolver, getResolver[F])
-      enrichments <- updateArg[F](blocker, original.enrichments, getEnrichments[F])
+      resolver <- updateArg[F](original.resolver, getResolver[F])
+      enrichments <- updateArg[F](original.enrichments, getEnrichments[F])
       updated = original.copy(resolver = resolver, enrichments = enrichments)
     } yield updated
 
-  private def updateArg[F[_]: ContextShift: Sync: Timer](
-    blocker: Blocker,
+  private def updateArg[F[_]: Async](
     orig: EncodedHoconOrPath,
-    getConfig: (Blocker, String, String, String) => F[Base64Hocon]
+    getConfig: (String, String, String) => F[Base64Hocon]
   ): F[EncodedHoconOrPath] =
     orig match {
       case Left(encoded) => Sync[F].pure(Left(encoded))
       case Right(path) =>
         path.toString match {
-          case dynamoDbRegex(region, table, key) => getConfig(blocker, region, table, key).map(Left(_))
+          case dynamoDbRegex(region, table, key) => getConfig(region, table, key).map(Left(_))
           case _ => Sync[F].pure(Right(path))
         }
     }
 
-  private def getResolver[F[_]: ContextShift: Sync: Timer](
-    blocker: Blocker,
+  private def getResolver[F[_]: Async](
     region: String,
     table: String,
     key: String
@@ -89,7 +88,7 @@ object DynamoDbConfig {
     dynamoDBResource.use { dynamoDB =>
       for {
         _ <- unsafeLogger.info(s"Retrieving resolver in DynamoDB $region/$table/$key")
-        item <- withRetry(blocker.blockOn(Sync[F].delay(dynamoDB.getTable(table).getItem("id", key))))
+        item <- withRetry(Async[F].blocking(dynamoDB.getTable(table).getItem("id", key)))
         jsonStr <- Option(item).flatMap(i => Option(i.getString("json"))) match {
                      case Some(content) =>
                        Sync[F].pure(content)
@@ -103,8 +102,7 @@ object DynamoDbConfig {
     }
   }
 
-  private def getEnrichments[F[_]: ContextShift: Sync: Timer](
-    blocker: Blocker,
+  private def getEnrichments[F[_]: Async](
     region: String,
     table: String,
     prefix: String
@@ -114,7 +112,7 @@ object DynamoDbConfig {
       val scanRequest = new ScanRequest().withTableName(table)
       for {
         _ <- unsafeLogger.info(s"Retrieving enrichments in DynamoDB $region/$table/$prefix*")
-        scanned <- withRetry(blocker.blockOn(Sync[F].delay(dynamoDBClient.scan(scanRequest))))
+        scanned <- withRetry(Async[F].blocking(dynamoDBClient.scan(scanRequest)))
         values = scanned.getItems().asScala.collect {
                    case map if Option(map.get("id")).exists(_.getS.startsWith(prefix)) && map.containsKey("json") =>
                      map.get("json").getS()
@@ -143,17 +141,17 @@ object DynamoDbConfig {
         .build()
     })(c => Sync[F].delay(c.shutdown))
 
-  private def withRetry[F[_]: Sync: Timer, A](f: F[A]): F[A] =
-    retryingOnSomeErrors[A](retryPolicy[F], worthRetrying, onError[F])(f)
+  private def withRetry[F[_]: Async, A](f: F[A]): F[A] =
+    retryingOnSomeErrors[A](retryPolicy[F], worthRetrying[F], onError[F])(f)
 
   private def retryPolicy[F[_]: Applicative]: RetryPolicy[F] =
     RetryPolicies.fullJitter[F](1500.milliseconds).join(RetryPolicies.limitRetries[F](5))
 
-  private def worthRetrying(e: Throwable): Boolean =
-    e match {
+  private def worthRetrying[F[_]: Applicative](e: Throwable): F[Boolean] =
+    Applicative[F].pure(e match {
       case ace: AmazonClientException if ace.isRetryable => true
       case NonFatal(_) => false
-    }
+    })
 
   private def onError[F[_]: Sync](error: Throwable, details: RetryDetails): F[Unit] =
     if (details.givingUp)

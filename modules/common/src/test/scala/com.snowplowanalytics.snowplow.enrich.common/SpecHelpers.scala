@@ -15,13 +15,15 @@ package com.snowplowanalytics.snowplow.enrich.common
 import java.util.concurrent.Executors
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 import cats.implicits._
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.ember.client.EmberClientBuilder
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.Json
 import io.circe.literal._
@@ -30,6 +32,7 @@ import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
 
 import com.snowplowanalytics.iglu.client.IgluCirceClient
+import com.snowplowanalytics.iglu.client.resolver.registries.{JavaNetRegistryLookup, RegistryLookup}
 
 import com.snowplowanalytics.iglu.core.SelfDescribingData
 import com.snowplowanalytics.iglu.core.circe.implicits._
@@ -39,7 +42,7 @@ import com.snowplowanalytics.lrumap.CreateLruMap._
 import com.snowplowanalytics.snowplow.enrich.common.adapters._
 import com.snowplowanalytics.snowplow.enrich.common.utils.{HttpClient, JsonUtils}
 
-object SpecHelpers extends CatsIO {
+object SpecHelpers extends CatsEffect {
 
   // Standard Iglu configuration
   private val igluConfig = json"""{
@@ -73,13 +76,19 @@ object SpecHelpers extends CatsIO {
 
   /** Builds an Iglu client from the above Iglu configuration. */
   val client: IgluCirceClient[IO] = IgluCirceClient
-    .parseDefault[IO](igluConfig)
+    .parseDefault[IO](igluConfig, maxJsonDepth = 40)
     .value
     .unsafeRunSync()
     .getOrElse(throw new RuntimeException("invalid resolver configuration"))
 
+  implicit val registryIOLookup: RegistryLookup[IO] = JavaNetRegistryLookup.ioLookupInstance[IO]
+
   val blockingEC = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool)
-  private val http4sClient = BlazeClientBuilder[IO](blockingEC).resource
+  private val http4sClient = EmberClientBuilder
+    .default[IO]
+    .withTimeout(30.seconds)
+    .withIdleConnectionTime(60.seconds)
+    .build
   val httpClient = http4sClient.map(HttpClient.fromHttp4sClient[IO])
 
   private type NvPair = (String, String)

@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common.fs2.test
 
 import cats.effect.Sync
-import cats.effect.concurrent.Ref
+import cats.effect.kernel.Ref
 import fs2.Stream
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.fs2.io.experimental.Metadata

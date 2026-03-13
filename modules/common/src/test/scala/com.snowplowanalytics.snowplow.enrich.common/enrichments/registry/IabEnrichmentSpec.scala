@@ -15,7 +15,8 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 import java.net.InetAddress
 
 import cats.effect.IO
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.unsafe.implicits.global
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.literal._
 
@@ -26,7 +27,7 @@ import org.joda.time.DateTime
 
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer, SelfDescribingData}
 
-class IabEnrichmentSpec extends Specification with DataTables with CatsIO {
+class IabEnrichmentSpec extends Specification with DataTables with CatsEffect {
 
   def is = s2"""
   performCheck should correctly perform IAB checks on valid input $e1
@@ -80,14 +81,17 @@ class IabEnrichmentSpec extends Specification with DataTables with CatsIO {
           expectedReason,
           expectedPrimaryImpact
         ) =>
-          validConfig.enrichment[IO].map { e =>
-            e.performCheck(userAgent, ipAddress, DateTime.now()) must beRight.like { case check =>
-              check.spiderOrRobot must_== expectedSpiderOrRobot and
-                (check.category must_== expectedCategory) and
-                (check.reason must_== expectedReason) and
-                (check.primaryImpact must_== expectedPrimaryImpact)
+          validConfig
+            .enrichment[IO]
+            .map { e =>
+              e.performCheck(userAgent, ipAddress, DateTime.now()) must beRight.like { case check =>
+                check.spiderOrRobot must_== expectedSpiderOrRobot and
+                  (check.category must_== expectedCategory) and
+                  (check.reason must_== expectedReason) and
+                  (check.primaryImpact must_== expectedPrimaryImpact)
+              }
             }
-          }
+            .unsafeRunSync()
       }
 
   def e2 = {

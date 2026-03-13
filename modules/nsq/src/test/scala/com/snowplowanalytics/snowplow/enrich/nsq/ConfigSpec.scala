@@ -23,7 +23,7 @@ import cats.effect.IO
 
 import org.http4s.Uri
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.BackoffPolicy
@@ -32,7 +32,7 @@ import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers.adaptersSchemas
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.BlobStorageClients.AzureStorage
 import org.specs2.mutable.Specification
 
-class ConfigSpec extends Specification with CatsIO {
+class ConfigSpec extends Specification with CatsEffect {
 
   "parse" should {
     "parse reference example for NSQ" in {
@@ -124,7 +124,7 @@ class ConfigSpec extends Specification with CatsIO {
           io.Experimental(
             Some(
               io.Metadata(
-                Uri.uri("https://my_pipeline.my_domain.com/iglu"),
+                Uri.unsafeFromString("https://my_pipeline.my_domain.com/iglu"),
                 5.minutes,
                 UUID.fromString("c5f3a09f-75f8-4309-bec5-fea560f78455"),
                 UUID.fromString("75a13583-5c99-40e3-81fc-541084dfc784")
@@ -146,7 +146,8 @@ class ConfigSpec extends Specification with CatsIO {
               )
             )
           )
-        )
+        ),
+        maxJsonDepth = 40
       )
       ConfigFile.parse[IO](configPath.asRight).value.map(result => result must beRight(expected))
     }
@@ -225,7 +226,8 @@ class ConfigSpec extends Specification with CatsIO {
         ),
         None,
         adaptersSchemas,
-        io.BlobStorageClients(gcs = true, s3 = true, azureStorage = None)
+        io.BlobStorageClients(gcs = true, s3 = true, azureStorage = None),
+        maxJsonDepth = 40
       )
       ConfigFile.parse[IO](configPath.asRight).value.map(result => result must beRight(expected))
     }

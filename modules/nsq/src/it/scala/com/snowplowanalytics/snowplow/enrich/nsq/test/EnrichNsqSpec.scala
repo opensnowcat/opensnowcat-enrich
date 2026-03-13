@@ -16,14 +16,14 @@ package test
 import scala.concurrent.duration._
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.kernel.Ref
+import cats.effect.testing.specs2.CatsEffect
 
 import org.specs2.mutable.Specification
 
 import Utils._
 
-class EnrichNsqSpec extends Specification with CatsIO {
+class EnrichNsqSpec extends Specification with CatsEffect {
 
   override protected val Timeout = 10.minutes
 
@@ -31,12 +31,12 @@ class EnrichNsqSpec extends Specification with CatsIO {
     "emit the correct number of enriched events and bad rows" in {
       val nbGood = 100L
       val nbBad = 10L
-      mkResources[IO].use { case (blocker, topology, sink) =>
+      mkResources[IO].use { case (topology, sink) =>
         for {
           refGood <- Ref.of[IO, AggregateGood](Nil)
           refBad <- Ref.of[IO, AggregateBad](Nil)
           _ <- generateEvents(sink, nbGood, nbBad, topology)
-                 .merge(consume(blocker, refGood, refBad, topology))
+                 .merge(consume(refGood, refBad, topology))
                  .interruptAfter(30.seconds)
                  .attempt
                  .compile

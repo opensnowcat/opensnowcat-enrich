@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
 import cats.data.NonEmptyList
 import cats.syntax.option._
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.literal._
 
@@ -32,7 +32,7 @@ import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class PingdomAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsIO {
+class PingdomAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsEffect {
 
   val adapterWithDefaultSchemas = PingdomAdapter(schemas = pingdomSchemas)
   def is = s2"""

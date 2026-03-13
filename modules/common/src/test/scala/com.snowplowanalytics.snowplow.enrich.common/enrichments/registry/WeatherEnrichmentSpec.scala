@@ -22,7 +22,7 @@ import cats.data.EitherT
 
 import cats.effect.IO
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.generic.auto._
 import io.circe.literal._
@@ -35,7 +35,7 @@ object WeatherEnrichmentSpec {
   val OwmApiKey = "OWM_KEY"
 }
 
-class WeatherEnrichmentSpec extends Specification with CatsIO {
+class WeatherEnrichmentSpec extends Specification with CatsEffect {
   import WeatherEnrichmentSpec._
   def is =
     skipAllIf(sys.env.get(OwmApiKey).isEmpty) ^ // Actually only e4 and e6 need to be skipped

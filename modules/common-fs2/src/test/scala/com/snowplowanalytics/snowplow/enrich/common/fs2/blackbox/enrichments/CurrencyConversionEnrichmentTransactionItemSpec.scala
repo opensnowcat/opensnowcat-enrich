@@ -16,13 +16,13 @@ import io.circe.literal._
 
 import org.specs2.mutable.Specification
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import cats.syntax.option._
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.blackbox.BlackBoxTesting
 
-class CurrencyConversionEnrichmentTransactionItemSpec extends Specification with CatsIO {
+class CurrencyConversionEnrichmentTransactionItemSpec extends Specification with CatsEffect {
 
   // TODO: Enable tests when we get an api key
   // args(skipAll = !sys.env.contains("OER_KEY"))

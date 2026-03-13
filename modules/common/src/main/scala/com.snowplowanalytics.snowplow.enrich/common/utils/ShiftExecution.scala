@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.utils
 
-import cats.effect.{ContextShift, Resource, Sync}
+import cats.effect.kernel.{Async, Resource, Sync}
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
@@ -41,12 +41,12 @@ trait ShiftExecution[F[_]] {
 object ShiftExecution {
 
   // A single thread is adequate because our Hikari connection pool has a single connection
-  def ofSingleThread[F[_]: ContextShift: Sync]: Resource[F, ShiftExecution[F]] =
+  def ofSingleThread[F[_]: Async]: Resource[F, ShiftExecution[F]] =
     for {
       es <- Resource.make(Sync[F].delay(Executors.newSingleThreadExecutor))(e => Sync[F].delay(e.shutdown))
       ec <- Resource.eval(Sync[F].delay(ExecutionContext.fromExecutorService(es)))
     } yield new ShiftExecution[F] {
       def shift[A](f: F[A]): F[A] =
-        ContextShift[F].evalOn(ec)(f)
+        Async[F].evalOn(f, ec)
     }
 }

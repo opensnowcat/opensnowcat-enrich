@@ -25,7 +25,7 @@ import io.circe.generic.semiauto._
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.implicits._
 
-import cats.effect.{Async, Blocker, Clock, ContextShift}
+import cats.effect.kernel.Async
 
 import com.snowplowanalytics.iglu.core.{SchemaCriterion, SchemaKey, SelfDescribingData}
 
@@ -101,7 +101,7 @@ object SqlQueryEnrichment extends ParseableEnrichment {
   implicit val cacheCirceDecoder: Decoder[Cache] =
     deriveDecoder[Cache]
 
-  def create[F[_]: Async: Clock: ContextShift](
+  def create[F[_]: Async](
     schemaKey: SchemaKey,
     inputs: List[Input],
     db: Rdbms,
@@ -109,7 +109,6 @@ object SqlQueryEnrichment extends ParseableEnrichment {
     output: Output,
     cache: Cache,
     ignoreOnError: Boolean,
-    blocker: Blocker,
     shifter: ShiftExecution[F]
   ): F[SqlQueryEnrichment[F]] = {
     val cacheConfig = CachingEvaluator.Config(
@@ -131,7 +130,6 @@ object SqlQueryEnrichment extends ParseableEnrichment {
           output,
           evaluator,
           executor,
-          blocker,
           shifter,
           getDataSource(db),
           ignoreOnError
@@ -155,9 +153,8 @@ object SqlQueryEnrichment extends ParseableEnrichment {
  * @param output configuration of output context
  * @param ttl cache TTL in milliseconds
  * @param cache actual mutable LRU cache
- * @param blocker Allows running blocking enrichments on a dedicated thread pool
  */
-final case class SqlQueryEnrichment[F[_]: Async: Clock](
+final case class SqlQueryEnrichment[F[_]: Async](
   schemaKey: SchemaKey,
   inputs: List[Input],
   db: Rdbms,
@@ -165,7 +162,6 @@ final case class SqlQueryEnrichment[F[_]: Async: Clock](
   output: Output,
   sqlQueryEvaluator: SqlQueryEvaluator[F],
   dbExecutor: DbExecutor[F],
-  blocker: Blocker,
   shifter: ShiftExecution[F],
   dataSource: DataSource,
   ignoreOnError: Boolean
@@ -217,7 +213,7 @@ final case class SqlQueryEnrichment[F[_]: Async: Clock](
 
   private def runLookup(intMap: Input.ExtractedValueMap): F[Either[Throwable, List[SelfDescribingData[Json]]]] =
     dbExecutor
-      .getConnection(dataSource, blocker)
+      .getConnection(dataSource)
       .use { connection =>
         maybeRunWithConnection(connection, intMap)
       }

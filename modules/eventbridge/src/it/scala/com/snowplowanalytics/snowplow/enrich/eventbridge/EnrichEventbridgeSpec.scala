@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
 import cats.effect.IO
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 import com.snowplowanalytics.snowplow.enrich.common.fs2.test.CollectorPayloadGen
 import com.snowplowanalytics.snowplow.enrich.eventbridge.enrichments._
 import org.specs2.mutable.Specification
@@ -22,9 +22,7 @@ import org.specs2.specification.AfterAll
 import java.util.UUID
 import scala.concurrent.duration._
 
-class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
-
-  implicit val concurrentIO = IO.ioConcurrentEffect
+class EnrichEventbridgeSpec extends Specification with AfterAll with CatsEffect {
 
   override protected val Timeout = 10.minutes
 
@@ -63,12 +61,12 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
         enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
       } yield enrichPipe
 
-      val input = CollectorPayloadGen.generate(nbGood, nbBad)
+      val input = CollectorPayloadGen.generate[IO](nbGood, nbBad)
 
       resources.use { enrich =>
         for {
           // for some weird reason, the records don't get consumed until the second time calling enrich pipeline
-          _ <- enrich(CollectorPayloadGen.generate(0)).compile.toList
+          _ <- enrich(CollectorPayloadGen.generate[IO](0)).compile.toList
           output <- enrich(input).compile.toList
           (good, bad) = parseOutput(output, testName)
         } yield {
@@ -110,12 +108,12 @@ class EnrichEventbridgeSpec extends Specification with AfterAll with CatsIO {
         enrichPipe <- mkEnrichPipe(Containers.localstackMappedPort, uuid)
       } yield enrichPipe
 
-      val input = CollectorPayloadGen.generate(nbGood)
+      val input = CollectorPayloadGen.generate[IO](nbGood)
 
       resources.use { enrich =>
         for {
           // for some weird reason, the records don't get consumed until the second time calling enrich pipeline
-          _ <- enrich(CollectorPayloadGen.generate(0)).compile.toList
+          _ <- enrich(CollectorPayloadGen.generate[IO](0)).compile.toList
           output <- enrich(input).compile.toList
           (good, bad) = parseOutput(output, testName)
         } yield {

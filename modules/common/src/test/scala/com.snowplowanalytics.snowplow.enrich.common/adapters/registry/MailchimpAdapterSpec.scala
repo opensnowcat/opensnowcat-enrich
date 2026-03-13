@@ -15,7 +15,9 @@ package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
 import cats.data.NonEmptyList
 import cats.syntax.option._
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.unsafe.implicits.global
+
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe._
 import io.circe.literal._
@@ -33,7 +35,7 @@ import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class MailchimpAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsIO {
+class MailchimpAdapterSpec extends Specification with DataTables with ValidatedMatchers with CatsEffect {
   def is = s2"""
   toKeys should return a valid List of Keys from a string containing braces (or not)                $e1
   toNestedJson should return a valid JField nested to contain all keys and then the supplied value  $e2
@@ -244,6 +246,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
               )
             )
           )
+          .unsafeRunSync()
       }
 
   def e9 =
@@ -267,7 +270,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with ValidatedM
           Shared.cljSource,
           Shared.context
         )
-        adapterWithDefaultSchemas.toRawEvents(payload, SpecHelpers.client).map(_ must beInvalid(NonEmptyList.one(expected)))
+        adapterWithDefaultSchemas.toRawEvents(payload, SpecHelpers.client).map(_ must beInvalid(NonEmptyList.one(expected))).unsafeRunSync()
       }
 
   def e10 = {

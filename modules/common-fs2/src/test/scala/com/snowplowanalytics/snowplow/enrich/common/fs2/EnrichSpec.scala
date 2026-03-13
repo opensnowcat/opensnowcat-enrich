@@ -21,6 +21,9 @@ import cats.data.{NonEmptyList, Validated}
 import cats.implicits._
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+
+import cats.effect.testing.specs2.CatsEffect
 
 import fs2.Stream
 
@@ -28,6 +31,10 @@ import _root_.io.circe.literal._
 
 import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
+
+import org.specs2.ScalaCheck
+import org.specs2.mutable.Specification
+import org.specs2.scalacheck.Parameters
 
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 
@@ -42,13 +49,7 @@ import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{CustomOutputF
 import com.snowplowanalytics.snowplow.enrich.common.fs2.EnrichSpec.{Expected, minimalEvent, normalizeResult}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.test._
 
-import org.specs2.ScalaCheck
-import org.specs2.mutable.Specification
-
-import cats.effect.testing.specs2.CatsIO
-import org.specs2.scalacheck.Parameters
-
-class EnrichSpec extends Specification with CatsIO with ScalaCheck {
+class EnrichSpec extends Specification with CatsEffect with ScalaCheck {
 
   sequential
 
@@ -67,6 +68,7 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
           derived_tstamp = Some(Instant.ofEpochMilli(0L))
         )
       SpecHelpers.createIgluClient(List(TestEnvironment.embeddedRegistry)).flatMap { igluClient =>
+        implicit val rl = SpecHelpers.registryLookup
         Enrich
           .enrichWith(
             TestEnvironment.enrichmentReg.pure[IO],
@@ -92,25 +94,29 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
       implicit val cpGen = PayloadGen.getPageViewArbitrary
       prop { (collectorPayload: CollectorPayload) =>
         val payload = collectorPayload.toRaw
-        SpecHelpers.createIgluClient(List(TestEnvironment.embeddedRegistry)).flatMap { igluClient =>
-          Enrich
-            .enrichWith(
-              TestEnvironment.enrichmentReg.pure[IO],
-              TestEnvironment.adapterRegistry,
-              igluClient,
-              None,
-              EnrichSpec.processor,
-              EnrichSpec.featureFlags,
-              IO.unit
-            )(
-              payload
-            )
-            .map(normalizeResult)
-            .map {
-              case List(Validated.Valid(e)) => e.event must beSome("page_view")
-              case other => ko(s"Expected one valid event, got $other")
-            }
-        }
+        SpecHelpers
+          .createIgluClient(List(TestEnvironment.embeddedRegistry))
+          .flatMap { igluClient =>
+            implicit val rl = SpecHelpers.registryLookup
+            Enrich
+              .enrichWith(
+                TestEnvironment.enrichmentReg.pure[IO],
+                TestEnvironment.adapterRegistry,
+                igluClient,
+                None,
+                EnrichSpec.processor,
+                EnrichSpec.featureFlags,
+                IO.unit
+              )(
+                payload
+              )
+              .map(normalizeResult)
+              .map {
+                case List(Validated.Valid(e)) => e.event must beSome("page_view")
+                case other => ko(s"Expected one valid event, got $other")
+              }
+          }
+          .unsafeRunSync()
       }.setParameters(Parameters(maxSize = 20, minTestsOk = 25))
     }
 
@@ -128,6 +134,7 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
           derived_tstamp = Some(Instant.ofEpochMilli(0L))
         )
       SpecHelpers.createIgluClient(List(TestEnvironment.embeddedRegistry)).flatMap { igluClient =>
+        implicit val rl = SpecHelpers.registryLookup
         Enrich
           .enrichWith(
             TestEnvironment.enrichmentReg.pure[IO],
@@ -150,6 +157,7 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
 
     "return bad row when base64 decoding isn't enabled and base64 encoded event arrived" in {
       SpecHelpers.createIgluClient(List(TestEnvironment.embeddedRegistry)).flatMap { igluClient =>
+        implicit val rl = SpecHelpers.registryLookup
         Enrich
           .enrichWith(
             TestEnvironment.enrichmentReg.pure[IO],
@@ -193,7 +201,7 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
 
     "enrich event using refreshing MaxMind DB" in {
       // 4 enrichments can update assets: MaxMind, IAB, referer-parser, ua-parser
-      val input = Stream(EnrichSpec.payload) ++ Stream.sleep_(2.seconds) ++ Stream(EnrichSpec.payload)
+      val input = Stream(EnrichSpec.payload) ++ Stream.sleep_[IO](2.seconds) ++ Stream(EnrichSpec.payload)
       val ipLookupsConf = IpLookupsEnrichment
         .parse(
           json"""{
@@ -335,18 +343,21 @@ class EnrichSpec extends Specification with CatsIO with ScalaCheck {
         )
         val badRow = BadRow.AdapterFailures(EnrichSpec.processor, failure, collectorPayload.toBadRowPayload)
 
-        TestEnvironment.make(Stream.empty).use { test =>
-          for {
-            _ <- sinkBad(test.env, badRow)
-            good <- test.good
-            pii <- test.pii
-            bad <- test.bad
-          } yield {
-            (bad.size must_== 1)
-            (good should be empty)
-            (pii should be empty)
+        TestEnvironment
+          .make(Stream.empty)
+          .use { test =>
+            for {
+              _ <- sinkBad(test.env, badRow)
+              good <- test.good
+              pii <- test.pii
+              bad <- test.bad
+            } yield {
+              (bad.size must_== 1)
+              (good should be empty)
+              (pii should be empty)
+            }
           }
-        }
+          .unsafeRunSync()
       }
     }
 

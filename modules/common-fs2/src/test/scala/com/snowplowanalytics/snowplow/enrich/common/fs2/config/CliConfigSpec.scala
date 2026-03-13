@@ -17,9 +17,9 @@ import java.nio.charset.StandardCharsets
 
 import org.specs2.mutable.Specification
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
-class CliConfigSpec extends Specification with CatsIO {
+class CliConfigSpec extends Specification with CatsEffect {
   "parseHocon" should {
     "parse valid HOCON" in {
       val string = """

@@ -16,7 +16,7 @@ import cats.data.ValidatedNel
 import cats.syntax.option._
 
 import cats.effect.IO
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.literal._
 
@@ -30,7 +30,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 
-class InputSpec extends Specification with ValidatedMatchers with CatsIO {
+class InputSpec extends Specification with ValidatedMatchers with CatsEffect {
   def is = s2"""
   create template context from POJO inputs              $e1
   create template context from JSON inputs              $e2

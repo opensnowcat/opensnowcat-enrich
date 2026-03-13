@@ -55,8 +55,8 @@ jobs:
         sbt "project kinesis; set assembly / test := {}; assembly" \
             "project eventbridge; set assembly / test := {}; assembly" \
             "project kafka; set assembly / test := {}; assembly" \
-            "project nsq; set assembly / test := {}; assembly"
-#       sbt "project pubsub; set assembly / test := {}; assembly" \
+            "project nsq; set assembly / test := {}; assembly" \
+            "project pubsub; set assembly / test := {}; assembly"
     - name: Run tests
       run: SBT_OPTS="-Xms1G -Xmx8G -Xss4M -XX:MaxMetaspaceSize=1024M" sbt +test
       env:

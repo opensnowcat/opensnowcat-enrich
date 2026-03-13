@@ -12,10 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.enrich.eventbridge
 
-import cats.effect.{Clock, ConcurrentEffect, ContextShift, ExitCode, Sync, Timer}
-
 import cats.Parallel
 import cats.implicits._
+
+import cats.effect.{ExitCode, Resource}
+import cats.effect.kernel.{Async, Sync}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext
@@ -27,8 +28,9 @@ import fs2.aws.kinesis.CommittableRecord
 
 import software.amazon.kinesis.exceptions.ShutdownException
 
-import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Cloud
+import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.{BlobStorageClients, Cloud}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.Run
+import com.snowplowanalytics.snowplow.enrich.common.fs2.io.Clients.Client
 
 import com.snowplowanalytics.snowplow.enrich.aws.S3Client
 
@@ -42,7 +44,7 @@ object EventbridgeRun {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def run[F[_]: Clock: ConcurrentEffect: ContextShift: Parallel: Timer](args: List[String], ec: ExecutionContext): F[ExitCode] =
+  def run[F[_]: Async: Parallel](args: List[String], ec: ExecutionContext): F[ExitCode] =
     Run.run[F, CommittableRecord](
       args,
       BuildInfo.name,
@@ -50,12 +52,12 @@ object EventbridgeRun {
       BuildInfo.description,
       ec,
       DynamoDbConfig.updateCliConfig[F],
-      Source.init[F],
-      (blocker, out) => Sink.initAttributed(blocker, out),
-      (blocker, out) => Sink.initAttributed(blocker, out),
-      (blocker, out) => Sink.init(blocker, out),
+      (input, monitoring) => Source.init[F](input, monitoring),
+      out => Sink.initAttributed(out),
+      out => Sink.initAttributed(out),
+      out => Sink.init(out),
       checkpoint[F],
-      _ => List(_ => S3Client.mk[F]),
+      createBlobStorageClient[F],
       getPayload,
       MaxRecordSize,
       Some(Cloud.Aws),
@@ -70,8 +72,13 @@ object EventbridgeRun {
     buffer.toArray
   }
 
+  private def createBlobStorageClient[F[_]: Async](conf: BlobStorageClients): List[Resource[F, Client[F]]] = {
+    val aws = if (conf.s3) Some(S3Client.mk[F]) else None
+    List(aws).flatten
+  }
+
   /** For each shard, the record with the biggest sequence number is found, and checkpointed. */
-  private def checkpoint[F[_]: Parallel: Sync: Timer](records: List[CommittableRecord]): F[Unit] =
+  private def checkpoint[F[_]: Async: Parallel](records: List[CommittableRecord]): F[Unit] =
     records
       .groupBy(_.shardId)
       .foldLeft(List.empty[CommittableRecord]) { (acc, shardRecords) =>

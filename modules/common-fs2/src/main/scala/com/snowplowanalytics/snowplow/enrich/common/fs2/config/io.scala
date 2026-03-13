@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common.fs2.config
 
-import java.nio.file.{InvalidPathException, Path, Paths}
+import java.nio.file.{InvalidPathException, Path => JavaPath, Paths}
 import java.time.Instant
 import java.net.URI
 import java.util.UUID
@@ -26,6 +26,8 @@ import _root_.io.circe.config.syntax._
 
 import org.http4s.{ParseFailure, Uri}
 
+import fs2.io.file.{Path => Fs2Path}
+
 import com.snowplowanalytics.snowplow.enrich.common.EtlPipeline.{FeatureFlags => CommonFeatureFlags}
 import com.snowplowanalytics.snowplow.enrich.common.adapters._
 
@@ -35,11 +37,18 @@ object io {
 
   import ConfigFile.finiteDurationEncoder
 
-  implicit val javaPathDecoder: Decoder[Path] =
+  implicit val javaPathDecoder: Decoder[JavaPath] =
     Decoder[String].emap { s =>
       Either.catchOnly[InvalidPathException](Paths.get(s)).leftMap(_.getMessage)
     }
-  implicit val javaPathEncoder: Encoder[Path] =
+  implicit val javaPathEncoder: Encoder[JavaPath] =
+    Encoder[String].contramap(_.toString)
+
+  implicit val fs2PathDecoder: Decoder[Fs2Path] =
+    Decoder[String].emap { s =>
+      Either.catchNonFatal(Fs2Path(s)).leftMap(_.getMessage)
+    }
+  implicit val fs2PathEncoder: Encoder[Fs2Path] =
     Encoder[String].contramap(_.toString)
 
   implicit val javaUriDecoder: Decoder[URI] =
@@ -110,7 +119,7 @@ object io {
             throw new IllegalArgumentException(s"Subscription format $subscription invalid")
         }
     }
-    case class FileSystem(dir: Path) extends Input
+    case class FileSystem(dir: Fs2Path) extends Input
     case class Kinesis private (
       appName: String,
       streamName: String,
@@ -268,7 +277,7 @@ object io {
             throw new IllegalArgumentException(s"Topic format $topic invalid")
         }
     }
-    case class FileSystem(file: Path, maxBytes: Option[Long]) extends Output
+    case class FileSystem(file: JavaPath, maxBytes: Option[Long]) extends Output
     case class Kinesis(
       streamName: String,
       region: Option[String],

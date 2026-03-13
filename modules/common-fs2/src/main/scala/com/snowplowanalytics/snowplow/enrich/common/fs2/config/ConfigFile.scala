@@ -16,7 +16,7 @@ import scala.concurrent.duration.FiniteDuration
 
 import cats.implicits._
 import cats.data.EitherT
-import cats.effect.Sync
+import cats.effect.kernel.Sync
 
 import _root_.io.circe.{Decoder, Encoder}
 import _root_.io.circe.config.syntax._
@@ -50,7 +50,8 @@ final case class ConfigFile(
   featureFlags: FeatureFlags,
   experimental: Option[Experimental],
   adaptersSchemas: AdaptersSchemas,
-  blobStorage: BlobStorageClients
+  blobStorage: BlobStorageClients,
+  maxJsonDepth: Int
 )
 
 object ConfigFile {
@@ -62,21 +63,22 @@ object ConfigFile {
 
   implicit val configFileDecoder: Decoder[ConfigFile] =
     deriveConfiguredDecoder[ConfigFile].emap {
-      case ConfigFile(_, _, _, Some(aup), _, _, _, _, _, _, _) if aup._1 <= 0L =>
+      case ConfigFile(_, _, _, Some(aup), _, _, _, _, _, _, _, _) if aup._1 <= 0L =>
         "assetsUpdatePeriod in config file cannot be less than 0".asLeft // TODO: use newtype
       // Remove pii output if streamName and region empty
-      case c @ ConfigFile(_, Outputs(good, Some(output: Output.Kinesis), bad, mapping), _, _, _, _, _, _, _, _, _)
+      case c @ ConfigFile(_, Outputs(good, Some(output: Output.Kinesis), bad, mapping), _, _, _, _, _, _, _, _, _, _)
           if output.streamName.isEmpty =>
         c.copy(output = Outputs(good, None, bad, mapping)).asRight
       // Remove pii output if topic empty
-      case c @ ConfigFile(_, Outputs(good, Some(Output.PubSub(t, _, _, _, _, _)), bad, mapping), _, _, _, _, _, _, _, _, _) if t.isEmpty =>
+      case c @ ConfigFile(_, Outputs(good, Some(Output.PubSub(t, _, _, _, _, _)), bad, mapping), _, _, _, _, _, _, _, _, _, _)
+          if t.isEmpty =>
         c.copy(output = Outputs(good, None, bad, mapping)).asRight
       // Remove pii output if topic empty
-      case c @ ConfigFile(_, Outputs(good, Some(Output.Kafka(topicName, _, _, _, _, _)), bad, mapping), _, _, _, _, _, _, _, _, _)
+      case c @ ConfigFile(_, Outputs(good, Some(Output.Kafka(topicName, _, _, _, _, _)), bad, mapping), _, _, _, _, _, _, _, _, _, _)
           if topicName.isEmpty =>
         c.copy(output = Outputs(good, None, bad, mapping)).asRight
       // Remove pii output if eventBusName is empty
-      case c @ ConfigFile(_, Outputs(good, Some(output: Output.Eventbridge), bad, mapping), _, _, _, _, _, _, _, _, _)
+      case c @ ConfigFile(_, Outputs(good, Some(output: Output.Eventbridge), bad, mapping), _, _, _, _, _, _, _, _, _, _)
           if output.eventBusName.isEmpty =>
         c.copy(output = Outputs(good, None, bad, mapping)).asRight
       case other => other.asRight

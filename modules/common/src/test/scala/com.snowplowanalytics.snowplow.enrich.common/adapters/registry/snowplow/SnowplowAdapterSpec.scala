@@ -15,7 +15,9 @@ package com.snowplowanalytics.snowplow.enrich.common.adapters.registry.snowplow
 import cats.data.NonEmptyList
 import cats.syntax.option._
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.unsafe.implicits.global
+
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.literal._
 
@@ -39,7 +41,7 @@ import com.snowplowanalytics.snowplow.enrich.common.adapters.RawEvent
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 
-class SnowplowAdapterSpec extends Specification with DataTables with ValidatedMatchers with ScalaCheck with CatsIO {
+class SnowplowAdapterSpec extends Specification with DataTables with ValidatedMatchers with ScalaCheck with CatsEffect {
   def is = s2"""
   Tp1.toRawEvents should return a NEL containing one RawEvent if the querystring is populated                             $e1
   Tp1.toRawEvents should return a Validation Failure if the querystring is empty                                          $e2
@@ -304,6 +306,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidatedMa
         Tp2Adapter
           .toRawEvents(payload, SpecHelpers.client)
           .map(_ must beInvalid(expected))
+          .unsafeRunSync()
       }
 
   def e8 = {
@@ -478,6 +481,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidatedMa
         Tp2Adapter
           .toRawEvents(payload, SpecHelpers.client)
           .map(_ must beInvalid(expected))
+          .unsafeRunSync()
       }
 
   def e11 = {

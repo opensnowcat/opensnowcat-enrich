@@ -18,7 +18,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import cats.Parallel
 import cats.implicits._
 
-import cats.effect.{Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.effect.kernel.{Async, Resource, Sync}
 
 import com.permutive.pubsub.producer.PubsubProducer
 import com.permutive.pubsub.producer.Model.{ProjectId, Topic}
@@ -37,14 +37,14 @@ object Sink {
   private implicit def unsafeLogger[F[_]: Sync]: Logger[F] =
     Slf4jLogger.getLogger[F]
 
-  def init[F[_]: Concurrent: ContextShift: Parallel: Timer](
+  def init[F[_]: Async: Parallel](
     output: Output
   ): Resource[F, ByteSink[F]] =
     for {
       sink <- initAttributed(output)
     } yield (records: List[Array[Byte]]) => sink(records.map(AttributedData(_, "", Map.empty)))
 
-  def initAttributed[F[_]: Concurrent: ContextShift: Parallel: Timer](
+  def initAttributed[F[_]: Async: Parallel](
     output: Output
   ): Resource[F, AttributedByteSink[F]] =
     output match {
@@ -54,7 +54,7 @@ object Sink {
         Resource.eval(Sync[F].raiseError(new IllegalArgumentException(s"Output $o is not PubSub")))
     }
 
-  private def pubsubSink[F[_]: Concurrent: Parallel, A: MessageEncoder](
+  private def pubsubSink[F[_]: Async: Parallel, A: MessageEncoder](
     output: Output.PubSub
   ): Resource[F, List[AttributedData[A]] => F[Unit]] = {
     val config = PubsubProducerConfig[F](
@@ -70,7 +70,7 @@ object Sink {
       .map(sinkBatch[F, A])
   }
 
-  private def sinkBatch[F[_]: Concurrent: Parallel, A](producer: PubsubProducer[F, A])(records: List[AttributedData[A]]): F[Unit] =
+  private def sinkBatch[F[_]: Async: Parallel, A](producer: PubsubProducer[F, A])(records: List[AttributedData[A]]): F[Unit] =
     records.parTraverse_ { r =>
       val attributes = dropOversizedAttributes(r)
       producer.produce(r.data, attributes)

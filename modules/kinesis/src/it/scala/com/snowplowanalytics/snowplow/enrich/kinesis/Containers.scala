@@ -21,11 +21,9 @@ import org.slf4j.LoggerFactory
 import retry.syntax.all._
 import retry.RetryPolicies
 
-import cats.syntax.flatMap._
-
 import cats.effect.{IO, Resource}
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import org.testcontainers.containers.{BindMode, GenericContainer => JGenericContainer, Network}
 import org.testcontainers.containers.wait.strategy.Wait
@@ -36,7 +34,7 @@ import com.dimafeng.testcontainers.GenericContainer
 import com.snowplowanalytics.snowplow.enrich.kinesis.enrichments.{Enrichment, Enrichments}
 import com.snowplowanalytics.snowplow.enrich.kinesis.generated.BuildInfo
 
-object Containers extends CatsIO {
+object Containers extends CatsEffect {
 
   private val network = Network.newNetwork()
 
@@ -198,9 +196,9 @@ object Containers extends CatsIO {
     )
 
     IO(container.isRunning()).retryingOnFailures(
-      _ == false,
-      retryPolicy,
-      (_, _) => IO.unit
+      wasSuccessful = running => IO.pure(!running),
+      policy = retryPolicy,
+      onFailure = (_, _) => IO.unit
     )
   }
 

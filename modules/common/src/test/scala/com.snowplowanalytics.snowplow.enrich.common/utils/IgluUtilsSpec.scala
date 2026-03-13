@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.enrich.common.utils
 import org.specs2.mutable.Specification
 import org.specs2.matcher.ValidatedMatchers
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.parser.parse
 
@@ -29,10 +29,11 @@ import com.snowplowanalytics.snowplow.badrows._
 
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
+import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers._
 import com.snowplowanalytics.snowplow.enrich.common.adapters.RawEvent
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 
-class IgluUtilsSpec extends Specification with ValidatedMatchers with CatsIO {
+class IgluUtilsSpec extends Specification with ValidatedMatchers with CatsEffect {
 
   val raw = RawEvent(
     CollectorPayload.Api("vendor", "version"),

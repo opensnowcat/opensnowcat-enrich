@@ -15,16 +15,13 @@ package com.snowplowanalytics.snowplow.enrich.eventbridge
 import java.util.UUID
 
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
 
 import org.slf4j.LoggerFactory
 
 import retry.syntax.all._
 import retry.RetryPolicies
 
-import cats.syntax.flatMap._
-
-import cats.effect.{IO, Resource, Timer}
+import cats.effect.{IO, Resource}
 
 import org.testcontainers.containers.{BindMode, GenericContainer => JGenericContainer, Network}
 import org.testcontainers.containers.wait.strategy.Wait
@@ -37,8 +34,6 @@ import com.snowplowanalytics.snowplow.enrich.eventbridge.generated.BuildInfo
 
 object Containers {
 
-  private val executionContext: ExecutionContext = ExecutionContext.global
-  implicit val ioTimer: Timer[IO] = IO.timer(executionContext)
 
   private val network = Network.newNetwork()
 
@@ -204,9 +199,9 @@ object Containers {
     )
 
     IO(container.isRunning()).retryingOnFailures(
-      _ == false,
-      retryPolicy,
-      (_, _) => IO.unit
+      wasSuccessful = running => IO.pure(!running),
+      policy = retryPolicy,
+      onFailure = (_, _) => IO.unit
     )
   }
 

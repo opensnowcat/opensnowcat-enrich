@@ -16,7 +16,7 @@ import cats.data.ValidatedNel
 import cats.syntax.either._
 
 import cats.effect.IO
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.Json
 import io.circe.literal._
@@ -34,7 +34,7 @@ import com.snowplowanalytics.snowplow.enrich.common.enrichments.registry.Enrichm
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.utils.HttpClient
 
-class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with Mockito with CatsIO {
+class ApiRequestEnrichmentSpec extends Specification with ValidatedMatchers with Mockito with CatsEffect {
   def is = s2"""
   extract correct configuration for GET request and perform the request  $e1
   skip incorrect input (none of json or pojo) in configuration           $e2

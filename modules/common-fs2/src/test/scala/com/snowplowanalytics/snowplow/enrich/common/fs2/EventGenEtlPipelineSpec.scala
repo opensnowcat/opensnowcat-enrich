@@ -13,8 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.common.fs2
 
 import cats.data.{Validated, ValidatedNel}
-import cats.effect.testing.specs2.CatsIO
-import cats.effect.{Blocker, IO}
+import cats.effect.testing.specs2.CatsEffect
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import cats.implicits._
 import com.snowplowanalytics.iglu.client.IgluCirceClient
 import com.snowplowanalytics.iglu.client.resolver.registries.Registry
@@ -26,8 +27,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.outputs.EnrichedEvent.toPartiallyEnrichedEvent
 import com.snowplowanalytics.snowplow.enrich.common.adapters.AdapterRegistry
 import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.RemoteAdapter
-import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers.adaptersSchemas
-import com.snowplowanalytics.snowplow.enrich.common.fs2.SpecHelpers._
+import com.snowplowanalytics.snowplow.enrich.common.fs2.SpecHelpers.adaptersSchemas
 import com.snowplowanalytics.snowplow.eventgen.runGen
 import com.snowplowanalytics.snowplow.eventgen.enrich.{SdkEvent => GenSdkEvent}
 import org.specs2.matcher.MustMatchers.{left => _, right => _}
@@ -46,7 +46,7 @@ import org.specs2.specification.core.{Fragment, Fragments}
 import java.time.Instant
 import scala.util.{Random, Try}
 
-class EventGenEtlPipelineSpec extends Specification with CatsIO {
+class EventGenEtlPipelineSpec extends Specification with CatsEffect {
 
   case class ContextMatcher(v: String)
 
@@ -162,10 +162,12 @@ class EventGenEtlPipelineSpec extends Specification with CatsIO {
 
   val rng: Random = new scala.util.Random(1L)
 
+  implicit val rl = SpecHelpers.registryLookup
   val adapterRegistry = new AdapterRegistry(Map.empty[(String, String), RemoteAdapter[IO]], adaptersSchemas)
   val enrichmentReg = EnrichmentRegistry[IO]()
   val igluCentral = Registry.IgluCentral
-  val client = IgluCirceClient.parseDefault[IO](json"""
+  val client = IgluCirceClient.parseDefault[IO](
+    json"""
       {
         "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-1",
         "data": {
@@ -194,11 +196,12 @@ class EventGenEtlPipelineSpec extends Specification with CatsIO {
           ]
         }
       }
-      """)
+      """,
+    maxJsonDepth = 40
+  )
   val processor = Processor("sce-test-suite", "1.0.0")
   val dateTime = DateTime.now()
   val process = Processor("EventGenEtlPipelineSpec", "v1")
-  val blocker: Blocker = Blocker.liftExecutionContext(SpecHelpers.blockingEC)
 
   def processEvents(e: CollectorPayload): IO[List[Validated[BadRow, EnrichedEvent]]] =
     EtlPipeline.processEvents[IO](
@@ -301,13 +304,16 @@ class EventGenEtlPipelineSpec extends Specification with CatsIO {
           }
         }
     )
-    .handleError { x =>
-      "No exception was thrown" >> {
-        x === None
-      }
-    }
     .compile
     .lastOrError
+    .attempt
+    .map[Fragments] {
+      case Right(fragments) => fragments
+      case Left(error) =>
+        s"Stream processing failed with error" >> {
+          failure(s"Unexpected error during event generation test: ${error.getMessage}")
+        }
+    }
     .unsafeRunSync()
 }
 

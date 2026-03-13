@@ -14,9 +14,10 @@ package com.snowplowanalytics.snowplow.enrich.common.enrichments.registry
 
 import cats.implicits._
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 
-import cats.effect.testing.specs2.CatsIO
+import cats.effect.testing.specs2.CatsEffect
 
 import io.circe.literal._
 
@@ -29,8 +30,8 @@ import com.snowplowanalytics.maxmind.iplookups.model.IpLocation
 
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
 
-class IpLookupsEnrichmentSpec extends Specification with DataTables with CatsIO {
-  val blocker: Blocker = Blocker.liftExecutionContext(SpecHelpers.blockingEC)
+class IpLookupsEnrichmentSpec extends Specification with DataTables with CatsEffect {
+  val blockingEC = SpecHelpers.blockingEC
 
   def is = s2"""
   extractIpInformation should correctly extract location data from IP addresses where possible $e1
@@ -104,17 +105,17 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with CatsIO 
         continent = "Asia",
         accuracyRadius = 100
       ).asRight.some |> { (_, ipAddress, expected) =>
-        for {
-          ipLookup <- config.enrichment[IO](blocker)
+        (for {
+          ipLookup <- config.enrichment[IO](blockingEC)
           result <- ipLookup.extractIpInformation(ipAddress)
           ipLocation = result.ipLocation.map(_.leftMap(_.getClass.getSimpleName))
-        } yield ipLocation must beEqualTo(expected)
+        } yield ipLocation must beEqualTo(expected)).unsafeRunSync()
       }
 
   def e2 =
-    for {
-      ipLookup <- config.enrichment[IO](blocker)
+    (for {
+      ipLookup <- config.enrichment[IO](blockingEC)
       result <- ipLookup.extractIpInformation("70.46.123.145")
       isp = result.isp
-    } yield isp must beEqualTo(Some(Right("FDN Communications")))
+    } yield isp must beEqualTo(Some(Right("FDN Communications")))).unsafeRunSync()
 }
