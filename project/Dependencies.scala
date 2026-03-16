@@ -81,7 +81,7 @@ object Dependencies {
     val lz4Java = "1.8.1"
     val mskAuth = "2.2.0"
     val nsqClient = "1.3.0"
-    val jackson = "2.19.1"
+    val jackson = "2.21.1"
     val config = "1.3.4"
 
     val decline = "2.4.1"
