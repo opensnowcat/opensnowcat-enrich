@@ -23,7 +23,7 @@ import cats.Applicative
 import cats.data.NonEmptyList
 import cats.kernel.Semigroup
 import cats.effect.kernel.{Async, Clock, Ref, Resource, Spawn, Sync}
-import cats.effect.std.Random
+import cats.effect.std.SecureRandom
 import fs2.Stream
 import io.circe.Json
 import io.circe.parser._
@@ -119,7 +119,7 @@ object Metadata {
       client: Client[F]
     ): Resource[F, Tracker[F]] =
       for {
-        implicit0(random: Random[F]) <- Resource.eval(Random.scalaUtilRandom[F])
+        implicit0(random: SecureRandom[F]) <- Resource.eval(SecureRandom.javaSecuritySecureRandom[F])
         emitter <- Http4sEmitter.build(
                      Emitter.EndpointParams(
                        config.endpoint.host.map(_.toString()).getOrElse("localhost"),
