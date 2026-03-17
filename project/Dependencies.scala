@@ -78,7 +78,7 @@ object Dependencies {
     val awsSdk2 = "2.41.26"
     val kinesisClient2 = "2.4.3"
     val kafka = "3.9.1"
-    val lz4Java = "1.8.1"
+    val lz4Java = "1.10.4"
     val mskAuth = "2.2.0"
     val nsqClient = "1.3.0"
     val jackson = "2.21.1"
@@ -184,7 +184,7 @@ object Dependencies {
     val gcs = "com.google.cloud"            % "google-cloud-storage"  % V.gcpSdk
     val kafkaClients = ("org.apache.kafka"  % "kafka-clients"         % V.kafka)
       .exclude("org.lz4", "lz4-java")
-    val lz4Java = "at.yawk.lz4"             % "lz4-java"              % V.lz4Java    // use fixed version from maintained fork to address CVE-2025-12183
+    val lz4Java = "at.yawk.lz4"             % "lz4-java"              % V.lz4Java
     val mskAuth = "software.amazon.msk"     % "aws-msk-iam-auth"      % V.mskAuth    % Runtime
     val config = "com.typesafe"             % "config"                % V.config
     val nsqClient = "com.snowplowanalytics" % "nsq-java-client"       % V.nsqClient
