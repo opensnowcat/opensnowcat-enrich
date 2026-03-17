@@ -19,7 +19,7 @@ import cats.data.NonEmptyList
 import cats.implicits._
 
 import cats.effect.kernel.{Async, Resource, Sync}
-import cats.effect.std.Random
+import cats.effect.std.SecureRandom
 
 import fs2.Stream
 
@@ -72,7 +72,7 @@ object Telemetry {
     client: HttpClient[F]
   ): Resource[F, Tracker[F]] =
     for {
-      implicit0(random: Random[F]) <- Resource.eval(Random.scalaUtilRandom[F])
+      implicit0(random: SecureRandom[F]) <- Resource.eval(SecureRandom.javaSecuritySecureRandom[F])
       emitter <- Http4sEmitter.build(
                    EndpointParams(config.collectorUri, port = Some(config.collectorPort), https = config.secure),
                    client,
