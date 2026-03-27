@@ -114,10 +114,14 @@ object DynamoDbConfig {
       for {
         _ <- unsafeLogger.info(s"Retrieving enrichments in DynamoDB $region/$table/$prefix*")
         scanned <- withRetry(Async[F].blocking(dynamoDBClient.scan(scanRequest)))
-        values = scanned.items().asScala.collect {
-                   case map if Option(map.get("id")).exists(_.s.startsWith(prefix)) && map.containsKey("json") =>
-                     Option(map.get("json").s())
-                 }.flatten
+        values = scanned
+                   .items()
+                   .asScala
+                   .collect {
+                     case map if Option(map.get("id")).exists(_.s.startsWith(prefix)) && map.containsKey("json") =>
+                       Option(map.get("json").s())
+                   }
+                   .flatten
         hocons <- values.toList
                     .traverse { jsonStr =>
                       Sync[F].delay(ConfigFactory.parseString(jsonStr))
