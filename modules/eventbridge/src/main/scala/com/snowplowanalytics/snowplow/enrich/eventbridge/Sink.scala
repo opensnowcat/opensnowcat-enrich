@@ -289,7 +289,6 @@ object Sink {
     size += entry.detailType().getBytes(StandardCharsets.UTF_8).length
     if (entry.detail() != null) size += entry.detail().getBytes(StandardCharsets.UTF_8).length
     if (entry.resources() != null) {
-      import scala.collection.JavaConverters._
       for (resource <- entry.resources().asScala)
         if (resource != null) size += resource.getBytes(StandardCharsets.UTF_8).length
     }
