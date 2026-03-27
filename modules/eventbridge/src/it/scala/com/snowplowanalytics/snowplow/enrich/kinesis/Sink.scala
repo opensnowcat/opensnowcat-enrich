@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 import scala.jdk.CollectionConverters._
@@ -162,7 +163,7 @@ object Sink {
   }
 
   private def getRecordSize(record: PutRecordsRequestEntry) =
-    record.data().asByteArray().length + record.partitionKey().getBytes.length
+    record.data().asByteArray().length + record.partitionKey().getBytes(StandardCharsets.UTF_8).length
 
   /**
    * Try writing a batch, and returns a list of the failures to be retried:
