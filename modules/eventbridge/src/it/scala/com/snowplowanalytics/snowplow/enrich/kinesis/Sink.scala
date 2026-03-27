@@ -12,10 +12,10 @@
  */
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
-import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import cats.implicits._
 import cats.{Monoid, Parallel}
@@ -29,10 +29,10 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import retry.syntax.all._
 import retry.RetryPolicy
 
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-
-import com.amazonaws.services.kinesis.model._
-import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClientBuilder}
+import software.amazon.awssdk.core.SdkBytes
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.kinesis.KinesisClient
+import software.amazon.awssdk.services.kinesis.model._
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.{AttributedByteSink, AttributedData, ByteSink}
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output
@@ -58,8 +58,8 @@ object Sink {
         o.region.orElse(getRuntimeRegion) match {
           case Some(region) =>
             for {
-              producer <- Resource.eval[F, AmazonKinesis](mkProducer(o, region))
-            } yield records => writeToKinesis(o, producer, toKinesisRecords(records))
+              producer <- mkProducer(o, region)
+            } yield (records: List[AttributedData[Array[Byte]]]) => writeToKinesis(o, producer, toKinesisRecords(records))
           case None =>
             Resource.eval(Sync[F].raiseError(new RuntimeException(s"Region not found in the config and in the runtime")))
         }
@@ -70,23 +70,23 @@ object Sink {
   private def mkProducer[F[_]: Sync](
     config: Output.Kinesis,
     region: String
-  ): F[AmazonKinesis] =
-    for {
-      builder <- Sync[F].delay(AmazonKinesisClientBuilder.standard)
-      withEndpoint <- config.customEndpoint match {
-                        case Some(endpoint) =>
-                          Sync[F].delay(builder.withEndpointConfiguration(new EndpointConfiguration(endpoint.toString, region)))
-                        case None =>
-                          Sync[F].delay(builder.withRegion(region))
-                      }
-      kinesis <- Sync[F].delay(withEndpoint.build())
-      _ <- streamExists(kinesis, config.streamName)
-    } yield kinesis
+  ): Resource[F, KinesisClient] =
+    Resource
+      .fromAutoCloseable(Sync[F].delay {
+        val builder = KinesisClient
+          .builder()
+          .region(Region.of(region))
+        config.customEndpoint
+          .map(builder.endpointOverride)
+          .getOrElse(builder)
+          .build()
+      })
+      .evalTap(kinesis => streamExists(kinesis, config.streamName))
 
-  private def streamExists[F[_]: Sync](kinesis: AmazonKinesis, stream: String): F[Unit] =
+  private def streamExists[F[_]: Sync](kinesis: KinesisClient, stream: String): F[Unit] =
     for {
-      described <- Sync[F].delay(kinesis.describeStream(stream))
-      status = described.getStreamDescription.getStreamStatus
+      described <- Sync[F].delay(kinesis.describeStream(DescribeStreamRequest.builder().streamName(stream).build()))
+      status = described.streamDescription.streamStatus.toString
       exists <- status match {
                   case "ACTIVE" | "UPDATING" =>
                     Sync[F].unit
@@ -97,7 +97,7 @@ object Sink {
 
   private def writeToKinesis[F[_]: Async: Parallel](
     config: Output.Kinesis,
-    kinesis: AmazonKinesis,
+    kinesis: KinesisClient,
     records: List[PutRecordsRequestEntry]
   ): F[Unit] = {
     val policyForErrors = Retries.fullJitter[F](config.backoffPolicy)
@@ -162,7 +162,7 @@ object Sink {
   }
 
   private def getRecordSize(record: PutRecordsRequestEntry) =
-    record.getData.array.size + record.getPartitionKey.getBytes.size
+    record.data().asByteArray().length + record.partitionKey().getBytes(StandardCharsets.UTF_8).length
 
   /**
    * Try writing a batch, and returns a list of the failures to be retried:
@@ -173,7 +173,7 @@ object Sink {
    */
   private def tryWriteToKinesis[F[_]: Async](
     config: Output.Kinesis,
-    kinesis: AmazonKinesis,
+    kinesis: KinesisClient,
     records: List[PutRecordsRequestEntry],
     retryPolicy: RetryPolicy[F]
   ): F[Vector[PutRecordsRequestEntry]] =
@@ -203,12 +203,11 @@ object Sink {
 
   private def toKinesisRecords(records: List[AttributedData[Array[Byte]]]): List[PutRecordsRequestEntry] =
     records.map { r =>
-      val binaryData = r.data
-      val data = ByteBuffer.wrap(binaryData)
-      val prre = new PutRecordsRequestEntry()
-      prre.setPartitionKey(r.partitionKey)
-      prre.setData(data)
-      prre
+      PutRecordsRequestEntry
+        .builder()
+        .partitionKey(r.partitionKey)
+        .data(SdkBytes.fromByteArray(r.data))
+        .build()
     }
 
   /**
@@ -244,18 +243,18 @@ object Sink {
           )
       }
 
-    def build(records: List[PutRecordsRequestEntry], prr: PutRecordsResult): TryBatchResult =
-      if (prr.getFailedRecordCount.toInt =!= 0)
+    def build(records: List[PutRecordsRequestEntry], prr: PutRecordsResponse): TryBatchResult =
+      if (prr.failedRecordCount().toInt =!= 0)
         records
-          .zip(prr.getRecords.asScala)
+          .zip(prr.records().asScala)
           .foldMap { case (orig, recordResult) =>
-            Option(recordResult.getErrorCode) match {
+            Option(recordResult.errorCode()) match {
               case None =>
                 TryBatchResult(Vector.empty, true, false, None)
               case Some("ProvisionedThroughputExceededException") =>
                 TryBatchResult(Vector(orig), false, true, None)
               case Some(_) =>
-                TryBatchResult(Vector(orig), false, false, Option(recordResult.getErrorMessage))
+                TryBatchResult(Vector(orig), false, false, Option(recordResult.errorMessage()))
             }
           }
       else
@@ -263,16 +262,15 @@ object Sink {
   }
 
   private def putRecords(
-    kinesis: AmazonKinesis,
+    kinesis: KinesisClient,
     streamName: String,
     records: List[PutRecordsRequestEntry]
-  ): PutRecordsResult = {
-    val putRecordsRequest = {
-      val prr = new PutRecordsRequest()
-      prr.setStreamName(streamName)
-      prr.setRecords(records.asJava)
-      prr
-    }
+  ): PutRecordsResponse = {
+    val putRecordsRequest = PutRecordsRequest
+      .builder()
+      .streamName(streamName)
+      .records(records.asJava)
+      .build()
     kinesis.putRecords(putRecordsRequest)
   }
 

@@ -72,11 +72,9 @@ object Dependencies {
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val schemaSniffer = "0.0.0"
-
-    val awsSdk = "1.12.797"
     val gcpSdk = "2.62.1"
-    val awsSdk2 = "2.41.26"
-    val kinesisClient2 = "2.4.3"
+    val awsSdk = "2.42.20"
+    val kinesisClient = "2.4.3"
     val kafka = "3.9.1"
     val lz4Java = "1.10.4"
     val mskAuth = "2.2.0"
@@ -178,9 +176,6 @@ object Dependencies {
     val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators"      % V.parserCombinators % Test
     val testContainersIt = "com.dimafeng"            %% "testcontainers-scala-core"     % V.testcontainers    % IntegrationTest
 
-    val kinesisSdk = "com.amazonaws"        % "aws-java-sdk-kinesis"  % V.awsSdk
-    val dynamodbSdk = "com.amazonaws"       % "aws-java-sdk-dynamodb" % V.awsSdk
-    val sts = "com.amazonaws"               % "aws-java-sdk-sts"      % V.awsSdk     % Runtime
     val gcs = "com.google.cloud"            % "google-cloud-storage"  % V.gcpSdk
     val kafkaClients = ("org.apache.kafka"  % "kafka-clients"         % V.kafka)
       .exclude("org.lz4", "lz4-java")
@@ -202,15 +197,15 @@ object Dependencies {
     val fs2Io = "co.fs2"                           %% "fs2-io"                % V.fs2
     val fs2Kafka = ("com.github.fd4s"              %% "fs2-kafka"             % V.fs2Kafka)
       .exclude("org.lz4", "lz4-java")
-    val kinesisSdk2 = "software.amazon.awssdk"      % "kinesis"               % V.awsSdk2
-    val dynamoDbSdk2 = "software.amazon.awssdk"     % "dynamodb"              % V.awsSdk2
-    val s3Sdk2 = "software.amazon.awssdk"           % "s3"                    % V.awsSdk2
-    val cloudwatchSdk2 = "software.amazon.awssdk"   % "cloudwatch"            % V.awsSdk2
-    val kinesisClient2 = ("software.amazon.kinesis" % "amazon-kinesis-client" % V.kinesisClient2)
+    val kinesisSdk = "software.amazon.awssdk"      % "kinesis"                % V.awsSdk
+    val dynamoDbSdk = "software.amazon.awssdk"     % "dynamodb"               % V.awsSdk
+    val s3Sdk = "software.amazon.awssdk"           % "s3"                     % V.awsSdk
+    val cloudwatchSdk = "software.amazon.awssdk"   % "cloudwatch"             % V.awsSdk
+    val kinesisClient = ("software.amazon.kinesis" % "amazon-kinesis-client"  % V.kinesisClient)
       .exclude("software.amazon.glue", "schema-registry-common")
       .exclude("software.amazon.glue", "schema-registry-serde")
-    val stsSdk2 = "software.amazon.awssdk"                % "sts"                                   % V.awsSdk2 % Runtime
-    val eventbridgeSdk2 = "software.amazon.awssdk"        % "eventbridge"                           % V.awsSdk2
+    val stsSdk = "software.amazon.awssdk"                % "sts"                                    % V.awsSdk % Runtime
+    val eventbridgeSdk = "software.amazon.awssdk"        % "eventbridge"                            % V.awsSdk
     val azureIdentity = "com.azure"                       % "azure-identity"                        % V.azureIdentity
     val jacksonDfXml = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml"                % V.jackson
     val http4sClient = "org.http4s"                      %% "http4s-ember-client"                   % V.http4s
@@ -309,7 +304,7 @@ object Dependencies {
 
     val awsUtilsDependencies = Seq(
       fs2BlobS3,
-      s3Sdk2
+      s3Sdk
     )
 
     val gcpUtilsDependencies = Seq(
@@ -334,18 +329,15 @@ object Dependencies {
     )
 
     val kinesisDependencies = Seq(
-      dynamodbSdk,
-      kinesisSdk,
       fs2BlobS3,
       fs2Aws,
       refined,
-      kinesisSdk2,
-      dynamoDbSdk2,
-      s3Sdk2,
-      cloudwatchSdk2,
-      kinesisClient2,
-      stsSdk2,
-      sts,
+      kinesisSdk,
+      dynamoDbSdk,
+      s3Sdk,
+      cloudwatchSdk,
+      kinesisClient,
+      stsSdk,
       specs2,
       specs2CE
     )
@@ -371,21 +363,18 @@ object Dependencies {
     )
 
     val eventbridgeDependencies = Seq(
-      dynamodbSdk,
-      kinesisSdk,
       fs2BlobS3,
       fs2Aws,
       refined,
-      kinesisSdk2,
-      dynamoDbSdk2,
-      s3Sdk2,
-      cloudwatchSdk2,
-      kinesisClient2,
-      stsSdk2,
-      sts,
+      kinesisSdk,
+      dynamoDbSdk,
+      s3Sdk,
+      cloudwatchSdk,
+      kinesisClient,
+      stsSdk,
       specs2,
       specs2CE,
-      eventbridgeSdk2
+      eventbridgeSdk
     )
 
     // exclusions

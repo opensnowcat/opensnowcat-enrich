@@ -58,7 +58,7 @@ object S3Client {
     }
 
   private def getRegion(): Region =
-    Either.catchNonFatal((new DefaultAwsRegionProviderChain).getRegion) match {
+    Either.catchNonFatal(DefaultAwsRegionProviderChain.builder().build().getRegion) match {
       case Right(region) =>
         region
       case _ =>
