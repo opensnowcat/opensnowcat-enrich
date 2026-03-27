@@ -92,7 +92,7 @@ object DynamoDbConfig {
         response <- withRetry(Async[F].blocking(dynamoDBClient.getItem(getItemRequest)))
         jsonStr <- Option(response.item())
                      .flatMap(item => Option(item.get("json")))
-                     .map(_.s()) match {
+                     .flatMap(av => Option(av.s())) match {
                      case Some(content) =>
                        Sync[F].pure(content)
                      case None =>
@@ -116,8 +116,8 @@ object DynamoDbConfig {
         scanned <- withRetry(Async[F].blocking(dynamoDBClient.scan(scanRequest)))
         values = scanned.items().asScala.collect {
                    case map if Option(map.get("id")).exists(_.s.startsWith(prefix)) && map.containsKey("json") =>
-                     map.get("json").s()
-                 }
+                     Option(map.get("json").s())
+                 }.flatten
         hocons <- values.toList
                     .traverse { jsonStr =>
                       Sync[F].delay(ConfigFactory.parseString(jsonStr))
