@@ -58,7 +58,7 @@ object Sink {
         o.region.orElse(getRuntimeRegion) match {
           case Some(region) =>
             for {
-              producer <- Resource.fromAutoCloseable(mkProducer(o, region))
+              producer <- mkProducer(o, region)
             } yield (records: List[AttributedData[Array[Byte]]]) => writeToKinesis(o, producer, toKinesisRecords(records))
           case None =>
             Resource.eval(Sync[F].raiseError(new RuntimeException(s"Region not found in the config and in the runtime")))
@@ -70,19 +70,18 @@ object Sink {
   private def mkProducer[F[_]: Sync](
     config: Output.Kinesis,
     region: String
-  ): F[KinesisClient] =
-    for {
-      kinesis <- Sync[F].delay {
-                   val builder = KinesisClient
-                     .builder()
-                     .region(Region.of(region))
-                   config.customEndpoint
-                     .map(builder.endpointOverride)
-                     .getOrElse(builder)
-                     .build()
-                 }
-      _ <- streamExists(kinesis, config.streamName)
-    } yield kinesis
+  ): Resource[F, KinesisClient] =
+    Resource
+      .fromAutoCloseable(Sync[F].delay {
+        val builder = KinesisClient
+          .builder()
+          .region(Region.of(region))
+        config.customEndpoint
+          .map(builder.endpointOverride)
+          .getOrElse(builder)
+          .build()
+      })
+      .evalTap(kinesis => streamExists(kinesis, config.streamName))
 
   private def streamExists[F[_]: Sync](kinesis: KinesisClient, stream: String): F[Unit] =
     for {
