@@ -25,14 +25,14 @@ import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 
 import retry.{RetryDetails, RetryPolicies, RetryPolicy, retryingOnSomeErrors}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.DurationLong
 import scala.util.control.NonFatal
 
-import com.amazonaws.AmazonClientException
-import com.amazonaws.services.dynamodbv2.model.ScanRequest
-import com.amazonaws.services.dynamodbv2.document.DynamoDB
-import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBuilder}
+import software.amazon.awssdk.core.exception.SdkException
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.{AttributeValue, GetItemRequest, ScanRequest}
 
 import com.snowplowanalytics.iglu.core.{SchemaKey, SchemaVer}
 
@@ -80,16 +80,19 @@ object DynamoDbConfig {
     region: String,
     table: String,
     key: String
-  ): F[Base64Hocon] = {
-    val dynamoDBResource = for {
-      client <- mkClient[F](region)
-      api <- Resource.make(Sync[F].delay(new DynamoDB(client)))(a => Sync[F].delay(a.shutdown()))
-    } yield api
-    dynamoDBResource.use { dynamoDB =>
+  ): F[Base64Hocon] =
+    mkClient[F](region).use { dynamoDBClient =>
       for {
         _ <- unsafeLogger.info(s"Retrieving resolver in DynamoDB $region/$table/$key")
-        item <- withRetry(Async[F].blocking(dynamoDB.getTable(table).getItem("id", key)))
-        jsonStr <- Option(item).flatMap(i => Option(i.getString("json"))) match {
+        getItemRequest = GetItemRequest
+                           .builder()
+                           .tableName(table)
+                           .key(Map("id" -> AttributeValue.builder().s(key).build()).asJava)
+                           .build()
+        response <- withRetry(Async[F].blocking(dynamoDBClient.getItem(getItemRequest)))
+        jsonStr <- Option(response.item())
+                     .flatMap(item => Option(item.get("json")))
+                     .map(_.s()) match {
                      case Some(content) =>
                        Sync[F].pure(content)
                      case None =>
@@ -100,7 +103,6 @@ object DynamoDbConfig {
                     }
       } yield Base64Hocon(tsConfig)
     }
-  }
 
   private def getEnrichments[F[_]: Async](
     region: String,
@@ -108,14 +110,13 @@ object DynamoDbConfig {
     prefix: String
   ): F[Base64Hocon] =
     mkClient[F](region).use { dynamoDBClient =>
-      // Assumes that the table is small and contains only the config
-      val scanRequest = new ScanRequest().withTableName(table)
+      val scanRequest = ScanRequest.builder().tableName(table).build()
       for {
         _ <- unsafeLogger.info(s"Retrieving enrichments in DynamoDB $region/$table/$prefix*")
         scanned <- withRetry(Async[F].blocking(dynamoDBClient.scan(scanRequest)))
-        values = scanned.getItems().asScala.collect {
-                   case map if Option(map.get("id")).exists(_.getS.startsWith(prefix)) && map.containsKey("json") =>
-                     map.get("json").getS()
+        values = scanned.items().asScala.collect {
+                   case map if Option(map.get("id")).exists(_.s.startsWith(prefix)) && map.containsKey("json") =>
+                     map.get("json").s()
                  }
         hocons <- values.toList
                     .traverse { jsonStr =>
@@ -133,13 +134,13 @@ object DynamoDbConfig {
       }
     }
 
-  private def mkClient[F[_]: Sync](region: String): Resource[F, AmazonDynamoDB] =
-    Resource.make(Sync[F].delay {
-      AmazonDynamoDBClientBuilder
-        .standard()
-        .withRegion(region)
+  private def mkClient[F[_]: Sync](region: String): Resource[F, DynamoDbClient] =
+    Resource.fromAutoCloseable(Sync[F].delay {
+      DynamoDbClient
+        .builder()
+        .region(Region.of(region))
         .build()
-    })(c => Sync[F].delay(c.shutdown))
+    })
 
   private def withRetry[F[_]: Async, A](f: F[A]): F[A] =
     retryingOnSomeErrors[A](retryPolicy[F], worthRetrying[F], onError[F])(f)
@@ -149,7 +150,7 @@ object DynamoDbConfig {
 
   private def worthRetrying[F[_]: Applicative](e: Throwable): F[Boolean] =
     Applicative[F].pure(e match {
-      case ace: AmazonClientException if ace.isRetryable => true
+      case sdke: SdkException if sdke.retryable() => true
       case NonFatal(_) => false
     })
 
