@@ -121,9 +121,12 @@ object Source {
           InitialPositionInStreamExtended.newInitialPositionAtTimestamp(Date.from(timestamp))
       }
 
+      val leaseManagementConfig =
+        configsBuilder.leaseManagementConfig
+          .initialPositionInStream(initPositionExtended)
+
       val retrievalConfig =
         configsBuilder.retrievalConfig
-          .initialPositionInStreamExtended(initPositionExtended)
           .retrievalSpecificConfig {
             kinesisConfig.retrievalMode match {
               case Input.Kinesis.Retrieval.FanOut =>
@@ -140,7 +143,7 @@ object Source {
       new Scheduler(
         configsBuilder.checkpointConfig,
         configsBuilder.coordinatorConfig,
-        configsBuilder.leaseManagementConfig,
+        leaseManagementConfig,
         configsBuilder.lifecycleConfig,
         metricsConfig,
         configsBuilder.processorConfig,
