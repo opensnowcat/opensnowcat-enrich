@@ -51,7 +51,7 @@ object Sink {
         o.region.orElse(getRuntimeRegion) match {
           case Some(region) =>
             for {
-              producer <- Resource.eval[F, EventBridgeClient](mkProducer(o, region))
+              producer <- Resource.fromAutoCloseable(mkProducer(o, region))
             } yield (records: List[AttributedData[Array[Byte]]]) => writeToEventbridge(o, producer, toEventBridgeEvents(records, o))
           case None =>
             Resource.eval(Sync[F].raiseError(new RuntimeException(s"Region not found in the config and in the runtime")))
@@ -289,7 +289,6 @@ object Sink {
     size += entry.detailType().getBytes(StandardCharsets.UTF_8).length
     if (entry.detail() != null) size += entry.detail().getBytes(StandardCharsets.UTF_8).length
     if (entry.resources() != null) {
-      import scala.collection.JavaConverters._
       for (resource <- entry.resources().asScala)
         if (resource != null) size += resource.getBytes(StandardCharsets.UTF_8).length
     }
