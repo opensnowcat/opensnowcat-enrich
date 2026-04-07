@@ -31,6 +31,7 @@ import eu.timepit.refined.numeric._
 
 import software.amazon.awssdk.regions.Region
 import software.amazon.kinesis.common.{ConfigsBuilder, InitialPositionInStream, InitialPositionInStreamExtended}
+import software.amazon.kinesis.processor.SingleStreamTracker
 import software.amazon.kinesis.coordinator.Scheduler
 import software.amazon.kinesis.metrics.MetricsLevel
 import software.amazon.kinesis.processor.ShardRecordProcessorFactory
@@ -109,16 +110,6 @@ object Source {
     Sync[F].delay(UUID.randomUUID()).map { uuid =>
       val hostname = InetAddress.getLocalHost().getCanonicalHostName()
 
-      val configsBuilder =
-        new ConfigsBuilder(kinesisConfig.streamName,
-                           kinesisConfig.appName,
-                           kinesisClient,
-                           dynamoDbClient,
-                           cloudWatchClient,
-                           s"$hostname:$uuid",
-                           recordProcessorFactory
-        )
-
       val initPositionExtended = kinesisConfig.initialPosition match {
         case InitPosition.Latest =>
           InitialPositionInStreamExtended.newInitialPosition(InitialPositionInStream.LATEST)
@@ -128,9 +119,15 @@ object Source {
           InitialPositionInStreamExtended.newInitialPositionAtTimestamp(Date.from(timestamp))
       }
 
-      val leaseManagementConfig =
-        configsBuilder.leaseManagementConfig
-          .initialPositionInStream(initPositionExtended)
+      val configsBuilder =
+        new ConfigsBuilder(new SingleStreamTracker(kinesisConfig.streamName, initPositionExtended),
+                           kinesisConfig.appName,
+                           kinesisClient,
+                           dynamoDbClient,
+                           cloudWatchClient,
+                           s"$hostname:$uuid",
+                           recordProcessorFactory
+        )
 
       val retrievalConfig =
         configsBuilder.retrievalConfig
@@ -150,7 +147,7 @@ object Source {
       new Scheduler(
         configsBuilder.checkpointConfig,
         configsBuilder.coordinatorConfig,
-        leaseManagementConfig,
+        configsBuilder.leaseManagementConfig,
         configsBuilder.lifecycleConfig,
         metricsConfig,
         configsBuilder.processorConfig,
