@@ -51,8 +51,8 @@ object Dependencies {
     val slf4j = "2.0.13"
     val thrift = "0.23.0"
     val sprayJson = "1.3.6"
-    val netty = "4.1.135.Final"
-    val grpcNettyShaded = "1.76.3"
+    val netty = "4.1.136.Final"
+    val grpcNettyShaded = "1.81.1"
     val protobuf = "4.29.6"
     val httpclient = "4.5.13"
 
