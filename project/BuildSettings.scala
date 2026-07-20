@@ -183,6 +183,7 @@ object BuildSettings {
       case x if x.endsWith(".types") => MergeStrategy.first
       case x if x.contains("netty") => MergeStrategy.first
       case x if x.endsWith("NOTICE") => MergeStrategy.rename
+      case x if x.contains("LICENSE") => MergeStrategy.rename
       case x =>
         val oldStrategy = (assembly / assemblyMergeStrategy).value
         oldStrategy(x)
