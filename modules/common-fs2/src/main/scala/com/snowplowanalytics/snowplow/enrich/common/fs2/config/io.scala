@@ -210,12 +210,14 @@ object io {
         case object Kcl3x extends ClientVersionConfig
 
         implicit val clientVersionConfigDecoder: Decoder[ClientVersionConfig] =
-          Decoder.decodeString.emap {
-            case "COMPATIBLE_WITH_2X_PHASE1" => CompatibleWith2xPhase1.asRight
-            case "COMPATIBLE_WITH_2X" => CompatibleWith2x.asRight
-            case "3X" => Kcl3x.asRight
-            case other =>
-              s"clientVersionConfig $other is not supported. Possible types are COMPATIBLE_WITH_2X_PHASE1, COMPATIBLE_WITH_2X and 3X".asLeft
+          Decoder.decodeString.emap { raw =>
+            raw.toUpperCase match {
+              case "COMPATIBLE_WITH_2X_PHASE1" => CompatibleWith2xPhase1.asRight
+              case "COMPATIBLE_WITH_2X" => CompatibleWith2x.asRight
+              case "3X" => Kcl3x.asRight
+              case _ =>
+                s"clientVersionConfig $raw is not supported. Possible types are COMPATIBLE_WITH_2X_PHASE1, COMPATIBLE_WITH_2X and 3X".asLeft
+            }
           }
         implicit val clientVersionConfigEncoder: Encoder[ClientVersionConfig] =
           Encoder.encodeString.contramap {
