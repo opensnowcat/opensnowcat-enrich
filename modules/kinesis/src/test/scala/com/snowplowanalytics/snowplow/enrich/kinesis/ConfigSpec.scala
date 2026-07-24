@@ -47,7 +47,8 @@ class ConfigSpec extends Specification with CatsEffect {
           io.BackoffPolicy(100.milli, 10.second, Some(10)),
           None,
           None,
-          None
+          None,
+          io.Input.Kinesis.ClientVersionConfig.CompatibleWith2xPhase1
         ),
         io.Outputs(
           io.Output.Kinesis(
@@ -152,7 +153,8 @@ class ConfigSpec extends Specification with CatsEffect {
           io.BackoffPolicy(100.milli, 10.second, Some(10)),
           None,
           None,
-          None
+          None,
+          io.Input.Kinesis.ClientVersionConfig.CompatibleWith2xPhase1
         ),
         io.Outputs(
           io.Output.Kinesis(
