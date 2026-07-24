@@ -65,6 +65,19 @@
     # Optional, endpoint url configuration to override aws cloudwatch endpoint for metrics
     # Can be used to specify local endpoint when using localstack
     # "cloudwatchCustomEndpoint": "http://localhost:4566"
+
+    # Optional, controls the KCL 2.x/3.x compatibility mode, used while migrating from
+    # enrich-kinesis built with kinesis-client 2.x to this version (built with kinesis-client 3.x).
+    # Must be COMPATIBLE_WITH_2X_PHASE1, COMPATIBLE_WITH_2X or 3X.
+    # COMPATIBLE_WITH_2X_PHASE1: keeps the exact same behaviour and lease-balancing algorithm as
+    #   kinesis-client 2.x. Deploy every worker with this setting first: the migration does not
+    #   start yet, so it is safe to roll out gradually or roll back.
+    # COMPATIBLE_WITH_2X: once every worker runs COMPATIBLE_WITH_2X_PHASE1, switch to this value to
+    #   start the actual migration to the KCL 3.x lease-balancing algorithm.
+    # 3X: full KCL 3.x mode. KCL switches to this automatically once the migration above has
+    #   completed on every worker, so it should not normally need to be set explicitly.
+    # See https://docs.aws.amazon.com/streams/latest/dev/kcl-migration-from-2-3.html
+    "clientVersionConfig": "COMPATIBLE_WITH_2X_PHASE1"
   }
 
   "output": {

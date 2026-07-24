@@ -130,7 +130,8 @@ object io {
       checkpointBackoff: BackoffPolicy,
       customEndpoint: Option[URI],
       dynamodbCustomEndpoint: Option[URI],
-      cloudwatchCustomEndpoint: Option[URI]
+      cloudwatchCustomEndpoint: Option[URI],
+      clientVersionConfig: Kinesis.ClientVersionConfig
     ) extends Input
         with RetryCheckpointing
 
@@ -192,6 +193,38 @@ object io {
             } yield retrieval
           }
         implicit val retrievalEncoder: Encoder[Retrieval] = deriveConfiguredEncoder[Retrieval]
+      }
+
+      // Controls the KCL 2.x/3.x compatibility mode used while migrating the lease/checkpoint table.
+      // See https://docs.aws.amazon.com/streams/latest/dev/kcl-migration-from-2-3.html
+      sealed trait ClientVersionConfig
+      object ClientVersionConfig {
+        // Deploy every worker with this setting first. The application keeps behaving exactly like
+        // KCL 2.x (same lease-balancing algorithm) and the migration to KCL 3.x does not start yet.
+        case object CompatibleWith2xPhase1 extends ClientVersionConfig
+        // Once every worker is running with CompatibleWith2xPhase1, switch to this setting to kick off
+        // the actual migration to the KCL 3.x lease-balancing algorithm.
+        case object CompatibleWith2x extends ClientVersionConfig
+        // Full KCL 3.x mode. KCL automatically switches to this once the migration above has completed,
+        // so it should not normally need to be set explicitly.
+        case object Kcl3x extends ClientVersionConfig
+
+        implicit val clientVersionConfigDecoder: Decoder[ClientVersionConfig] =
+          Decoder.decodeString.emap { raw =>
+            raw.toUpperCase match {
+              case "COMPATIBLE_WITH_2X_PHASE1" => CompatibleWith2xPhase1.asRight
+              case "COMPATIBLE_WITH_2X" => CompatibleWith2x.asRight
+              case "3X" => Kcl3x.asRight
+              case _ =>
+                s"clientVersionConfig $raw is not supported. Possible types are COMPATIBLE_WITH_2X_PHASE1, COMPATIBLE_WITH_2X and 3X".asLeft
+            }
+          }
+        implicit val clientVersionConfigEncoder: Encoder[ClientVersionConfig] =
+          Encoder.encodeString.contramap {
+            case CompatibleWith2xPhase1 => "COMPATIBLE_WITH_2X_PHASE1"
+            case CompatibleWith2x => "COMPATIBLE_WITH_2X"
+            case Kcl3x => "3X"
+          }
       }
 
       implicit val kinesisDecoder: Decoder[Kinesis] = deriveConfiguredDecoder[Kinesis]

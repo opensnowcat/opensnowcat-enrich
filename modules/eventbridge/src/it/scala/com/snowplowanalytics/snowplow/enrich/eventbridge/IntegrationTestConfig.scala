@@ -59,7 +59,8 @@ object IntegrationTestConfig {
       BackoffPolicy(10.millis, 10.seconds, Some(10)),
       Some(URI.create(getEndpoint(localstackPort))),
       Some(URI.create(getEndpoint(localstackPort))),
-      Some(URI.create(getEndpoint(localstackPort)))
+      Some(URI.create(getEndpoint(localstackPort))),
+      Input.Kinesis.ClientVersionConfig.CompatibleWith2xPhase1
     )
 
   val monitoring = Monitoring(

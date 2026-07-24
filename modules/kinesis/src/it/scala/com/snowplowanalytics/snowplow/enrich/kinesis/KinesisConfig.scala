@@ -35,7 +35,8 @@ object KinesisConfig {
       BackoffPolicy(10.millis, 10.seconds, Some(10)),
       Some(URI.create(getEndpoint(localstackPort))),
       Some(URI.create(getEndpoint(localstackPort))),
-      Some(URI.create(getEndpoint(localstackPort)))
+      Some(URI.create(getEndpoint(localstackPort))),
+      Input.Kinesis.ClientVersionConfig.CompatibleWith2xPhase1
     )
 
   def badStreamConfig(localstackPort: Int, streamName: String) =
@@ -49,7 +50,8 @@ object KinesisConfig {
       BackoffPolicy(10.millis, 10.seconds, Some(10)),
       Some(URI.create(getEndpoint(localstackPort))),
       Some(URI.create(getEndpoint(localstackPort))),
-      Some(URI.create(getEndpoint(localstackPort)))
+      Some(URI.create(getEndpoint(localstackPort))),
+      Input.Kinesis.ClientVersionConfig.CompatibleWith2xPhase1
     )
 
   def rawStreamConfig(localstackPort: Int, streamName: String) =

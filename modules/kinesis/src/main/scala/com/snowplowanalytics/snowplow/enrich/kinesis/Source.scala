@@ -32,7 +32,7 @@ import eu.timepit.refined.numeric._
 import software.amazon.awssdk.regions.Region
 import software.amazon.kinesis.common.{ConfigsBuilder, InitialPositionInStream, InitialPositionInStreamExtended}
 import software.amazon.kinesis.processor.SingleStreamTracker
-import software.amazon.kinesis.coordinator.Scheduler
+import software.amazon.kinesis.coordinator.{CoordinatorConfig, Scheduler}
 import software.amazon.kinesis.metrics.MetricsLevel
 import software.amazon.kinesis.processor.ShardRecordProcessorFactory
 import software.amazon.kinesis.retrieval.polling.PollingConfig
@@ -144,9 +144,21 @@ object Source {
         if (monitoring.metrics.cloudwatch) MetricsLevel.DETAILED else MetricsLevel.NONE
       }
 
+      val coordinatorConfig = configsBuilder.coordinatorConfig
+        .clientVersionConfig {
+          kinesisConfig.clientVersionConfig match {
+            case Input.Kinesis.ClientVersionConfig.CompatibleWith2xPhase1 =>
+              CoordinatorConfig.ClientVersionConfig.CLIENT_VERSION_CONFIG_COMPATIBLE_WITH_2X_PHASE1
+            case Input.Kinesis.ClientVersionConfig.CompatibleWith2x =>
+              CoordinatorConfig.ClientVersionConfig.CLIENT_VERSION_CONFIG_COMPATIBLE_WITH_2X
+            case Input.Kinesis.ClientVersionConfig.Kcl3x =>
+              CoordinatorConfig.ClientVersionConfig.CLIENT_VERSION_CONFIG_3X
+          }
+        }
+
       new Scheduler(
         configsBuilder.checkpointConfig,
-        configsBuilder.coordinatorConfig,
+        coordinatorConfig,
         configsBuilder.leaseManagementConfig,
         configsBuilder.lifecycleConfig,
         metricsConfig,
