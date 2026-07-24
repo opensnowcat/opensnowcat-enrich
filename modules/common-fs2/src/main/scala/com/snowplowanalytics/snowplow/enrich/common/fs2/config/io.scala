@@ -215,8 +215,7 @@ object io {
             case "COMPATIBLE_WITH_2X" => CompatibleWith2x.asRight
             case "3X" => Kcl3x.asRight
             case other =>
-              s"clientVersionConfig $other is not supported. Possible types are COMPATIBLE_WITH_2X_PHASE1, COMPATIBLE_WITH_2X and 3X"
-                .asLeft
+              s"clientVersionConfig $other is not supported. Possible types are COMPATIBLE_WITH_2X_PHASE1, COMPATIBLE_WITH_2X and 3X".asLeft
           }
         implicit val clientVersionConfigEncoder: Encoder[ClientVersionConfig] =
           Encoder.encodeString.contramap {
