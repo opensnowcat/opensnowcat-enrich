@@ -1,7 +1,7 @@
 # Migrating enrich-kinesis / enrich-eventbridge from KCL 2.x to KCL 3.5
 
 This document is for maintainers operating `enrich-kinesis` / `enrich-eventbridge` deployments that
-are moving from `amazon-kinesis-client` 2.7.3 to 3.5.0 (this repo skips the 3.0–3.4 line and jumps
+are moving from `amazon-kinesis-client` 2.7.3 to 3.5.1 (this repo skips the 3.0–3.4 line and jumps
 straight to 3.5, which uses the **single table format** by default for new 2.x → 3.5 migrations).
 
 It covers:
@@ -21,7 +21,7 @@ Reference: [AWS docs - Migrate from KCL 2.x to KCL 3.x](https://docs.aws.amazon.
 
 ## 1. What changed in this codebase
 
-- `amazon-kinesis-client` bumped to `3.5.0` (`project/Dependencies.scala`).
+- `amazon-kinesis-client` bumped to `3.5.1` (`project/Dependencies.scala`).
 - A new input config field, `clientVersionConfig`, was added to `Input.Kinesis`
   (`modules/common-fs2/.../config/io.scala`). It maps directly onto
   `CoordinatorConfig.ClientVersionConfig` and controls the 2.x/3.x compatibility mode:
