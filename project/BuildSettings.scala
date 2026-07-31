@@ -185,6 +185,7 @@ object BuildSettings {
       case x if x.startsWith("META-INF/license/") || (x.startsWith("META-INF/") && x.contains("LICENSE")) => MergeStrategy.rename
       case x if x.endsWith("NOTICE") => MergeStrategy.rename
       case x if x.contains("LICENSE") => MergeStrategy.rename
+      case x if x.endsWith("MANIFEST.MF") => MergeStrategy.discard
       case x =>
         val oldStrategy = (assembly / assemblyMergeStrategy).value
         oldStrategy(x)
