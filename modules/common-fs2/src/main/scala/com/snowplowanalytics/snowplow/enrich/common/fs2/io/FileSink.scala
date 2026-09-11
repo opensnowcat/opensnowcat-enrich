@@ -19,7 +19,7 @@ import java.nio.channels.FileChannel
 import cats.implicits._
 
 import cats.effect.kernel.{Async, Ref, Resource, Sync}
-import cats.effect.std.{Hotswap, Semaphore}
+import cats.effect.std.{NonEmptyHotswap, Semaphore}
 
 import com.snowplowanalytics.snowplow.enrich.common.fs2.config.io.Output.{FileSystem => FileSystemConfig}
 
@@ -60,7 +60,8 @@ object FileSink {
     maxBytes: Long
   ): Resource[F, ByteSink[F]] =
     for {
-      (hs, first) <- Hotswap(makeFile(1, path))
+      hs <- NonEmptyHotswap(makeFile(1, path))
+      first <- Resource.eval(hs.get.use(Sync[F].pure))
       ref <- Resource.eval(Ref.of(first))
       sem <- Resource.eval(Semaphore(1L))
     } yield { records =>
@@ -109,14 +110,14 @@ object FileSink {
       .as(state.copy(bytes = state.bytes + bytes.length + 1))
 
   private def maybeRotate[F[_]: Sync](
-    hs: Hotswap[F, FileState],
+    hs: NonEmptyHotswap[F, FileState],
     base: Path,
     state: FileState,
     maxBytes: Long,
     bytesToWrite: Int
   ): F[FileState] =
     if (state.bytes + bytesToWrite > maxBytes)
-      hs.swap(makeFile(state.index + 1, base))
+      hs.swap(makeFile(state.index + 1, base)) >> hs.get.use(Sync[F].pure)
     else
       Sync[F].pure(state)
 
