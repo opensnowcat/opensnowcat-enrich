@@ -49,7 +49,7 @@ object Dependencies {
     val log4j = "2.25.4"
     val guava = "33.2.1-jre"
     val slf4j = "2.0.13"
-    val thrift = "0.23.0"
+    val thrift = "0.24.0"
     val sprayJson = "1.3.6"
     val netty = "4.1.136.Final"
     val grpcNettyShaded = "1.81.1"
