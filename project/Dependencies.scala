@@ -59,9 +59,10 @@ object Dependencies {
 
     val refererParser = "2.1.0"
     val maxmindIplookups = "0.8.2"
-    val circe = "0.14.3"
+    val circe = "0.14.17"
+    val circeGenericExtras = "0.14.4"
     val circeOptics = "0.14.1"
-    val circeConfig = "0.10.1"
+    val circeConfig = "0.10.2"
     val circeJackson = "0.14.0"
     val scalaForex = "3.0.0"
     val scalaWeather = "2.0.0"
@@ -137,7 +138,7 @@ object Dependencies {
 
     val circeCore = "io.circe"                     %% "circe-core"                    % V.circe
     val circeGeneric = "io.circe"                  %% "circe-generic"                 % V.circe
-    val circeExtras = "io.circe"                   %% "circe-generic-extras"          % V.circe
+    val circeExtras = "io.circe"                   %% "circe-generic-extras"          % V.circeGenericExtras
     val circeParser = "io.circe"                   %% "circe-parser"                  % V.circe
     val circeLiteral = "io.circe"                  %% "circe-literal"                 % V.circe
     val circeConfig = "io.circe"                   %% "circe-config"                  % V.circeConfig
@@ -272,7 +273,8 @@ object Dependencies {
       specs2Mock,
       specs2CE,
       circeLiteral % Test,
-      parserCombinators
+      parserCombinators,
+      circeParser
     )
 
     val commonFs2Dependencies = Seq(

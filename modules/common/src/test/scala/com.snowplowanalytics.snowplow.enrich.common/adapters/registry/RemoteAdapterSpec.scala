@@ -238,7 +238,7 @@ class RemoteAdapterSpec extends Specification with ValidatedMatchers with CatsEf
     val expected = FailureDetails.AdapterFailure.InputData(
       "body",
       Some("""{"events":"response"}"""),
-      "[REMOTE_ADAPTER] could not be decoded as a list of json objects: Got value '\"response\"' with wrong type, expecting array: DownField(events)"
+      "[REMOTE_ADAPTER] could not be decoded as a list of json objects: DecodingFailure at .events: Got value '\"response\"' with wrong type, expecting array"
     )
     SpecHelpers.httpClient.use { http =>
       IO.pure(adapter(http).processResponse(bodylessPayload, unexpectedJsonResponse) must beLeft(expected))
