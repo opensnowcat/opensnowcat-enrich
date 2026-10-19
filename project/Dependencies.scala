@@ -55,6 +55,7 @@ object Dependencies {
     val grpcNettyShaded = "1.82.4"
     val protobuf = "4.29.6"
     val httpclient = "4.5.13"
+    val httpclient5 = "5.6.5"
 
     val refererParser = "2.1.0"
     val maxmindIplookups = "0.8.2"
@@ -117,6 +118,7 @@ object Dependencies {
     val commonsIO = "commons-io"                       % "commons-io"        % V.commonsIO
     val commonsLang = "org.apache.commons"             % "commons-lang3"     % V.commonsLang
     val httpclient = "org.apache.httpcomponents"       % "httpclient"        % V.httpclient
+    val httpclient5 = "org.apache.httpcomponents.client5" % "httpclient5"    % V.httpclient5
     val jodaTime = "joda-time"                         % "joda-time"         % V.jodaTime
     val useragent = "eu.bitwalker"                     % "UserAgentUtils"    % V.useragent
     val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind"  % V.jackson
@@ -230,6 +232,7 @@ object Dependencies {
       commonsIO,
       commonsLang,
       httpclient,
+      httpclient5,
       useragent,
       jacksonDatabind,
       uaParser,
