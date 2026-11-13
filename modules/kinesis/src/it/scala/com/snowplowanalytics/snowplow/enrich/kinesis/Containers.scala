@@ -43,7 +43,7 @@ object Containers extends CatsEffect {
 
   val localstack = {
     val container = GenericContainer(
-      dockerImage = "localstack/localstack-light:1.2.0",
+      dockerImage = "localstack/localstack:1.4.0",
       fileSystemBind = Seq(
         GenericContainer.FileSystemBind(
           "modules/kinesis/src/it/resources/localstack",
